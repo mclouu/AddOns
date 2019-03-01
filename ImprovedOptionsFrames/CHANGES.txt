@@ -1,0 +1,12 @@
+tag d54b484a3b0411c6ac64e0cd8cc17a892a3f5065 1.5.8
+Author:	Andrew Scott <ascott18@gmail.com>
+Date:	Sun Jul 22 13:32:35 2018 -0700
+
+1.5.8
+
+commit 2f742dd167316a84af5bd3a88b29806b73ec8e17
+Author: Andrew Scott <ascott18@gmail.com>
+Date:   Sun Jul 22 13:32:31 2018 -0700
+
+    TOC bump
+
