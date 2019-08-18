@@ -69,15 +69,16 @@ VUHDO_I18N_SHOW_BUFF_WATCH = "Muestra buscador de buffs";
 -- Chat messages
 -- @EXACT = false
 VUHDO_I18N_COMMAND_LIST = "\n|cffffe566 - [ Commandes VuhDo] -|r";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566opt|r[ions] - Opciones de VuhDo";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566res|r[et] - Resetear la posicion del panel";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566lock|r - Cambiar Panel Bloqueado";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566mm, map, minimap|r - Activar Icono de minimapa";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566show, hide, toggle|r - Girar paneles";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566load|r - [Profile],[Key Layout]";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�[broad]|cffffe566cast, mt|r[s] - Configurar tanques principales";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566role|r - Restablecer rol de jugadores";
-VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "�|cffffe566help,?|r - Lista de comandos\n";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566opt|r[ions] - Opciones de VuhDo";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566res|r[et] - Resetear la posicion del panel";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566lock|r - Cambiar Panel Bloqueado";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566mm, map, minimap|r - Activar Icono de minimapa";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566show, hide, toggle|r - Girar paneles";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566load|r - [Profile],[Key Layout]";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n[broad]|cffffe566cast, mt|r[s] - Configurar tanques principales";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566role|r - Restablecer rol de jugadores";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566ab|r[out] - About this add-on";
+VUHDO_I18N_COMMAND_LIST = VUHDO_I18N_COMMAND_LIST .. "|n|cffffe566help,?|r - Lista de comandos\n";
 VUHDO_I18N_BAD_COMMAND = "Comando invalido! Teclea '/vuhdo help' or '/vd ?' para ver la lista de comandos.";
 VUHDO_I18N_CHAT_SHOWN = "|cffffe566visible|r.";
 VUHDO_I18N_CHAT_HIDDEN = "|cffffe566cach\195\169|r.";
@@ -469,4 +470,20 @@ VUHDO_I18N_DEF_BOUQUET_ROLE_AND_SUMMON = "Role & Summon Status Icon";
 VUHDO_I18N_BOUQUET_IS_PHASED = "Icon: Is Phased";
 VUHDO_I18N_BOUQUET_IS_WAR_MODE_PHASED = "Icon: Is War Mode Phased";
 VUHDO_I18N_DEF_BOUQUET_IS_PHASED = "Is Phased Icon";
+
+-- 3.101
+VUHDO_I18N_DEF_PLAYER_COMBO_POINTS = "Player Combo Points";
+VUHDO_I18N_BOUQUET_OWN_COMBO_POINTS_EQUALS = "Flag: Own Combo Points ==";
+VUHDO_I18N_DEF_PLAYER_SOUL_SHARDS = "Player Soul Shards";
+VUHDO_I18N_BOUQUET_OWN_SOUL_SHARDS_EQUALS = "Flag: Own Soul Shards ==";
+VUHDO_I18N_DEF_PLAYER_RUNES = "Player Runes";
+VUHDO_I18N_BOUQUET_OWN_RUNES_EQUALS = "Flag: Own Runes ==";
+VUHDO_I18N_DEF_PLAYER_ARCANE_CHARGES = "Player Arcane Charges";
+VUHDO_I18N_BOUQUET_OWN_ARCANE_CHARGES_EQUALS = "Flag: Own Arcane Charges ==";
+VUHDO_I18N_DEBUFF_BLACKLIST_ADDED = "Added \"[%s] %s\" to the debuff backlist.";
+
+-- 3.104
+VUHDO_I18N_PLAY_SOUND_FILE_ERR = "Could not play sound \"%s\": %s";
+VUHDO_I18N_PLAY_SOUND_FILE_DEBUFF_ERR = "Could not play sound \"%s\" for standard debuff. Adjust your settings under 'VuhDo Options > Debuffs > Standard > Debuff Sound'.";
+VUHDO_I18N_PLAY_SOUND_FILE_CUSTOM_DEBUFF_ERR = "Could not play sound \"%s\" for custom debuff \"%s\". Adjust your settings under 'VuhDo Options > Debuffs > Custom'.";
 

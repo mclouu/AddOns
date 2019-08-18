@@ -1,5 +1,5 @@
 local RingKeeper, _, T = {}, ...
-local RK_RingDesc, RK_CollectionIDs, RK_Version, RK_Rev, EV, SV = {}, {}, 2, 47, T.Evie
+local RK_RingDesc, RK_CollectionIDs, RK_Version, RK_Rev, EV, SV = {}, {}, 2, 48, T.Evie
 local unlocked, queue, RK_DeletedRings, RK_FlagStore, sharedCollection = false, {}, {}, {}, {}
 
 local function assert(condition, text, level, ...)
@@ -388,7 +388,9 @@ local function RK_SyncRing(name, force, tok)
 		OneRingLib:SetRing(name, cid, desc)
 	end
 
-	for _, e in ipairs(desc) do
+	local onOpenSlice, onOpenAction = desc.onOpen
+	for i=1, #desc do
+		local e = desc[i]
 		local ident, action = e[1]
 		if ident == "macrotext" then
 			local m = RK_ParseMacro(e[2])
@@ -398,14 +400,18 @@ local function RK_SyncRing(name, force, tok)
 		end
 		changed = changed or (action ~= e._action) or (e.fastClick ~= e._fastClick) or (e.rotationMode ~= e._rotationMode) or (action and (e.show ~= e._show) or (e.embed ~= e._embed))
 		e._action, e._fastClick, e._rotationMode = action, e.fastClick, e.rotationMode
+		if i == onOpenSlice then
+			onOpenAction = e._action
+		end
 	end
-	changed = changed or (desc._embed ~= desc.embed)
+	changed = changed or (desc._embed ~= desc.embed) or (desc._onOpen ~= onOpenAction)
 
 	if not changed and not force then return end
 	local collection, cn = sharedCollection, 1
 	wipe(collection)
-	for _, e in ipairs(desc) do
-		if e._action then
+	for i=1, #desc do
+		local e = desc[i]
+		if e._action and i ~= onOpenSlice then
 			collection[e.sliceToken], collection[cn], cn = e._action, e.sliceToken, cn + 1
 			collection['__visibility-' .. e.sliceToken], e._show = e.show or nil, e.show
 			collection['__embed-' .. e.sliceToken], e._embed = e.embed, e.embed
@@ -413,6 +419,7 @@ local function RK_SyncRing(name, force, tok)
 		end
 	end
 	collection['__embed'], desc._embed = desc.embed, desc.embed
+	collection['__openAction'], desc._onOpen = onOpenAction, onOpenAction
 	AB:UpdateActionSlot(cid, collection)
 	OneRingLib:SetRing(name, cid, desc)
 end
@@ -495,6 +502,11 @@ local function svInitializer(event, _name, sv)
 		local deleted, flags, mousemap = SV.OPieDeletedRings or RK_DeletedRings, SV.OPieFlagStore or RK_FlagStore
 		mousemap, SV.OPieDeletedRings, SV.OPieFlagStore = {PRIMARY=OneRingLib:GetOption("PrimaryButton"), SECONDARY=OneRingLib:GetOption("SecondaryButton")}
 		for k,v in pairs(flags) do RK_FlagStore[k] = v end
+		
+		local storageVersion = flags.StoreVersion or (flags.FlushedDefaultColors and 1) or 0
+		storageVersion = type(storageVersion) == "number" and storageVersion or 0
+		local colorFlush, onOpenFlush = storageVersion < 1, storageVersion < 2
+		RK_FlagStore.StoreVersion, RK_FlagStore.FlushedDefaultColors = 2, nil
 
 		for k, v in pairs(queue) do
 			if v.hotkey then v.hotkey = v.hotkey:gsub("[^-; ]+", mousemap) end
@@ -505,18 +517,22 @@ local function svInitializer(event, _name, sv)
 				RK_DeletedRings[k] = true
 			end
 		end
-		local colorFlush = not RK_FlagStore.FlushedDefaultColors
 		for k, v in pairs(SV) do
-			if colorFlush and type(v) == "table" then
-				for _,v in pairs(v) do
-					if type(v) == "table" and v.c == "e5ff00" then
-						v.c = nil
+			if type(v) == "table" then
+				if colorFlush then
+					for _,v in pairs(v) do
+						if type(v) == "table" and v.c == "e5ff00" then
+							v.c = nil
+						end
 					end
+				end
+				if onOpenFlush and v.onOpen ~= nil then
+					v.quarantineOnOpen, v.onOpen = v.onOpen, nil
 				end
 			end
 			securecall(RingKeeper.SetRing, RingKeeper, k, v)
 		end
-		RK_FlagStore.FlushedDefaultColors = true
+
 		collectgarbage("collect")
 	end
 end
@@ -634,7 +650,9 @@ function RingKeeper:GetSnapshotRing(snap)
 				end
 			end
 		end
-		ret.name, ret.quarantineBind, ret.hotkey = ret.name:gsub("|?|", "||"), type(ret.hotkey) == "string" and ret.hotkey or nil
+		ret.name = ret.name:gsub("|?|", "||")
+		ret.quarantineBind, ret.hotkey = type(ret.hotkey) == "string" and ret.hotkey or nil
+		ret.quarantineOnOpen, ret.onOpen = ret.onOpen, nil
 		return ret
 	end
 end

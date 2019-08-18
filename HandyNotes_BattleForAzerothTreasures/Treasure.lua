@@ -53,19 +53,39 @@ ns.points = {
     --]]
     [862] = { -- Zuldazar
         [54093150] = {quest=48938, achievement=12851, criteria=40988, note="On second floor",}, -- Offerings of the Chosen
-        [64732170] = {quest=50259, achievement=12851, criteria=40989,}, -- Witch Doctor's Hoard
+        [64712167] = {quest=50259, achievement=12851, criteria=40989,}, -- Witch Doctor's Hoard
         [51718690] = {quest=49936, achievement=12851, criteria=40990, note="Bottom floor of ship",}, -- Spoils of Pandaria
-        [51432661] = {quest=50582, achievement=12851, criteria=40991,}, -- Gift of the Brokenhearted
-        [49486526] = {quest=49257, achievement=12851, criteria=40992, note="Top of ship",}, -- Warlord's Cache
-        [38793443] = {quest=50707, achievement=12851, criteria=40993, note="Road behind waterfall",}, -- Dazar's Forgotten Chest
+        [51442661] = {quest=50582, achievement=12851, criteria=40991, note="Top of hill"}, -- Gift of the Brokenhearted
+        [50112715] = path{quest=50582},
+        [49506526] = {quest=49257, achievement=12851, criteria=40992, note="Top of ship",}, -- Warlord's Cache
+        [38793444] = {quest=50707, achievement=12851, criteria=40993, note="Up on the rocks",}, -- Dazar's Forgotten Chest
+        [41003328] = path{quest=50707, note="Path behind the waterfall"},
+        [41973566] = path{quest=50707},
         [61065863] = {quest=50947, achievement=12851, criteria=40994, npc=133208, note="Event: kill Da White Shark first",}, -- Da White Shark's Bounty
-        [71841676] = {quest=50949, achievement=12851, criteria=40995,}, -- The Exile's Lament
-        [56123806] = {quest=51338, achievement=12851, criteria=40996, note="In cave behind waterfall",}, -- Cache of Secrets
+        [71821677] = {quest=50949, item=163036, achievement=12851, criteria=40995, note="In cave",}, -- The Exile's Lament
         [71161767] = path{quest=50949},
-        [52974722] = {quest=51624, achievement=12851, criteria=40997}, -- Riches of Tor'nowa
+        [56123806] = {quest=51338, achievement=12851, criteria=40996, note="In cave behind waterfall",}, -- Cache of Secrets
+        [52974719] = {quest=51624, achievement=12851, criteria=40997}, -- Riches of Tor'nowa
         -- junk
-        [80135512] = {quest=51346, junk=true, label="Treasure Chest",},
-        [50823158] = {quest=50711, junk=true, label="Treasure Chest",},
+        [50823158] = {quest=50711, junk=true, label=CHEST,},
+        [65041636] = {quest=50715, junk=true, label=CHEST,},
+        [68902222] = {quest=50715, junk=true, label=CHEST,},
+        [68503365] = {quest=50716, junk=true, label=CHEST,},
+        [66552896] = {quest=50720, junk=true, label=CHEST,},
+        [63062832] = {quest=50720, junk=true, label=CHEST,},
+        [75042303] = {quest=50721, junk=true, label=CHEST,},
+        [48984088] = {quest=50722, junk=true, label=CHEST,},
+        [45676019] = {quest=50723, junk=true, label=CHEST,},
+        [47526049] = {quest=50723, junk=true, label=CHEST,},
+        [80791415] = {quest=50724, junk=true, label=CHEST,},
+        [80151648] = {quest=50724, junk=true, label=CHEST,},
+        [41127489] = {quest=50726, junk=true, label=CHEST,},
+        [43177297] = {quest=50726, junk=true, label=CHEST,},
+        [40953756] = {quest=50727, junk=true, label=CHEST,},
+        [81203857] = {quest=50728, junk=true, label=CHEST,},
+        [80135512] = {quest=51346, junk=true, label=CHEST,},
+        [82465431] = {quest=51346, junk=true, label=CHEST,},
+        -- [71684127] = {quest=50308, junk=true, label="Mysterious trashpile", achievement="12482", note="Jani"},
     },
     [863] = { -- Nazmir
         [77903634] = {quest=49867, achievement=12771, criteria=40857,}, -- Lucky Horace's Lucky Chest
@@ -76,9 +96,25 @@ ns.points = {
         [62103487] = {quest=49891, achievement=12771, criteria=40861, note="Underwater cave",}, -- Lost Nazmani Treasure
         [42772620] = {quest=49484, achievement=12771, criteria=40862, note="Climb the tree",}, -- Offering to Bwonsamdi
         [66791735] = {quest=49483, achievement=12771, criteria=40863, note="Climb the tree",}, -- Shipwrecked Chest
-        [46238292] = {quest=49889, achievement=12771, criteria=40864,}, -- Venomous Seal
+        [46228295] = {quest=49889, achievement=12771, criteria=40864,}, -- Venomous Seal
         [76826220] = {quest=50045, achievement=12771, criteria=40865, note="Underwater cave",}, -- Swallowed Naga Chest
         [35455498] = {quest=49313, achievement=12771, criteria=40866, note="In cave",}, -- Wunja's Trove
+        -- Hoppin' Sad (Lost Spawn of Krag'wa)
+        [65605090] = {quest=53417, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",}, --verify
+        [69105790] = {quest=53418, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",}, --verify
+        [56106490] = {quest=53419, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",},
+        [52804290] = {quest=53420, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",}, --verify
+        [33506160] = {quest=53421, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",},
+        [45609100] = {quest=53422, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",}, --verify
+        [28408230] = {quest=53423, achievement=13028, minimap=true, atlas="WildBattlePetCapturable", note="Cave in cliffs",}, --verify
+        [24209160] = {quest=53424, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",}, --verify
+        [21706930] = {quest=53425, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",},
+        -- [52804290] = {quest=53426, achievement=13828, minimap=true,}, -- maybe?
+        [25694058] = {quest=53426, achievement=13028, minimap=true, atlas="WildBattlePetCapturable",},
+        -- junk
+        [41575046] = {quest=49916, junk=true, label=CHEST,},
+        [41596574] = {quest=49916, junk=true, label=CHEST,},
+        [28048187] = {quest=50895, junk=true, label=CHEST,},
     },
     [864] = { -- Vol'dun
         [46598801] = {quest=50237, achievement=12849, criteria=40966, note="Use mine cart",}, -- Ashvane Spoils
@@ -96,7 +132,7 @@ ns.points = {
         [57746464] = {quest=51136, achievement=12849, criteria=40971,}, -- Excavator's Greed
         [56696469] = path{quest=51136},
         [57061121] = {quest=52992, achievement=12849, criteria=41002, note="Enter at top of temple",}, -- Lost Offerings of Kimbul
-        [26484534] = {quest=53004, achievement=12849, criteria=41004, note="Use Abandoned Bobber",}, -- Sandsunken Treasure
+        [26484534] = {quest=53004, item=163036, achievement=12849, criteria=41004, note="Use Abandoned Bobber",}, -- Sandsunken Treasure
         -- Scavenger of the Sands
         [56297011] = {quest=53132, minimap=true, atlas="VignetteLootElite", scale=1.2, achievement=13016, criteria=41342, note="Under the bridge",}, -- Jason's Rusty Blade
         [36217838] = {quest=53133, minimap=true, atlas="VignetteLootElite", scale=1.2, achievement=13016, criteria=41343, note="Inside the turned over box",}, -- Ian's Empty Bottle
@@ -115,6 +151,7 @@ ns.points = {
         [62832267] = {quest=53145, minimap=true, atlas="VignetteLootElite", scale=1.2, achievement=13016, criteria=41355, note="Down from Tortaka Refuge",}, -- Kurt's Ornate Key
         -- junk
         [46984656] = {quest=50883, junk=true, label="Mysterious trashpile", achievement=12482, note="In alcove, Summon Jani, give her Charged Ranishu Antennae"},
+        [59631517] = {quest=50914, junk=true, label=CHEST,},
         [61071734] = {quest=50914, junk=true, label=CHEST,},
         [53841481] = {quest=50915, junk=true, label=CHEST,},
         [60843637] = {quest=50916, junk=true, label=CHEST,},
@@ -155,10 +192,19 @@ ns.points = {
         [90507551] = {quest=52836, hide_before=52859, achievement=12852, criteria=41020, note="Kill pirates in Freehold until the map drops",}, -- Yellowed Treasure Map 162581 (q:52859)
         [29222534] = {quest=52833, hide_before=52854, achievement=12852, criteria=41019, note="Kill pirates in Freehold until the map drops",}, -- Fading Treasure Map 162580 (q:52854)
         [48983759] = {quest=52845, hide_before=52860, achievement=12852, criteria=41021, note="Kill pirates in Freehold until the map drops",}, -- Singed Treasure Map 162584 (q:52860)
+        -- Shanty Raid
+        [43382585] = {quest=53410, item=163715, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41542, note="In a cave",}, -- Fruit Counting
+        [76218305] = {quest=50233, item=163717, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41544, note="Kill Barman Bill",}, -- Josephus
+        [56706990] = {quest=50096, item=163718, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41545, note="Kill Black-Eyed Bart",}, -- Black Sphere
+        [73208410] = {quest=53411, item=163719, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41546, note="Ground floor, on a table",}, -- Horse
+        [70602270] = {quest=53407, item=163716, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41543, note="Behind Jay the Tavern Bard",}, -- Inebriation
+        [74403540] = {quest=53408, item=163714, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41541, note="On the fireplace mantel",}, -- Lively Men
         -- junk:
+        [83673580] = {quest=53631, junk=true, label="Dusty Marine Supplies",},
         [76967543] = {quest=48593, junk=true, label=CHEST_SM,},
         [78008050] = {quest=48595, junk=true, label=CHEST_SM,},
         [76358090] = {quest=48595, junk=true, label=CHEST_SM,},
+        [73468317] = {quest=48596, junk=true, label=CHEST_SM,},
         [75758283] = {quest=48596, junk=true, label=CHEST_SM,},
         [38432868] = {quest=48598, junk=true, label=CHEST_SM,},
         [38762673] = {quest=48599, junk=true, label=CHEST_SM,},
@@ -169,6 +215,7 @@ ns.points = {
         [68635108] = {quest=48609, junk=true, label=CHEST_SM,},
         [50842310] = {quest=48611, junk=true, label=CHEST_SM,},
         [47442365] = {quest=48611, junk=true, label=CHEST_SM,},
+        [48392785] = {quest=48611, junk=true, label=CHEST_SM,},
         [61212836] = {quest=48612, junk=true, label=CHEST_SM,},
         [57311757] = {quest=48617, junk=true, label=CHEST_SM,},
         [87347379] = {quest=48618, junk=true, label=CHEST_SM,},
@@ -178,15 +225,26 @@ ns.points = {
     },
     [896] = { -- Drustvar
         [33713008] = {quest=53356, achievement=12995, criteria=41697,}, -- Web-Covered Chest
-        [63306585] = {quest=53385, achievement=12995, criteria=41699, note="Left Down Up Right",}, -- Runebound Cache
-        [33687173] = {quest=53387, achievement=12995, criteria=41701, note="Right Up Left Down",}, -- Runebound Coffer
-        [55605181] = {quest=53472, achievement=12995, criteria=41703, note="Click on Witch Torch",}, -- Bespelled Chest
-        [25472416] = {quest=53474, achievement=12995, criteria=41705, note="Click on Witch Torch",}, -- Enchanted Chest
+        [63306585] = {quest=53385, item=163743, achievement=12995, criteria=41699, note="Left Down Up Right",}, -- Runebound Cache
+        [33687173] = {quest=53387, item=163740, achievement=12995, criteria=41701, note="Right Up Left Down",}, -- Runebound Coffer
+        [55605181] = {quest=53472, item=163790, minimap=true, achievement=12995, criteria=41703, note="Click on Witch Torch",}, -- Bespelled Chest
+        [25472416] = {quest=53474, item=163796, minimap=true, achievement=12995, criteria=41705, note="Click on Witch Torch",}, -- Enchanted Chest
         [25751995] = {quest=53357, achievement=12995, criteria=41698, note="Get keys from Gorging Raven",}, -- Merchant's Chest
-        [44222770] = {quest=53386, achievement=12995, criteria=41700, note="Left Right Down Up",}, -- Runebound Chest
-        [18515133] = {quest=53471, achievement=12995, criteria=41702, note="Click on Witch Torch",}, -- Hexed Chest
-        [67767367] = {quest=53473, achievement=12995, criteria=41704, note="Click on Witch Torch",}, -- Ensorcelled Chest
-        [24304840] = {quest=53475, achievement=12995, criteria=41752,}, -- Stolen Thornspeaker Cache
+        [44222770] = {quest=53386, item=163742, achievement=12995, criteria=41700, note="Left Right Down Up",}, -- Runebound Chest
+        [18515133] = {quest=53471, item=163789, minimap=true, achievement=12995, criteria=41702, note="Click on Witch Torch",}, -- Hexed Chest
+        [67767367] = {quest=53473, item=163791, minimap=true, achievement=12995, criteria=41704, note="Click on Witch Torch",}, -- Ensorcelled Chest
+        [24304840] = {quest=53475, minimap=true, achievement=12995, criteria=41752,}, -- Stolen Thornspeaker Cache
+        -- junk
+        [65312905] = {quest=51871, junk=true, label=CHEST_SM,},
+        [57862187] = {quest=51875, junk=true, label=CHEST_SM,},
+        [58642825] = {quest=51875, junk=true, label=CHEST_SM,},
+        [50332252] = {quest=51878, junk=true, label=CHEST_SM,},
+        [62094463] = {quest=51882, junk=true, label=CHEST_SM,},
+        [60306860] = {quest=51896, junk=true, label=CHEST_SM,},
+        [26222993] = {quest=51907, junk=true, label=CHEST_SM,},
+        [23181263] = {quest=5191, junk=true, label=CHEST_SM,},
+        [24223681] = {quest=51911, junk=true, label=CHEST_SM,},
+        [39326173] = {quest=51914, junk=true, label=CHEST_SM,},
     },
     [942] = { -- Stormsong Valley
         [66901200] = {quest=51449, achievement=12853, criteria=41061,}, -- Weathered Treasure Chest
@@ -196,17 +254,40 @@ ns.points = {
         [59913907] = {quest=50937, achievement=12853, criteria=41065, note="On roof",}, -- Hidden Scholar's Chest
         [58608388] = {quest=49811, achievement=12853, criteria=41066, note="Under platform",}, -- Smuggler's Stash
         [58216368] = {quest=52326, achievement=12853, criteria=41067, note="Top shelf inside shed",}, -- Discarded Lunchbox
-        [44447353] = {quest=52429, achievement=12853, criteria=41068, note="Jump onto platform",}, -- Carved Wooden Chest
+        [44447353] = {quest=52429, item=162000, achievement=12853, criteria=41068, note="Jump down onto platform",}, -- Carved Wooden Chest
         [36692323] = {quest=52976, achievement=12853, criteria=41069, note="Climb ladder onto ship",}, -- Venture Co. Supply Chest
         [46003069] = {quest=52980, achievement=12853, criteria=41070, note="Behind pillar",}, -- Forgotten Chest
-        [41256950] = {achievement=13046, atlas="Food", note="Open an Unforgettable Luncheon here; buy them at the Inn, or loot one from the Discarded Lunchbox in Brennadam",}, -- These Hills Sing
+        [41256950] = {achievement=13046, atlas="Food", minimap=true, note="Open an Unforgettable Luncheon here; buy them at the Inn, or loot one from the Discarded Lunchbox in Brennadam",}, -- These Hills Sing
+        -- Legends of the Tidesages
+        [49518090] = {achievement=13051, criteria=41425, minimap=true, atlas="poi-workorders",}, -- Part 1 (Near the waterfall)
+        [59025954] = {achievement=13051, criteria=41426, minimap=true, atlas="poi-workorders",}, -- Part 2 (On top of the hill)
+        [31957291] = {achievement=13051, criteria=41427, minimap=true, atlas="poi-workorders",}, -- Part 3 (Near the lake)
+        [33813323] = {achievement=13051, criteria=41428, minimap=true, atlas="poi-workorders",}, -- Part 4 (On top of the island)
+        [56023853] = {achievement=13051, criteria=41429, minimap=true, atlas="poi-workorders",}, -- Part 5 (Up the mountain right of Warfang Hold)
+        [44183660] = {achievement=13051, criteria=41430, minimap=true, atlas="poi-workorders",}, -- Part 6 (Up the mountain left of Warfang Hold)
+        [62083022] = {achievement=13051, criteria=41431, minimap=true, atlas="poi-workorders",}, -- Part 7
+        [75073113] = {achievement=13051, criteria=41432, minimap=true, atlas="poi-workorders",}, -- Part 8 (Near the Shrine of the Storm entrance)
         -- junk
+        [32126620] = {quest=53635, junk=true, label="Curious Grain Sack",},
+        [32946967] = {quest=53652, junk=true, label="Curious Grain Sack",},
         [66567107] = {quest=50576, item=154476, label="Honey Vat", note="Strangely, not part of the achievement",},
         [62056563] = {quest=51184, junk=true, label=CHEST_SM,},
         [51796523] = {quest=51184, junk=true, label=CHEST_SM,},
         [70265958] = {quest=51927, junk=true, label=CHEST_SM,},
+        [75103513] = {quest=51938, junk=true, label=CHEST_SM,},
         [64366899] = {quest=51939, junk=true, label=CHEST_SM,},
         [68067158] = {quest=51939, junk=true, label=CHEST_SM, note="In a bush",},
+        [48406562] = {quest=51940, junk=true, label=CHEST_SM,},
+        [44107300] = {quest=51942, junk=true, label=CHEST_SM,},
+        [29776948] = {quest=51943, junk=true, label=CHEST_SM,},
+        [29985150] = {quest=51944, junk=true, label=CHEST_SM,},
+        [36272737] = {quest=51945, junk=true, label=CHEST_SM,},
+        [57645092] = {quest=51946, junk=true, label=CHEST_SM,},
+        [60865118] = {quest=51946, junk=true, label=CHEST_SM,},
+        [46915393] = {quest=51949, junk=true, label=CHEST_SM,},
+    },
+    [1183] = { -- Thornheart
+        [60804121] = {quest=52429, item=162000, achievement=12853, criteria=41068, note="Jump down from here",}, -- Carved Wooden chest
     },
     [1161] = { -- Boralus
         [61901010] = {quest=52870, achievement=12852, criteria=41016, note="In cave",}, -- Scrimshaw Cache
@@ -218,6 +299,9 @@ ns.points = {
         [70328576] = {quest=52137, atlas="poi-workorders", minimap=true, achievement=12852, criteria=41017, note="Read Damp Scrolls; underground",},
         [67147982] = {quest=52138, atlas="poi-workorders", minimap=true, achievement=12852, criteria=41017, note="Read Damp Scrolls",},
         [55769095] = {quest=52195, atlas="DemonInvasion2", scale=1.4, minimap=true, hide_before={52134, 52135, 52136, 52137, 52138}, item=161342, achievement=12852, criteria=41017, note="Ominous Altar; use it, get teleported, pick up the gem",}, -- Secret of the Depths
+        -- Shanty Raid
+        [72616853] = {quest=53408, item=163714, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41541, note="On the fireplace mantel",}, -- Lively Men
+        [53141767] = {quest=53407, item=163716, atlas="poi-workorders", minimap=true, achievement=13057, criteria=41543, note="Behind Jay the Tavern Bard",}, -- Inebriation
         -- junk
         [66758031] = {quest=50952, junk=true, label=CHEST_SM,},
     },
@@ -226,5 +310,11 @@ ns.points = {
         [44472690] = {quest=51338, minimap=true, achievement=12851, criteria=40996, note="In cave behind waterfall",}, -- Cache of Secrets
         [38300716] = {quest=48938, minimap=true, achievement=12851, criteria=40988, note="On top of the Hall of the High Priests",}, -- Offerings of the Chosen
         [41141101] = path{quest=48938},
+        -- junk
+        [48981013] = {quest=49142, junk=true, label=CHEST,},
+    },
+    [1355] = { -- Nazjatar
+    },
+    [1462] = { -- Mechagon
     },
 }

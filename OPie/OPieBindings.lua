@@ -183,15 +183,23 @@ function subBindings:set(id, bind)
 	config.undo.saveProfile()
 	OneRingLib:SetOption("SliceBindingString", v, self.scope)
 end
-function subBindings:scopes(info, level, checked)
-	info.arg1, info.arg2, info.text, info.checked = self, nil, L"Defaults for all rings", checked and self.scope == nil
-	UIDropDownMenu_AddButton(info, level)
+local subBindings_List = {}
+local function subBindings_ScopeClick(_, key)
+	return bindSet.set(nil, subBindings, key or nil)
+end
+local function subBindings_ScopeFormat(key, list)
+	return list[key], list[0] and (key or nil) == subBindings.scope
+end
+function subBindings:scopes(_info, level, checked)
+	local list = subBindings_List
+	wipe(list) -- Reusing the table to maintain the scroll position key
+	list[0], list[1], list[false] = checked, false, L"Defaults for all rings"
 	local ct = T.OPC_RingScopePrefixes
 	for key, name, scope in OneRingLib:IterateRings(true) do
 		local color = ct and ct[scope] or "|cffacd7e6"
-		info.text, info.arg2, info.checked = (L"Ring: %s"):format(color .. (name or key) .. "|r"), key, checked and key == self.scope
-		UIDropDownMenu_AddButton(info, level)
+		list[#list+1], list[key] = key, (L"Ring: %s"):format(color .. (name or key) .. "|r")
 	end
+	config.ui.scrollingDropdown:Display(level, list, subBindings_ScopeFormat, subBindings_ScopeClick)
 end
 function subBindings:default()
 	OneRingLib:SetOption("SliceBindingString", nil)

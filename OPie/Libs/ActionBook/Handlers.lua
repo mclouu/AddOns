@@ -1,7 +1,7 @@
 local _, T = ...
 if T.SkipLocalActionBook then return end
 local AB = assert(T.ActionBook:compatible(2,21), "A compatible version of ActionBook is required")
-local RW = assert(AB:compatible("Rewire",1,13), "A compatible version of Rewire is required")
+local RW = assert(AB:compatible("Rewire",1,14), "A compatible version of Rewire is required")
 local KR = assert(AB:compatible("Kindred",1,14), "A compatible version of Kindred is required")
 local L, EV = AB:locale(), assert(T.Evie)
 local spellFeedback, itemHint, toyHint, mountHint, mountMap
@@ -232,7 +232,7 @@ do -- item: items ID/inventory slot
 		else
 			name, link, _, _, _, _, _, _, _, icon = GetItemInfo(ident)
 		end
-		local iid, cdStart, cdLen, enabled, cdLeft = (link and tonumber(link:match("item:(%d+)"))) or itemIdMap[ident]
+		local iid, cdStart, cdLen, enabled, cdLeft = (link and tonumber(link:match("item:([x%x]+)"))) or itemIdMap[ident]
 		if iid and PlayerHasToy(iid) and GetItemCount(iid) == 0 then
 			return toyHint(iid, nil, target)
 		elseif iid then
@@ -310,10 +310,27 @@ do -- macrotext
 	local function checkReturn(pri, ...)
 		if select("#", ...) > 0 then return pri, ... end
 	end
-	RW:SetCommandHint("/use", 100, function(_, _, clause, target)
+	local function canUseViaSCUI(clause)
+		if (tonumber(clause) or 0) > INVSLOT_LAST_EQUIPPED then
+			-- SCUI will pass to UseInventoryItem
+			return false
+		end
+		local iid = tonumber(clause:match("^%s*item:([x%x]+)"))
+		if iid and C_ToyBox.GetToyInfo(iid) then
+			-- Toys aren't matched by item:id syntax in UIBN
+			return false
+		end
+		return true
+	end
+	RW:SetCommandHint("/use", 100, function(_, _, clause, target, _, _, msg)
 		if not clause or clause == "" then return end
-		local link, bag, slot = SecureCmdItemParse(clause)
+		local isItemReturn, link, bag, slot = false, SecureCmdItemParse(clause)
 		if (bag and slot) or (link and GetItemInfoInstant(link)) then
+			if msg == "castrandom-fallback" or canUseViaSCUI(clause) then
+				isItemReturn = true
+			end
+		end
+		if isItemReturn then
 			return checkReturn(90, itemHint(link, nil, target, nil, bag, slot))
 		end
 		local sid = clause:match("^spell:(%d+)$")
@@ -321,7 +338,7 @@ do -- macrotext
 			return checkReturn(true, spellFeedback(sid or clause, target))
 		end
 	end)
-	RW:SetCommandHint("/cast", 100, function(_, _, clause, target)
+	RW:SetCommandHint("/cast", 100, function(_, _, clause, target, _, _, msg)
 		if not clause or clause == "" then return end
 		local sex = DoesSpellExist(clause) and not tonumber(clause, 10)
 		local sid = not sex and clause:match("^spell:(%d+)$")
@@ -329,7 +346,8 @@ do -- macrotext
 			return checkReturn(true, spellFeedback(sid or clause, target))
 		else
 			local link, bag, slot = SecureCmdItemParse(clause)
-			if (bag and slot) or (link and GetItemInfoInstant(link)) then
+			if ((bag and slot) or (link and GetItemInfoInstant(link))) and
+			   (msg == "castrandom-fallback" or canUseViaSCUI(clause)) then
 				return checkReturn(90, itemHint(link, nil, target, nil, bag, slot))
 			end
 		end
@@ -359,7 +377,7 @@ do -- macrotext
 			end
 			v = t[v]
 			v, v[0] = v[1 + v[0] % #v], (v[0] * 37 + 13) % 2^32
-			return RW:RunAttribute("RunSlashCmd", "/cast", v, target)
+			return RW:RunAttribute("RunSlashCmd", "/cast", v, target, "opt-into-cr-fallback")
 		]])
 		RW:RegisterCommand(SLASH_USERANDOM1, true, true, f)
 		local sc, ic = GetManagedEnvironment(f).t, {}
@@ -377,7 +395,11 @@ do -- macrotext
 				ic[clause] = t
 			end
 			if t then
-				return RW:GetCommandAction("/use", t[1 + t[0] % #t], target)
+				local nextArg = t[1 + t[0] % #t]
+				if tonumber(nextArg) and  GetItemInfo(nextArg) then
+					nextArg = "item:" .. nextArg
+				end
+				return RW:GetCommandAction("/use", nextArg, target, nil, "castrandom-fallback")
 			end
 		end)
 	end
@@ -524,17 +546,6 @@ do -- equipmentset: equipment sets by name
 	local function resolveIcon(fid)
 		return type(fid) == "number" and fid or ("Interface/Icons/" .. (fid or "INV_Misc_QuestionMark"))
 	end
-	local function SetBadEquipmentSet(tip, name)
-		tip:SetEquipmentSet(name)
-		if name:match("^%s?(.-)%s?$") ~= name then
-			tip:AddLine(ERR_NAME_INVALID_SPACE, 1, 0, 0, true)
-		elseif name:match("[%[%];]") then
-			tip:AddLine(ERR_NAME_INVALID, 1, 0, 0, true)
-		end
-	end
-	local function isBadName(name)
-		return name:match("^%s?([^%[%];]-)%s?$") ~= name
-	end
 	local function equipmentsetHint(name)
 		local _, icon, _, active, total, equipped, available = C_EquipmentSet.GetEquipmentSetInfo(name and C_EquipmentSet.GetEquipmentSetID(name) or -1)
 		if icon then
@@ -545,20 +556,16 @@ do -- equipmentset: equipment sets by name
 		AB:NotifyObservers("equipmentset")
 	end
 	local function createEquipSet(name)
-		local sid = type(name) == "string" and not isBadName(name) and C_EquipmentSet.GetEquipmentSetID(name)
+		local sid = type(name) == "string" and C_EquipmentSet.GetEquipmentSetID(name)
 		if not sid then return end
 		if not setMap[name] then
-			setMap[name] = AB:CreateActionSlot(equipmentsetHint, name, "attribute", "type","macro", "macrotext", (SLASH_EQUIP_SET1 or "/equipset") .. " " .. name)
+			setMap[name] = AB:CreateActionSlot(equipmentsetHint, name, "attribute", "type","equipmentset", "equipmentset",name)
 		end
 		return setMap[name]
 	end
 	local function describeEquipSet(name)
 		local _, ico = C_EquipmentSet.GetEquipmentSetInfo(name and C_EquipmentSet.GetEquipmentSetID(name) or -1)
-		local fname, setTip = name, GameTooltip.SetEquipmentSet
-		if type(name) == "string" and isBadName(name) then
-			fname, setTip = "|cffff0000" .. name, SetBadEquipmentSet
-		end
-		return L"Equipment Set", fname, ico and resolveIcon(ico) or "Interface/Icons/INV_Misc_QuestionMark", nil, setTip, name
+		return L"Equipment Set", name, ico and resolveIcon(ico) or "Interface/Icons/INV_Misc_QuestionMark", nil, GameTooltip.SetEquipmentSet, name
 	end
 	AB:RegisterActionType("equipmentset", createEquipSet, describeEquipSet)
 	RW:SetCommandHint(SLASH_EQUIP_SET1, 80, function(_, _, clause)
@@ -828,7 +835,7 @@ do -- toybox: item ID
 	RW:SetCommandHint(SLASH_USE_TOY1, 60, function(_, _, clause, target)
 		if clause and clause ~= "" then
 			local _, link = GetItemInfo(clause)
-			local iid = link and tonumber(link:match("item:(%d+)"))
+			local iid = link and tonumber(link:match("item:([x%x]+)"))
 			if iid then
 				return true, toyHint(iid, nil, target)
 			end

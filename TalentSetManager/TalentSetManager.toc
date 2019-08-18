@@ -1,4 +1,4 @@
-## Interface: 80000
+## Interface: 80100
 ## Title: Talent Set Manager
 ## Author: Vildiesel EU - Well of Eternity
 ## Notes: Allows you to store and learn entire sets of talents

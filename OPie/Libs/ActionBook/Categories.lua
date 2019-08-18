@@ -72,7 +72,7 @@ AB:AugmentCategory(L"Items", function(_, add)
 		end
 		for slot=INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
 			local iid = GetInventoryItemID("player", slot)
-			if iid and not mark[iid] and not t(iid) then
+			if iid and not mark[iid] and t(iid) then
 				add("item", iid)
 				mark[iid] = 1
 			end

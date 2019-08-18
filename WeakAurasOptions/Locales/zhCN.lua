@@ -11,9 +11,21 @@ local L = WeakAuras.L
 	L["% of Progress"] = "% 进度"
 	L["%i auras selected"] = "%i 个光环被选中"
 	L["%i Matches"] = "%i 符合"
+	--[[Translation missing --]]
+	L["%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"] = "%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"
+	--[[Translation missing --]]
+	L["%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"] = "%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"
 	L["%s Color"] = "%s 颜色"
 	L["%s total auras"] = "%s 所有的光环"
+	--[[Translation missing --]]
+	L["%s, border"] = "%s, border"
+	--[[Translation missing --]]
+	L["%s, offset: %0.2f;%0.2f"] = "%s, offset: %0.2f;%0.2f"
+	--[[Translation missing --]]
+	L["|c%02x%02x%02x%02xColor|r"] = "|c%02x%02x%02x%02xColor|r"
 	L["|cFFFF0000Duplicate Keys Found!|nPlease change the keys of the following options!|r"] = "|cFFFF0000发现重复的键值！|n请修改下列选项的键值！|r"
+	--[[Translation missing --]]
+	L["|cFFffcc00Glow:|r"] = "|cFFffcc00Glow:|r"
 	L["1 Match"] = "1符合"
 	L["1. Text"] = "文本"
 	L["1. Text Settings"] = "字体设置"
@@ -61,6 +73,7 @@ local L = WeakAuras.L
 	L["Animations"] = "动画"
 	L["Any of"] = "任意的"
 	L["Apply Template"] = "应用模板"
+	L["Arc Length"] = "圆弧长度"
 	L["Arcane Orb"] = "奥术宝珠"
 	L["At a position a bit left of Left HUD position."] = "在左侧 HUD 偏左一点的位置"
 	L["At a position a bit left of Right HUD position"] = "在右侧 HUD 偏左一点的位置"
@@ -123,6 +136,8 @@ local L = WeakAuras.L
 	L["Collapse all non-loaded displays"] = "折叠所有未载入的图示"
 	L["Color"] = "颜色"
 	L["color"] = "颜色"
+	L["Column Height"] = "行高度"
+	L["Column Space"] = "行空间"
 	L["Combinations"] = "组合"
 	L["Combine Matches Per Unit"] = "组合每个单位满足条件的"
 	L["Compare against the number of units affected."] = "比较受影响的单位数量"
@@ -152,7 +167,11 @@ local L = WeakAuras.L
 	L["Custom Code"] = "自定义代码"
 	L["Custom Configuration"] = "自定义设置"
 	L["Custom Function"] = "自定义功能"
+	--[[Translation missing --]]
+	L["Custom Grow"] = "Custom Grow"
 	L["Custom Options"] = "自定义选项"
+	--[[Translation missing --]]
+	L["Custom Sort"] = "Custom Sort"
 	L["Custom Trigger"] = "自定义生效触发器"
 	L["Custom trigger event tooltip"] = [=[选择用于检查自订触发的事件。
 如果有多个事件,可以用逗号或空白分隔。
@@ -169,6 +188,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Custom Variables"] = "自定义变量"
 	L["Debuff Type"] = "减益类型"
 	L["Default"] = "默认"
+	--[[Translation missing --]]
+	L["Default Color"] = "Default Color"
 	L["Delete"] = "删除"
 	L["Delete all"] = "删除所有"
 	L["Delete children and group"] = "删除子节点和组"
@@ -248,6 +269,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Foreground Texture"] = "前景材质"
 	L["Frame"] = "框架"
 	L["Frame Strata"] = "框架层级"
+	--[[Translation missing --]]
+	L["Frequency"] = "Frequency"
 	L["From Template"] = "从模板"
 	L["From version "] = "自版本"
 	L["General Text Settings"] = "通用字体设置"
@@ -257,6 +280,7 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Glow Settings"] = "发光设置"
 	L["Glow Type"] = "发光类型"
 	L["Green Rune"] = "绿色符文"
+	L["Grid direction"] = "表格方向"
 	L["Group"] = "组"
 	L["Group (verb)"] = "群组（动态）"
 	L["Group aura count description"] = [=[所输入的队伍或团队成员的数量必须给定一个或多个光环作为显示触发的条件。
@@ -278,6 +302,7 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Hawk"] = "鹰"
 	L["Height"] = "高度"
 	L["Hide"] = "隐藏"
+	L["Hide Cooldown Text"] = "隐藏冷却文本"
 	L["Hide on"] = "隐藏于"
 	L["Hide this group's children"] = "隐藏此组的子节点"
 	L["Hide When Not In Group"] = "不在队伍时隐藏"
@@ -318,9 +343,11 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Left 2 HUD position"] = "左侧第二 HUD 位置"
 	L["Left HUD position"] = "左侧 HUD 位置"
 	L["Left Text"] = "左边文字"
-	--[[Translation missing --]]
-	L["Legacy Aura Trigger"] = "Legacy Aura Trigger"
+	L["Legacy Aura Trigger"] = "传统光环触发器"
 	L["Length"] = "长度"
+	L["Limit"] = "限制"
+	--[[Translation missing --]]
+	L["Lines & Particles"] = "Lines & Particles"
 	L["Load"] = "载入"
 	L["Loaded"] = "已载入"
 	L["Loop"] = "循环"
@@ -439,6 +466,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Rotate Text"] = "旋转文字"
 	L["Rotation"] = "旋转"
 	L["Rotation Mode"] = "旋转模式"
+	L["Row Space"] = "列空间"
+	L["Row Width"] = "列宽度"
 	L["Same"] = "相同"
 	L["Scale"] = "缩放"
 	L["Search"] = "搜索"
@@ -453,7 +482,6 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Settings"] = "设置"
 	L["Shift-click to create chat link"] = "按住 Shift 点击来生成聊天链接"
 	L["Show all matches (Auto-clone)"] = "列出所有符合的(自动复制)"
-	L["Show Cooldown Text"] = "显示 CD 文本"
 	L["Show Glow Effect"] = "显示发光效果"
 	L["Show If Unit Does Not Exist"] = "如果单位不存在时显示"
 	L["Show If Unit Is Invalid"] = "当单位无效时显示"
@@ -523,9 +551,10 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["The duration of the animation in seconds. The finish animation does not start playing until after the display would normally be hidden."] = "动画时长秒时。直到显示内容被正常隐藏之后结束动画才会播放。"
 	L["The type of trigger"] = "触发器类型"
 	L["Then "] = "然后"
-	L["This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."] = "这将替换 %tooltip, %tooltip1, %tooltip2, %tooltip3 的文本。"
 	--[[Translation missing --]]
-	L["This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"] = "This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"
+	L["Thickness"] = "Thickness"
+	L["This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."] = "这将替换 %tooltip, %tooltip1, %tooltip2, %tooltip3 的文本。"
+	L["This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"] = "这个光环使用了传统光环触发器，将它们转换到新版来获得更好的体验和更多的功能。"
 	L["This display is currently loaded"] = "此显示内容已加载"
 	L["This display is not currently loaded"] = "此显示内容未加载"
 	L["This region of type \"%s\" is not supported."] = "该类型区域“%s”不受支持。"
@@ -563,6 +592,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Update Custom Text On..."] = "更新自定义文字于"
 	L["Update in Group"] = "更新群组内所有项"
 	L["Update this Aura"] = "更新此光环"
+	--[[Translation missing --]]
+	L["Use Display Info Id"] = "Use Display Info Id"
 	L["Use Full Scan (High CPU)"] = "使用完整扫描(高CPU)"
 	L["Use nth value from tooltip:"] = "使用来自鼠标提示的值的顺序："
 	L["Use SetTransform"] = "使用 SetTransform 方法"
@@ -582,11 +613,15 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["X Offset"] = "X 偏移"
 	L["X Rotation"] = "X旋转"
 	L["X Scale"] = "宽度比例"
+	--[[Translation missing --]]
+	L["X-Offset"] = "X-Offset"
 	L["Y Offset"] = "Y 偏移"
 	L["Y Rotation"] = "Y旋转"
 	L["Y Scale"] = "长度比例"
 	L["Yellow Rune"] = "黄色符文"
 	L["Yes"] = "是"
+	--[[Translation missing --]]
+	L["Y-Offset"] = "Y-Offset"
 	L["You are about to delete %d aura(s). |cFFFF0000This cannot be undone!|r Would you like to continue?"] = "正在删除 %d 个光环，|cFFFF0000此操作无法被撤销！|r真的要删除吗?"
 	L["Z Offset"] = "深度 偏移"
 	L["Z Rotation"] = "Z旋转"

@@ -168,7 +168,7 @@ local options = {
 											type = "input",
 											name = L["Texture"],
 											order = 10,
-											width = "double",
+											width = 2,
 											get = function()
 												return mod.db.backdrop.settings.bgFile
 											end,
@@ -270,7 +270,7 @@ local options = {
 											max = 20,
 											step = 1,
 											bigStep = 1,
-											width = "double",
+											width = 2,
 											get = function()
 												return mod.db.backdrop.settings.insets.left
 											end,
@@ -365,7 +365,7 @@ local options = {
 											max = 48,
 											step = 1,
 											bigStep = 1,
-											width = "double",
+											width = 2,
 											get = function()
 												return mod.db.backdrop.settings.edgeSize
 											end,
@@ -531,10 +531,13 @@ local borderOptions = {
 		width = "full",
 		get = function(info)
 			local tex = getTextureAndDB(info)
-			return tex.settings.texture
+			return tostring(tex.settings.texture) -- Have to tostring FileIDs for the editbox to display it
 		end,
 		set = function(info, v)
 			local tex = getTextureAndDB(info)
+			local num = tonumber(v)
+			-- If true, assume it's a FileID and save it as a number.
+			if num then v = num end
 			tex.settings.texture = v
 			tex:SetTexture(v)
 		end

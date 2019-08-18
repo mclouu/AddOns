@@ -468,6 +468,10 @@ if playerClass == "HUNTER" then -- pet:stable id; havepet:stable id
 		RegisterStateConditional("pet", "pet", "[nopet]; " .. (o and o .. "; 0" or " 0"), false)
 		KR:SetStateConditionalValue("havepet", hpo and tostring(hpo) or "")
 		noPendingSync = true
+		if hpo == nil and (e == "PLAYER_LOGIN" or e == nil) then
+			-- TODO (8.1.5) the missing PET_STABLE_UPDATE might reappear in the future.
+			C_Timer.After(0, syncPet)
+		end
 		return e == "PLAYER_REGEN_ENABLED" and "remove" or nil
 	end
 	KR:SetStateConditionalValue("havepet", false)

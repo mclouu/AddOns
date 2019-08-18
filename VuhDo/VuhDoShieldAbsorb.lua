@@ -70,6 +70,10 @@ local VUHDO_ABSORB_DEBUFFS = {
 	-- Patch 8.0 - Battle for Azeroth - The Underrot
 	[278961] = function(aUnit) return select(16, VUHDO_unitDebuff(aUnit, VUHDO_SPELL_ID.DEBUFF_DECAYING_MIND)), 30; end, -- Diseased Lasher Decaying Mind
 
+	-- Patch 8.1.5 - Battle for Azeroth - Crucible of Storms
+	[284722] = function(aUnit) return select(16, VUHDO_unitDebuff(aUnit, VUHDO_SPELL_ID.DEBUFF_UMBRAL_SHELL)), 10 * 60; end, -- Uu'nat Umbral Shell
+	[286771] = function(aUnit) return select(16, VUHDO_unitDebuff(aUnit, VUHDO_SPELL_ID.DEBUFF_UMBRAL_SHELL)), 10 * 60; end, -- Uu'nat Umbral Shell
+
 	--[79105] = function(aUnit) return 280000, 60 * 60; end, -- @TESTING PW:F
 };
 
@@ -155,12 +159,11 @@ local function VUHDO_updateShieldValue(aUnit, aShieldName, anAmount, aDuration)
 		return;
 	end
 
-	if aDuration and VUHDO_SHIELD_LEFT[aUnit][aShieldName] <= anAmount then
+	if aDuration then
 		VUHDO_SHIELD_EXPIRY[aUnit][aShieldName] = GetTime() + aDuration;
+		VUHDO_SHIELD_SIZE[aUnit][aShieldName] = anAmount;
 		--VUHDO_xMsg("Shield overwritten");
-	end
-
-	if VUHDO_SHIELD_SIZE[aUnit][aShieldName] < anAmount then
+	elseif VUHDO_SHIELD_SIZE[aUnit][aShieldName] < anAmount then
 		VUHDO_SHIELD_SIZE[aUnit][aShieldName] = anAmount;
 	end
 
@@ -311,7 +314,7 @@ function VUHDO_parseCombatLogShieldAbsorb(aMessage, aSrcGuid, aDstGuid, aShieldN
 			VUHDO_removeShield(tUnit, aShieldName);
 			VUHDO_DEBUFF_SHIELDS[tUnit] = nil;
 		end
-	elseif "SPELL_HEAL" == aMessage or "SPELL_PERIODIC_HEAL" == aMessage
+	elseif ("SPELL_HEAL" == aMessage or "SPELL_PERIODIC_HEAL" == aMessage)
 		and VUHDO_DEBUFF_SHIELDS[tUnit]
 		and (tonumber(anAbsorbAmount) or 0) > 0 then
 		tShieldName = VUHDO_DEBUFF_SHIELDS[tUnit];

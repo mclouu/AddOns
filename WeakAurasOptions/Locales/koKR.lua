@@ -13,9 +13,21 @@ local L = WeakAuras.L
 	L["% of Progress"] = "진행 상태의 %"
 	L["%i auras selected"] = "%i 효과 선택됨"
 	L["%i Matches"] = "%i개 일치"
+	--[[Translation missing --]]
+	L["%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"] = "%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"
+	--[[Translation missing --]]
+	L["%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"] = "%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"
 	L["%s Color"] = "%s 색상"
 	L["%s total auras"] = "총 %s개 효과"
+	--[[Translation missing --]]
+	L["%s, border"] = "%s, border"
+	--[[Translation missing --]]
+	L["%s, offset: %0.2f;%0.2f"] = "%s, offset: %0.2f;%0.2f"
+	--[[Translation missing --]]
+	L["|c%02x%02x%02x%02xColor|r"] = "|c%02x%02x%02x%02xColor|r"
 	L["|cFFFF0000Duplicate Keys Found!|nPlease change the keys of the following options!|r"] = "|cFFFF0000 중복 키를 찾았습니다!|n 다음 옵션의 키를 변경하십시오!|r"
+	--[[Translation missing --]]
+	L["|cFFffcc00Glow:|r"] = "|cFFffcc00Glow:|r"
 	L["1 Match"] = "1개 일치"
 	L["1. Text"] = "1. 문자"
 	L["1. Text Settings"] = "1. 문자 설정"
@@ -68,6 +80,8 @@ local L = WeakAuras.L
 	L["Animations"] = "애니메이션"
 	L["Any of"] = "다음 중 하나"
 	L["Apply Template"] = "견본 적용"
+	--[[Translation missing --]]
+	L["Arc Length"] = "Arc Length"
 	L["Arcane Orb"] = "비전 구슬"
 	L["At a position a bit left of Left HUD position."] = "좌측 HUD 위치보다 약간 왼쪽에 위치시킵니다."
 	L["At a position a bit left of Right HUD position"] = "우측 HUD 위치보다 약간 왼쪽에 위치시킵니다"
@@ -135,6 +149,10 @@ local L = WeakAuras.L
 	L["Collapse all non-loaded displays"] = "불러오지 않은 모든 디스플레이 접기"
 	L["Color"] = "색상"
 	L["color"] = "색상"
+	--[[Translation missing --]]
+	L["Column Height"] = "Column Height"
+	--[[Translation missing --]]
+	L["Column Space"] = "Column Space"
 	L["Combinations"] = "조합"
 	--[[Translation missing --]]
 	L["Combine Matches Per Unit"] = "Combine Matches Per Unit"
@@ -151,9 +169,9 @@ local L = WeakAuras.L
 	L["Convert to New Aura Trigger"] = "신규 방식 효과 활성 조건으로 변환"
 	L["Convert to..."] = "변환하기..."
 	L["Cooldown"] = "재사용 대기시간"
-	L["Cooldown Edge"] = "재사용 대기시간 모서리"
+	L["Cooldown Edge"] = "재사용 대기시간 경계"
 	L["Cooldown Settings"] = "재사용 대기시간 설정"
-	L["Cooldown Swipe"] = "재사용 대기시간 Swipe"
+	L["Cooldown Swipe"] = "재사용 대기시간 바늘"
 	L["Copy settings..."] = "설정 복사..."
 	L["Copy to all auras"] = "모든 효과에 복사"
 	L["Copy URL"] = "URL 복사"
@@ -168,7 +186,11 @@ local L = WeakAuras.L
 	L["Custom Code"] = "사용자 정의 코드"
 	L["Custom Configuration"] = "사용자 설정 구성"
 	L["Custom Function"] = "사용자 설정 함수"
+	--[[Translation missing --]]
+	L["Custom Grow"] = "Custom Grow"
 	L["Custom Options"] = "사용자 설정 옵션"
+	--[[Translation missing --]]
+	L["Custom Sort"] = "Custom Sort"
 	L["Custom Trigger"] = "사용자 설정 활성 조건"
 	L["Custom trigger event tooltip"] = [=[
 사용자 설정 활성 조건을 확인할 이벤트를 선택하세요.
@@ -187,6 +209,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Custom Variables"] = "사용자 설정 변수"
 	L["Debuff Type"] = "약화 효과 유형"
 	L["Default"] = "기본"
+	--[[Translation missing --]]
+	L["Default Color"] = "Default Color"
 	L["Delete"] = "삭제"
 	L["Delete all"] = "모두 삭제"
 	L["Delete children and group"] = "자식과 그룹 삭제"
@@ -278,6 +302,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Foreground Texture"] = "전경 텍스쳐"
 	L["Frame"] = "프레임"
 	L["Frame Strata"] = "프레임 우선순위"
+	--[[Translation missing --]]
+	L["Frequency"] = "Frequency"
 	L["From Template"] = "견본으로부터"
 	--[[Translation missing --]]
 	L["From version "] = "From version "
@@ -288,6 +314,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Glow Settings"] = "반짝임 설정"
 	L["Glow Type"] = "반짝임 유형"
 	L["Green Rune"] = "녹색 룬"
+	--[[Translation missing --]]
+	L["Grid direction"] = "Grid direction"
 	L["Group"] = "그룹"
 	L["Group (verb)"] = "그룹시키기"
 	L["Group aura count description"] = [=[디스플레이 조건을 충족하기 위해 주어진 효과에 영향을 받는 한명 이상의 %s원의 숫자.
@@ -311,6 +339,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Hawk"] = "매"
 	L["Height"] = "높이"
 	L["Hide"] = "숨기기"
+	--[[Translation missing --]]
+	L["Hide Cooldown Text"] = "Hide Cooldown Text"
 	L["Hide on"] = "숨기기"
 	L["Hide this group's children"] = "이 그룹의 자식 숨기기"
 	L["Hide When Not In Group"] = "파티중이 아닐 때 숨기기"
@@ -364,6 +394,10 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Legacy Aura Trigger"] = "Legacy Aura Trigger"
 	--[[Translation missing --]]
 	L["Length"] = "Length"
+	--[[Translation missing --]]
+	L["Limit"] = "Limit"
+	--[[Translation missing --]]
+	L["Lines & Particles"] = "Lines & Particles"
 	L["Load"] = "불러오기"
 	L["Loaded"] = "불러옴"
 	L["Loop"] = "반복"
@@ -382,8 +416,7 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Min"] = "Min"
 	L["Mirror"] = "뒤집기"
 	L["Model"] = "모델"
-	--[[Translation missing --]]
-	L["Model Settings"] = "Model Settings"
+	L["Model Settings"] = "모델 설정"
 	L["Move Down"] = "아래로 이동"
 	L["Move this display down in its group's order"] = "이 디스플레이를 그룹 내 순서에서 아래로 이동"
 	L["Move this display up in its group's order"] = "이 디스플레이를 그룹 내 순서에서 위로 이동"
@@ -502,6 +535,10 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Rotate Text"] = "문자 회전"
 	L["Rotation"] = "회전"
 	L["Rotation Mode"] = "회전 모드"
+	--[[Translation missing --]]
+	L["Row Space"] = "Row Space"
+	--[[Translation missing --]]
+	L["Row Width"] = "Row Width"
 	L["Same"] = "동일한"
 	L["Scale"] = "크기 비율"
 	L["Search"] = "검색"
@@ -520,7 +557,6 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Settings"] = "설정"
 	L["Shift-click to create chat link"] = "Shift+클릭 - 대화 링크 만들기"
 	L["Show all matches (Auto-clone)"] = "모든 일치 표시 (자동 복제)"
-	L["Show Cooldown Text"] = "재사용 대기시간 문자 표시"
 	L["Show Glow Effect"] = "반짝임 효과 표시"
 	--[[Translation missing --]]
 	L["Show If Unit Does Not Exist"] = "Show If Unit Does Not Exist"
@@ -604,6 +640,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	--[[Translation missing --]]
 	L["Then "] = "Then "
 	--[[Translation missing --]]
+	L["Thickness"] = "Thickness"
+	--[[Translation missing --]]
 	L["This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."] = "This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."
 	--[[Translation missing --]]
 	L["This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"] = "This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"
@@ -647,6 +685,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Update in Group"] = "Update in Group"
 	--[[Translation missing --]]
 	L["Update this Aura"] = "Update this Aura"
+	--[[Translation missing --]]
+	L["Use Display Info Id"] = "Use Display Info Id"
 	L["Use Full Scan (High CPU)"] = "전체 스캔 사용 (높은 CPU 사용률)"
 	--[[Translation missing --]]
 	L["Use nth value from tooltip:"] = "Use nth value from tooltip:"
@@ -673,11 +713,15 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["X Offset"] = "X 좌표"
 	L["X Rotation"] = "X 회전"
 	L["X Scale"] = "가로 크기"
+	--[[Translation missing --]]
+	L["X-Offset"] = "X-Offset"
 	L["Y Offset"] = "Y 좌표"
 	L["Y Rotation"] = "Y 회전"
 	L["Y Scale"] = "세로 크기"
 	L["Yellow Rune"] = "노란색 룬"
 	L["Yes"] = "네"
+	--[[Translation missing --]]
+	L["Y-Offset"] = "Y-Offset"
 	L["You are about to delete %d aura(s). |cFFFF0000This cannot be undone!|r Would you like to continue?"] = "효과 %d개를 삭제하려고 합니다. |cFFFF0000이는 취소할 수 없습니다!|r 계속할까요?"
 	L["Z Offset"] = "Z 좌표"
 	L["Z Rotation"] = "Z 회전"

@@ -1,8 +1,8 @@
 local _G = _G
 local unpack = _G.unpack
 
-if not AddOnSkins then return end
-local AS = unpack(AddOnSkins)
+if not _G.AddOnSkins then return end
+local AS = unpack(_G.AddOnSkins)
 if not AS:CheckAddOn("REFlex") then return end
 
 function AS:REFlex()
@@ -22,7 +22,7 @@ function AS:REFlex()
     AS:SkinTab(_G["REFlexFrameTab"..i])
   end
   _G.REFlexFrame_Title:SetPoint("TOP", 0, -10)
-  _G.REFlexFrame_HKBar:SetPoint("BOTTOM", 0, 19)
+  _G.REFlexFrame_HKBar:SetPoint("BOTTOM", 0, 18)
 end
 
 AS:RegisterSkin("REFlex", AS.REFlex)

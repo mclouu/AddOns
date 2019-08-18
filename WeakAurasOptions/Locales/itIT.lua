@@ -11,10 +11,22 @@ local L = WeakAuras.L
 	L["% of Progress"] = "% di Progresso"
 	L["%i auras selected"] = "%i aure selezionate"
 	L["%i Matches"] = "%i Corrispondenze"
+	--[[Translation missing --]]
+	L["%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"] = "%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"
+	--[[Translation missing --]]
+	L["%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"] = "%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"
 	L["%s Color"] = "%s Colore"
 	L["%s total auras"] = "%s aure totali"
 	--[[Translation missing --]]
+	L["%s, border"] = "%s, border"
+	--[[Translation missing --]]
+	L["%s, offset: %0.2f;%0.2f"] = "%s, offset: %0.2f;%0.2f"
+	--[[Translation missing --]]
+	L["|c%02x%02x%02x%02xColor|r"] = "|c%02x%02x%02x%02xColor|r"
+	--[[Translation missing --]]
 	L["|cFFFF0000Duplicate Keys Found!|nPlease change the keys of the following options!|r"] = "|cFFFF0000Duplicate Keys Found!|nPlease change the keys of the following options!|r"
+	--[[Translation missing --]]
+	L["|cFFffcc00Glow:|r"] = "|cFFffcc00Glow:|r"
 	L["1 Match"] = "1 Confronta"
 	L["1. Text"] = "1. Testo"
 	L["1. Text Settings"] = "1. Impostazioni Testo"
@@ -60,6 +72,8 @@ local L = WeakAuras.L
 	L["Animations"] = "Animazioni"
 	L["Any of"] = "Qualsiasi tra"
 	L["Apply Template"] = "Applica Template"
+	--[[Translation missing --]]
+	L["Arc Length"] = "Arc Length"
 	L["Arcane Orb"] = "Globo Arcano"
 	L["At a position a bit left of Left HUD position."] = "In una posizione un po' a sinistra della posizione dell'HUD sinistro."
 	L["At a position a bit left of Right HUD position"] = "In una posizione un po' a sinistra della posizione dell'HUD destro."
@@ -134,6 +148,10 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["color"] = "color"
 	--[[Translation missing --]]
+	L["Column Height"] = "Column Height"
+	--[[Translation missing --]]
+	L["Column Space"] = "Column Space"
+	--[[Translation missing --]]
 	L["Combinations"] = "Combinations"
 	--[[Translation missing --]]
 	L["Combine Matches Per Unit"] = "Combine Matches Per Unit"
@@ -192,7 +210,11 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["Custom Function"] = "Custom Function"
 	--[[Translation missing --]]
+	L["Custom Grow"] = "Custom Grow"
+	--[[Translation missing --]]
 	L["Custom Options"] = "Custom Options"
+	--[[Translation missing --]]
+	L["Custom Sort"] = "Custom Sort"
 	--[[Translation missing --]]
 	L["Custom Trigger"] = "Custom Trigger"
 	--[[Translation missing --]]
@@ -207,6 +229,8 @@ local L = WeakAuras.L
 	L["Debuff Type"] = "Debuff Type"
 	--[[Translation missing --]]
 	L["Default"] = "Default"
+	--[[Translation missing --]]
+	L["Default Color"] = "Default Color"
 	--[[Translation missing --]]
 	L["Delete"] = "Delete"
 	--[[Translation missing --]]
@@ -352,6 +376,8 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["Frame Strata"] = "Frame Strata"
 	--[[Translation missing --]]
+	L["Frequency"] = "Frequency"
+	--[[Translation missing --]]
 	L["From Template"] = "From Template"
 	--[[Translation missing --]]
 	L["From version "] = "From version "
@@ -369,6 +395,8 @@ local L = WeakAuras.L
 	L["Glow Type"] = "Glow Type"
 	--[[Translation missing --]]
 	L["Green Rune"] = "Green Rune"
+	--[[Translation missing --]]
+	L["Grid direction"] = "Grid direction"
 	--[[Translation missing --]]
 	L["Group"] = "Group"
 	--[[Translation missing --]]
@@ -393,6 +421,8 @@ local L = WeakAuras.L
 	L["Height"] = "Height"
 	--[[Translation missing --]]
 	L["Hide"] = "Hide"
+	--[[Translation missing --]]
+	L["Hide Cooldown Text"] = "Hide Cooldown Text"
 	--[[Translation missing --]]
 	L["Hide on"] = "Hide on"
 	--[[Translation missing --]]
@@ -477,6 +507,10 @@ local L = WeakAuras.L
 	L["Legacy Aura Trigger"] = "Legacy Aura Trigger"
 	--[[Translation missing --]]
 	L["Length"] = "Length"
+	--[[Translation missing --]]
+	L["Limit"] = "Limit"
+	--[[Translation missing --]]
+	L["Lines & Particles"] = "Lines & Particles"
 	--[[Translation missing --]]
 	L["Load"] = "Load"
 	--[[Translation missing --]]
@@ -708,6 +742,10 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["Rotation Mode"] = "Rotation Mode"
 	--[[Translation missing --]]
+	L["Row Space"] = "Row Space"
+	--[[Translation missing --]]
+	L["Row Width"] = "Row Width"
+	--[[Translation missing --]]
 	L["Same"] = "Same"
 	--[[Translation missing --]]
 	L["Scale"] = "Scale"
@@ -735,8 +773,6 @@ local L = WeakAuras.L
 	L["Shift-click to create chat link"] = "Shift-click to create chat link"
 	--[[Translation missing --]]
 	L["Show all matches (Auto-clone)"] = "Show all matches (Auto-clone)"
-	--[[Translation missing --]]
-	L["Show Cooldown Text"] = "Show Cooldown Text"
 	--[[Translation missing --]]
 	L["Show Glow Effect"] = "Show Glow Effect"
 	--[[Translation missing --]]
@@ -876,6 +912,8 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["Then "] = "Then "
 	--[[Translation missing --]]
+	L["Thickness"] = "Thickness"
+	--[[Translation missing --]]
 	L["This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."] = "This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."
 	--[[Translation missing --]]
 	L["This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"] = "This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"
@@ -954,6 +992,8 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["Update this Aura"] = "Update this Aura"
 	--[[Translation missing --]]
+	L["Use Display Info Id"] = "Use Display Info Id"
+	--[[Translation missing --]]
 	L["Use Full Scan (High CPU)"] = "Use Full Scan (High CPU)"
 	--[[Translation missing --]]
 	L["Use nth value from tooltip:"] = "Use nth value from tooltip:"
@@ -992,6 +1032,8 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["X Scale"] = "X Scale"
 	--[[Translation missing --]]
+	L["X-Offset"] = "X-Offset"
+	--[[Translation missing --]]
 	L["Y Offset"] = "Y Offset"
 	--[[Translation missing --]]
 	L["Y Rotation"] = "Y Rotation"
@@ -1001,6 +1043,8 @@ local L = WeakAuras.L
 	L["Yellow Rune"] = "Yellow Rune"
 	--[[Translation missing --]]
 	L["Yes"] = "Yes"
+	--[[Translation missing --]]
+	L["Y-Offset"] = "Y-Offset"
 	--[[Translation missing --]]
 	L["You are about to delete %d aura(s). |cFFFF0000This cannot be undone!|r Would you like to continue?"] = "You are about to delete %d aura(s). |cFFFF0000This cannot be undone!|r Would you like to continue?"
 	--[[Translation missing --]]

@@ -1,13 +1,13 @@
 local mod	= DBM:NewMod(2337, "DBM-ZuldazarRaid", 3, 1176)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision(("$Revision: 18417 $"):sub(12, -3))
+mod:SetRevision("20190717035048")
 mod:SetCreatureID(146251, 146253, 146256)--Sister Katherine 146251, Brother Joseph 146253, Laminaria 146256
 mod:SetEncounterID(2280)
 --mod:DisableESCombatDetection()
 mod:SetZone()
 mod:SetBossHPInfoToHighest()
---mod:SetUsedIcons(1, 2, 8)
+mod:SetUsedIcons(1, 2, 3)
 mod:SetHotfixNoticeRev(18367)
 --mod:SetMinSyncRevision(16950)
 --mod.respawnTime = 35
@@ -15,12 +15,12 @@ mod:SetHotfixNoticeRev(18367)
 mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
-	"SPELL_CAST_START 284262 284106 284393 284383 285017 284362 288696 288941",
-	"SPELL_CAST_SUCCESS 285350 285426 285118 290694 289795 287169",
-	"SPELL_AURA_APPLIED 286558 284405 285000 285382 285350 285426 287995",
+	"SPELL_CAST_START 284262 284393 284383 285017 284362 288696 288941 289487 289479",
+	"SPELL_CAST_SUCCESS 285350 285426 285118 290694 289795 287169 284106",
+	"SPELL_AURA_APPLIED 286558 284405 285000 285382 285350 285426 287995 288205 284361",
 	"SPELL_AURA_REFRESH 285000 285382",
 	"SPELL_AURA_APPLIED_DOSE 285000 285382",
-	"SPELL_AURA_REMOVED 286558 285000 285382 285350 285426 287995",
+	"SPELL_AURA_REMOVED 286558 285000 285382 285350 285426 287995 288205 284361",
 	"SPELL_INTERRUPT",
 --	"SPELL_PERIODIC_DAMAGE 285075",
 --	"SPELL_PERIODIC_MISSED 285075",
@@ -32,8 +32,8 @@ mod:RegisterEventsInCombat(
 --TODO, icons and stuff for storm's wail
 --TODO, add "watch wave" warning for Energized wake on mythic
 --[[
-(ability.id = 284262 or ability.id = 284106 or ability.id = 284393 or ability.id = 284383 or ability.id = 285017 or ability.id = 284362 or ability.id = 288696 or ability.id = 288941) and type = "begincast"
- or (ability.id = 285350 or ability.id = 285426 or ability.id = 285118 or ability.id = 290694 or ability.id = 289795 or ability.id = 287169) and type = "cast"
+(ability.id = 284262 or ability.id = 284393 or ability.id = 284383 or ability.id = 285017 or ability.id = 284362 or ability.id = 288696 or ability.id = 288941) and type = "begincast"
+ or (ability.id = 285350 or ability.id = 285426 or ability.id = 285118 or ability.id = 290694 or ability.id = 289795 or ability.id = 287169 or ability.id = 284106) and type = "cast"
  or type = "interrupt"
  or ability.id = 284405 and type = "applydebuff"
 --]]
@@ -41,10 +41,11 @@ mod:RegisterEventsInCombat(
 ----General
 local warnTranslocate					= mod:NewTargetNoFilterAnnounce(284393, 2)
 ----Sister Katherine
-local warnCracklingLightning			= mod:NewCastAnnounce(284106, 3)
+local warnCracklingLightning			= mod:NewTargetAnnounce(288205, 4)
 local warnElecShroud					= mod:NewTargetAnnounce(287995, 4)
 local warnJoltingVolley					= mod:NewCountAnnounce(287169, 3)
 ----Brother Joseph
+local warnSeaStorm						= mod:NewTargetAnnounce(284361, 2)
 local warnTemptingSong					= mod:NewTargetAnnounce(284405, 2)
 local warnTidalShroud					= mod:NewTargetAnnounce(286558, 4)
 --Stage Two: Laminaria
@@ -57,22 +58,27 @@ local warnStormsWail					= mod:NewTargetNoFilterAnnounce(285350, 3)
 local specWarnTidalEmpowerment			= mod:NewSpecialWarningInterrupt(284765, "HasInterrupt", nil, nil, 1, 2)
 --local specWarnGTFO						= mod:NewSpecialWarningGTFO(285075, false, nil, 2, 1, 8)
 ----Sister Katherine
-local specWarnVoltaicFlash				= mod:NewSpecialWarningDodge(284262, nil, nil, nil, 2, 2)
---local yellDarkRevolation				= mod:NewPosYell(273365)
---local yellDarkRevolationFades			= mod:NewIconFadesYell(273365
+local specWarnVoltaicFlash				= mod:NewSpecialWarningDodgeCount(284262, nil, nil, nil, 2, 2)
+local specWarnCracklingLightning		= mod:NewSpecialWarningMoveAway(288205, nil, nil, nil, 1, 2)
+local yellCracklingLightning			= mod:NewYell(288205)
+local yellCracklingLightningFades		= mod:NewShortFadesYell(288205)
 ----Brother Joseph
-local specWarnSeaStorm					= mod:NewSpecialWarningDodge(284360, nil, nil, nil, 2, 2)
-local specWarnSeasTemptation			= mod:NewSpecialWarningSwitch(284383, "RangedDps", nil, nil, 1, 2)--Ranged assumed for now, melee stay out until temping song goes out
+local specWarnSeaStorm					= mod:NewSpecialWarningMoveAway(284361, nil, nil, nil, 1, 2)
+local yellSeaStorm						= mod:NewYell(284361)
+local yellSeaStormFades					= mod:NewShortFadesYell(284361)
+local specWarnSeasTemptation			= mod:NewSpecialWarningSwitchCount(284383, "RangedDps", nil, nil, 1, 2)--Ranged assumed for now, melee stay out until temping song goes out
 local specWarnTemptingSong				= mod:NewSpecialWarningRun(284405, nil, nil, nil, 4, 2)
 local yellTemptingSong					= mod:NewYell(284405)
 --Stage Two: Laminaria
 local specWarnEnergizedStorm			= mod:NewSpecialWarningSwitch("ej19312", "RangedDps", nil, nil, 1, 2)
---local yellKepWrapped					= mod:NewFadesYell(285000)
 local specWarnSeaSwell					= mod:NewSpecialWarningDodge(285118, nil, nil, 2, 3, 2)
 local specWarnIreoftheDeep				= mod:NewSpecialWarningSoak(285017, "-Tank", nil, nil, 1, 2)
 local specWarnStormsWail				= mod:NewSpecialWarningMoveTo(285350, nil, nil, 2, 3, 2)
 local yellStormsWail					= mod:NewYell(285350)
 local yellStormsWailFades				= mod:NewShortFadesYell(285350)
+--Achievement
+local specWarnUndertow					= mod:NewSpecialWarningSpell(289487, nil, nil, nil, 2, 2)
+local specWarnHydroBlast				= mod:NewSpecialWarningSpell(289479, nil, nil, nil, 2, 3)
 
 --Stage One: Storm the Ships
 mod:AddTimerLine(DBM:EJ_GetSectionInfo(19257))
@@ -90,20 +96,15 @@ local timerTidalShroudCD				= mod:NewCDTimer(36.5, 286558, nil, nil, nil, 4, nil
 --Stage Two: Laminaria
 mod:AddTimerLine(DBM:EJ_GetSectionInfo(19258))
 local timerCataTides					= mod:NewCastTimer(15, 288696, nil, nil, nil, 4, nil, DBM_CORE_INTERRUPT_ICON)
-local timerSeaSwellCD					= mod:NewCDTimer(20.6, 285118, nil, nil, nil, 3, nil, DBM_CORE_DEADLY_ICON)
+local timerSeaSwellCD					= mod:NewCDTimer(20.6, 285118, nil, nil, nil, 3, nil, DBM_CORE_DEADLY_ICON, nil, 1, 3)
 local timerIreoftheDeepCD				= mod:NewCDTimer(32.8, 285017, nil, nil, nil, 5)
 local timerStormsWailCD					= mod:NewCDTimer(120.2, 285350, nil, nil, nil, 3)
-local timerStormsWail					= mod:NewTargetTimer(12, 285350, nil, nil, nil, 5)
 local timerJoltingVolleyCD				= mod:NewCDCountTimer(43.6, 287169, nil, nil, nil, 2, nil, DBM_CORE_HEALER_ICON)
 
 --local berserkTimer					= mod:NewBerserkTimer(600)
 
-local countdownSeaSwell					= mod:NewCountdown(20.6, 285118, true, 3, 3)
---local countdownRupturingBlood				= mod:NewCountdown("Alt12", 244016, false, 2, 3)
---local countdownFelstormBarrage			= mod:NewCountdown("AltTwo32", 244000, nil, nil, 3)
-
 mod:AddNamePlateOption("NPAuraOnKepWrapping", 285382)
---mod:AddSetIconOption("SetIconDarkRev", 273365, true)
+mod:AddSetIconOption("SetIconWail", 285350, true, false, {1, 2, 3})
 mod:AddRangeFrameOption(5, 285118)
 mod:AddInfoFrameOption(284760, true)
 
@@ -112,6 +113,9 @@ mod.vb.bossesDied = 0
 mod.vb.cracklingCast = 0
 mod.vb.sirenCount = 0
 mod.vb.joltingCast = 0
+mod.vb.stormsActive = 0
+mod.vb.stormsWailIcon = 1
+mod.vb.voltaicFlashCount = 0
 local freezingTidePod = DBM:GetSpellInfo(285075)
 local stormTargets = {}
 
@@ -152,7 +156,7 @@ do
 end
 
 --Needs to be run on pull and teleports (either player changing sides or boss)
-local function delayedSisterUpdate(self, first)
+local function delayedSisterUpdate(self, reschedule)
 	self:Unschedule(delayedSisterUpdate)
 	if self:CheckBossDistance(146251, true) then--Sister Katherine
 		timerCracklingLightningCD:SetFade(false)
@@ -164,12 +168,12 @@ local function delayedSisterUpdate(self, first)
 		timerElecShroudCD:SetFade(true)
 	end
 	--Secondary scan (only runs on translocate)
-	if first then
-		self:Schedule(2, delayedSisterUpdate, self)
+	if reschedule and reschedule < 4 then
+		self:Schedule(2, delayedSisterUpdate, self, reschedule+1)
 	end
 end
 
-local function delayedBrotherUpdate(self, first)
+local function delayedBrotherUpdate(self, reschedule)
 	self:Unschedule(delayedBrotherUpdate)
 	if self:CheckBossDistance(146253, true) then--Brother Joseph
 		timerSeaStormCD:SetFade(false)
@@ -181,8 +185,8 @@ local function delayedBrotherUpdate(self, first)
 		timerTidalShroudCD:SetFade(true)
 	end
 	--Secondary scan (only runs on translocate)
-	if first then
-		self:Schedule(2, delayedBrotherUpdate, self)
+	if reschedule and reschedule < 4 then
+		self:Schedule(2, delayedBrotherUpdate, self, reschedule+1)
 	end
 end
 
@@ -193,9 +197,12 @@ function mod:OnCombatStart(delay)
 	self.vb.cracklingCast = 0
 	self.vb.sirenCount = 0
 	self.vb.joltingCast = 0
+	self.vb.stormsActive = 0
+	self.vb.stormsWailIcon = 1
+	self.vb.voltaicFlashCount = 0
 	if not self:IsLFR() then
 		--Sister
-		timerCracklingLightningCD:Start(3.9-delay)--3.9-8.8
+		timerCracklingLightningCD:Start(5.9-delay)--5.9-10.8
 		timerVoltaicFlashCD:Start(8.8-delay)
 		timerElecShroudCD:Start(30-delay)
 		--Brother
@@ -204,7 +211,7 @@ function mod:OnCombatStart(delay)
 		timerTidalShroudCD:Start(30.1-delay)--30-32
 	else
 		--Sister
-		timerCracklingLightningCD:Start(11.7-delay)--3.9-8.8
+		timerCracklingLightningCD:Start(13.7-delay)--3.9-8.8?
 		timerVoltaicFlashCD:Start(20-delay)
 		--Brother
 		timerSeaStormCD:Start(6-delay)--0.3-8
@@ -212,7 +219,6 @@ function mod:OnCombatStart(delay)
 	end
 	if self:IsMythic() then
 		timerSeaSwellCD:Start(19.8-delay)
-		countdownSeaSwell:Start(19.8-delay)
 	end
 	if self.Options.NPAuraOnKepWrapping then
 		DBM:FireEvent("BossMod_EnableHostileNameplates")
@@ -221,8 +227,8 @@ function mod:OnCombatStart(delay)
 		DBM.InfoFrame:SetHeader(OVERVIEW)
 		DBM.InfoFrame:Show(8, "function", updateInfoFrame, false, false)
 	end
-	self:Schedule(0.5, delayedSisterUpdate, self, true)--Update timers couple seconds into pull
-	self:Schedule(0.5, delayedBrotherUpdate, self, true)--Update timers couple seconds into pull
+	self:Schedule(0.5, delayedSisterUpdate, self, 1)--Update timers couple seconds into pull
+	self:Schedule(0.5, delayedBrotherUpdate, self, 1)--Update timers couple seconds into pull
 end
 
 function mod:OnCombatEnd()
@@ -254,8 +260,9 @@ end
 function mod:SPELL_CAST_START(args)
 	local spellId = args.spellId
 	if spellId == 284262 then
+		self.vb.voltaicFlashCount = self.vb.voltaicFlashCount + 1
 		if self:CheckBossDistance(args.sourceGUID, true) then
-			specWarnVoltaicFlash:Show()
+			specWarnVoltaicFlash:Show(self.vb.voltaicFlashCount)
 			specWarnVoltaicFlash:Play("watchorb")
 			timerVoltaicFlashCD:SetFade(false)
 		else
@@ -267,26 +274,10 @@ function mod:SPELL_CAST_START(args)
 			timerVoltaicFlashCD:Start()--12
 		end
 	elseif spellId == 288941 and self:AntiSpam(20, 2) then--AntiSpam must be at least 15 here, 20 for good measure
-		specWarnVoltaicFlash:Show()
+		self.vb.voltaicFlashCount = self.vb.voltaicFlashCount + 1
+		specWarnVoltaicFlash:Show(self.vb.voltaicFlashCount)
 		specWarnVoltaicFlash:Play("watchorb")
 		timerVoltaicFlashCD:Start(42.5)
-	elseif spellId == 284106 then
-		self.vb.cracklingCast = self.vb.cracklingCast + 1
-		if self:CheckBossDistance(args.sourceGUID, true) then
-			warnCracklingLightning:Show()
-			timerCracklingLightningCD:SetFade(false)
-		else
-			timerCracklingLightningCD:SetFade(true)
-		end
-		if self:IsLFR() then
-			timerCracklingLightningCD:Start(30)
-		else
-			if self.vb.cracklingCast % 2 == 0 then
-				timerCracklingLightningCD:Start(21.9)--21.9 (usually 23.1 but I have one log showing 21.9)
-			else
-				timerCracklingLightningCD:Start(12.1)
-			end
-		end
 	elseif spellId == 284393 then
 		warnTranslocate:Show(args.sourceName)
 		local cid = self:GetCIDFromGUID(args.sourceGUID)
@@ -296,10 +287,10 @@ function mod:SPELL_CAST_START(args)
 			timerCracklingLightningCD:Stop()
 			timerElecShroudCD:Stop()
 			--This may be more complicated than this, like maybe a pause/resume more so than this
-			timerCracklingLightningCD:Start(12)
+			timerCracklingLightningCD:Start(14)
 			timerVoltaicFlashCD:Start(17)
 			timerElecShroudCD:Start(36.4)
-			self:Schedule(3, delayedSisterUpdate, self, true)
+			self:Schedule(3, delayedSisterUpdate, self, 1)
 		else--Brother
 			timerSeaStormCD:Stop()
 			timerSeasTemptationCD:Stop()
@@ -309,12 +300,12 @@ function mod:SPELL_CAST_START(args)
 			timerSeaStormCD:Start(12.1)
 			timerSeasTemptationCD:Start(26.7, self.vb.sirenCount+1)--Even less sure about this one
 			timerTidalShroudCD:Start(37.7)
-			self:Schedule(3, delayedBrotherUpdate, self, true)
+			self:Schedule(3, delayedBrotherUpdate, self, 1)
 		end
 	elseif spellId == 284383 then
 		self.vb.sirenCount = self.vb.sirenCount + 1
 		if self:CheckBossDistance(args.sourceGUID, true) then
-			specWarnSeasTemptation:Show()
+			specWarnSeasTemptation:Show(self.vb.sirenCount)
 			specWarnSeasTemptation:Play("killmob")
 			timerSeasTemptationCD:SetFade(false)
 		else
@@ -327,8 +318,6 @@ function mod:SPELL_CAST_START(args)
 		timerIreoftheDeepCD:Start()
 	elseif spellId == 284362 then
 		if self:CheckBossDistance(args.sourceGUID, true) then
-			specWarnSeaStorm:Show()
-			specWarnSeaStorm:Play("watchstep")
 			timerSeaStormCD:SetFade(false)
 		else
 			timerSeaStormCD:SetFade(true)
@@ -344,36 +333,38 @@ function mod:SPELL_CAST_START(args)
 		warnCataTides:Show()
 		timerCataTides:Start()
 		timerSeaSwellCD:Stop()
-		countdownSeaSwell:Cancel()
+	elseif spellId == 289487 then
+		specWarnUndertow:Show()
+		specWarnUndertow:Play("keepmove")
+	elseif spellId == 289479 then
+		specWarnHydroBlast:Show()
+		specWarnHydroBlast:Play("crowdcontrol")
 	end
 end
 
 function mod:SPELL_CAST_SUCCESS(args)
 	local spellId = args.spellId
 	if (spellId == 285350 or spellId == 285426) and args:GetSrcCreatureID() == 146256 then
+		self.vb.stormsActive = self.vb.stormsActive + 1
 		timerStormsWailCD:Start()
 	elseif spellId == 285118 then--All P2 Sea Swell
 		specWarnSeaSwell:Show()
 		specWarnSeaSwell:Play("watchstep")
 		if self:IsMythic() then
 			timerSeaSwellCD:Start(17)
-			countdownSeaSwell:Start(17)
 		elseif self:IsLFR() then
 			timerSeaSwellCD:Start(24.3)
-			countdownSeaSwell:Start(24.3)
 		else
 			timerSeaSwellCD:Start()
-			countdownSeaSwell:Start(20.6)
 		end
 	elseif spellId == 290694 and self:AntiSpam(5, 3) then--Mythic P1 Sea Swell
 		specWarnSeaSwell:Show()
 		specWarnSeaSwell:Play("watchstep")
 		timerSeaSwellCD:Start(20)
-		countdownSeaSwell:Start(20)
 	elseif spellId == 289795 and self.vb.phase == 2 then--Zuldazar Reuse Spell 06 (P2 sirens spawning)
 		self.vb.sirenCount = self.vb.sirenCount + 1
 		if self:AntiSpam(8, 5) then
-			specWarnSeasTemptation:Show()
+			specWarnSeasTemptation:Show(self.vb.sirenCount)
 			specWarnSeasTemptation:Play("killmob")
 		end
 		if self.vb.sirenCount % 2 == 0 then
@@ -385,6 +376,22 @@ function mod:SPELL_CAST_SUCCESS(args)
 		self.vb.joltingCast = self.vb.joltingCast + 1
 		warnJoltingVolley:Show(self.vb.joltingCast)
 		timerJoltingVolleyCD:Start(43.6, self.vb.joltingCast+1)
+	elseif spellId == 284106 then
+		self.vb.cracklingCast = self.vb.cracklingCast + 1
+		if self:CheckBossDistance(args.sourceGUID, true) then
+			timerCracklingLightningCD:SetFade(false)
+		else
+			timerCracklingLightningCD:SetFade(true)
+		end
+		if self:IsLFR() then
+			timerCracklingLightningCD:Start(30)
+		else
+			if self.vb.cracklingCast % 2 == 0 then
+				timerCracklingLightningCD:Start(21.9)--21.9 (usually 23.1 but I have one log showing 21.9)
+			else
+				timerCracklingLightningCD:Start(12.1)
+			end
+		end
 	end
 end
 
@@ -392,10 +399,6 @@ function mod:SPELL_AURA_APPLIED(args)
 	local spellId = args.spellId
 	if spellId == 285000 then
 		local amount = args.amount or 1
-		--if args:IsPlayer() then
-		--	yellKepWrapped:Cancel()
-			--yellKepWrapped:Countdown(18)
-		--end
 		warnKelpWrapped:Show(args.destName, amount)
 	elseif spellId == 286558 then
 		if self:CheckBossDistance(args.destGUID, true) then
@@ -428,17 +431,46 @@ function mod:SPELL_AURA_APPLIED(args)
 	elseif spellId == 285350 or spellId == 285426 then
 		if args:IsPlayer() then
 			specWarnStormsWail:Show(freezingTidePod)
-			local timer = self:IsEasy() and 13 or 10
-			specWarnStormsWail:Schedule(timer-4.5, DBM_CORE_BACK)
 			specWarnStormsWail:Play("targetyou")
 			yellStormsWail:Yell()
-			yellStormsWailFades:Countdown(timer)
+			local spellName, _, _, _, _, expireTime = DBM:UnitDebuff("player", 285350, 285426)
+			if expireTime then
+				local remaining = expireTime-GetTime()
+				specWarnStormsWail:Schedule(remaining-4.5, DBM_CORE_BACK)
+				yellStormsWailFades:Countdown(remaining)
+			end
 		else
 			warnStormsWail:Show(args.destName)
 		end
-		timerStormsWail:Start(12, args.destName)
 		if not tContains(stormTargets, args.destName) then
 			table.insert(stormTargets, args.destName)
+		end
+		if self.Options.SetIconWail then
+			self:SetIcon(args.destName, self.vb.stormsWailIcon)
+		end
+		--Smart rotation code that'll automatically rotate betwen needed number of icons based on number of debuffs out
+		--Automatically reset icon to 1 if icon higher than our max count.
+		--ie 2 debuffs out, it'll alternate icons 1 and 2. 3 out, it'll cycle through icons 1-3, a single debuff, it'll basically keep resetting to 1
+		self.vb.stormsWailIcon = self.vb.stormsWailIcon + 1
+		if self.vb.stormsWailIcon > self.vb.stormsActive then
+			self.vb.stormsWailIcon = 1
+		end
+	elseif spellId == 288205 then
+		if args:IsPlayer() then
+			specWarnCracklingLightning:Show()
+			specWarnCracklingLightning:Play("runout")
+			yellCracklingLightning:Yell()
+			yellCracklingLightningFades:Countdown(spellId)
+		else
+			warnCracklingLightning:Show(args.destName)
+		end
+	elseif spellId == 284361 then
+		warnSeaStorm:CombinedShow(0.5, args.destName)
+		if args:IsPlayer() then
+			specWarnSeaStorm:Show()
+			specWarnSeaStorm:Play("runout")
+			yellSeaStorm:Yell()
+			yellSeaStormFades:Countdown(spellId)
 		end
 	end
 end
@@ -469,8 +501,18 @@ function mod:SPELL_AURA_REMOVED(args)
 			yellStormsWailFades:Cancel()
 			specWarnStormsWail:Cancel()
 		end
-		timerStormsWail:Stop(12, args.destName)
 		tDeleteItem(stormTargets, args.destName)
+		if self.Options.SetIconWail then
+			self:SetIcon(args.destName, 0)
+		end
+	elseif spellId == 288205 then
+		if args:IsPlayer() then
+			yellCracklingLightningFades:Cancel()
+		end
+	elseif spellId == 284361 then
+		if args:IsPlayer() then
+			yellSeaStormFades:Cancel()
+		end
 	end
 end
 
@@ -488,9 +530,9 @@ function mod:SPELL_INTERRUPT(args)
 	if type(args.extraSpellId) == "number" and args.extraSpellId == 288696 then
 		self.vb.phase = 2
 		self.vb.sirenCount = 0
+		self.vb.voltaicFlashCount = 0
 		timerSeaSwellCD:Stop()
 		timerCataTides:Stop()
-		countdownSeaSwell:Cancel()
 		if self:IsMythic() then
 			timerVoltaicFlashCD:SetFade(false)
 			timerSeasTemptationCD:SetFade(false)
@@ -498,7 +540,6 @@ function mod:SPELL_INTERRUPT(args)
 			timerIreoftheDeepCD:Start(3.2)
 			timerStormsWailCD:Start(6.6)
 			timerSeaSwellCD:Start(7.2)
-			countdownSeaSwell:Start(7.2)
 			--Mythic Only
 			timerJoltingVolleyCD:Start(10.2, 1)
 			timerVoltaicFlashCD:Start(18.7)
@@ -506,7 +547,6 @@ function mod:SPELL_INTERRUPT(args)
 		elseif self:IsLFR() then
 			--LFR seems to do it's own thing with timers across the board
 			timerSeaSwellCD:Start(5.3)
-			countdownSeaSwell:Start(5.3)
 			timerIreoftheDeepCD:Start(7)
 			timerStormsWailCD:Start(16.7)
 		else
@@ -514,7 +554,6 @@ function mod:SPELL_INTERRUPT(args)
 			timerIreoftheDeepCD:Start(3.2)
 			timerStormsWailCD:Start(6.6)
 			timerSeaSwellCD:Start(7.2)
-			countdownSeaSwell:Start(7.2)
 		end
 	end
 end

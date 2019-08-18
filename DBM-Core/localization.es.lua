@@ -20,7 +20,6 @@ DBM_COPY_URL_DIALOG					= "Copiar vínculo"
 --Post Patch 7.1
 DBM_CORE_NO_RANGE					= "No se puede usar el radar de distancia en estancias. Se procederá a usar el marco de distancia por texto."
 DBM_CORE_NO_ARROW					= "No se puede usar la flecha en estancias."
-DBM_CORE_ARROW_SUMMONED				= "Flecha activada. SiArrow has been activated. If you did not do this manually, you have a 3rd party addon configured to activated it for you"
 DBM_CORE_NO_HUD						= "No se puede usar el indicador en pantalla en estancias."
 
 DBM_CORE_DYNAMIC_DIFFICULTY_CLUMP	= "DBM ha desactivado el marco de distancia dinámico para este combate debido a la falta de información sobre las diferencias según el número de jugadores."
@@ -165,7 +164,7 @@ DBM_CORE_VOICE_DISABLED				= "Tienes al menos un paquete de voces de DBM instala
 DBM_CORE_VOICE_COUNT_MISSING		= "La voz de cuenta atrás %d está asignada a un paquete de voces que no se ha podido encontrar. Se ha restaurado a la configuración por defecto."
 DBM_BIG_WIGS						= "BigWigs"
 
-DBM_CORE_UPDATEREMINDER_HEADER			= "Tu versión de Deadly Boss Mods está desfasada.\nPuedes descargar la versión %s (r%d) a través de Curse/Twitch, WoWInterface o deadlybossmods.com."
+DBM_CORE_UPDATEREMINDER_HEADER			= "Tu versión de Deadly Boss Mods está desfasada.\nPuedes descargar la versión %s (%s) a través de Curse/Twitch, WoWInterface o deadlybossmods.com."
 DBM_CORE_UPDATEREMINDER_HEADER_ALPHA	= "Tu versión alfa de Deadly Boss Mods está desfasada.\nEstás por lo menos %d versiones por detrás. Se recomienda a los usuarios que usen siempre la última versión alfa. De lo contrario, sería más recomendable usar la última versión oficial. Las versiones alfa tienen una comprobación de versión mucho más estricta porque son versiones de desarrollo de DBM."
 DBM_CORE_UPDATEREMINDER_FOOTER			= "Pulsa " .. (IsMacClient() and "Cmd-C" or "Ctrl-C")  ..  " para copiar el enlace de descarga en tu portapapeles."
 DBM_CORE_UPDATEREMINDER_FOOTER_GENERIC	= "Pulsa " .. (IsMacClient() and "Cmd-C" or "Ctrl-C")  ..  " para copiar el enlace en tu portapapeles."
@@ -251,11 +250,9 @@ DBM_CORE_TIMER_USAGE	= {
 	"DBM timer commands:",
 	"-----------------",
 	"/dbm timer <seg> <texto>: Inicia un temporizador con texto.",
-	"/dbm ctimer <seg> <texto>: Inicia un temporizador con texto de cuenta atrás.",
 	"/dbm ltimer <seg> <texto>: Inicia un temporizador que se repite hasta que se cancela.",
-	"/dbm cltimer <seg> <texto>: Inicia un temporizador con texto de cuenta atrás que se repite hasta que se cancela.",
 	"(Si escribes 'broadcast' delante de un temporizador, lo compartirás con tu grupo de banda si eres líder o ayudante)",
-	"/dbm timer endloop: Cancela todos los ltimer o cltimer que se estén repitiendo."
+	"/dbm timer endloop: Cancela todos los ltimer que se estén repitiendo."
 }
 
 DBM_ERROR_NO_PERMISSION				= "No tienes permiso para hacer eso."
@@ -488,13 +485,6 @@ DBM_CORE_AUTO_ICONS_OPTION_TEXT2		= "Poner iconos en $spell:%s"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT			= "Mostrar flecha indicadora para juntarse con los objetivos afectados por $spell:%s"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT2		= "Mostrar flecha indicadora para alejarse de los objetivos afectados por $spell:%s"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT3		= "Mostrar flecha indicadora para ir a una ubicación específica para $spell:%s"
-DBM_CORE_AUTO_VOICE_OPTION_TEXT			= "Reproducir alertas de voz para $spell:%s"
-DBM_CORE_AUTO_VOICE2_OPTION_TEXT		= "Reproducir alertas de voz para los cambios de fase"
-DBM_CORE_AUTO_VOICE3_OPTION_TEXT		= "Reproducir alertas de voz cuando falte poco para que aparezcan esbirros"
-DBM_CORE_AUTO_VOICE4_OPTION_TEXT		= "Reproducir alertas de voz para apartarte de áreas de daño en el suelo"
-DBM_CORE_AUTO_COUNTDOWN_OPTION_TEXT		= "Reproducir sonido de cuenta atrás para el tiempo de reutilización de $spell:%s"
-DBM_CORE_AUTO_COUNTDOWN_OPTION_TEXT2	= "Reproducir sonido de cuenta atrás para la duración restante de $spell:%s"
-DBM_CORE_AUTO_COUNTOUT_OPTION_TEXT		= "Reproducir sonido de contador para la duración de $spell:%s"
 DBM_CORE_AUTO_YELL_OPTION_TEXT.shortyell		= "Gritar cuando te afecte $spell:%s"
 DBM_CORE_AUTO_YELL_OPTION_TEXT.yell		= "Gritar (con tu nombre) cuando te afecte $spell:%s"
 DBM_CORE_AUTO_YELL_OPTION_TEXT.count	= "Gritar (con contador) cuando te afecte $spell:%s"
@@ -511,8 +501,6 @@ DBM_CORE_AUTO_YELL_ANNOUNCE_TEXT.shortfade		= "%%d"
 DBM_CORE_AUTO_YELL_ANNOUNCE_TEXT.iconfade		= "{rt%%2$d}%%1$d"
 DBM_CORE_AUTO_YELL_ANNOUNCE_TEXT.position 	= "%s %%s en {rt%%d}"..UnitName("player").."{rt%%d}"
 DBM_CORE_AUTO_YELL_ANNOUNCE_TEXT.combo			= "%s y %%s"--Spell name (from option, plus spellname given in arg)
-DBM_CORE_AUTO_YELL_CUSTOM_POSITION		= "{rt%d}%s{rt%d}"
-DBM_CORE_AUTO_YELL_CUSTOM_POSITION2		= "{rt%d}{rt%d}%s{rt%d}{rt%d}"
 DBM_CORE_AUTO_YELL_CUSTOM_FADE			= "%s ha expirado"
 DBM_CORE_AUTO_HUD_OPTION_TEXT			= "Mostrar indicador en pantalla para $spell:%s"
 DBM_CORE_AUTO_HUD_OPTION_TEXT_MULTI		= "Mostrar indicadores en pantalla para varias mecánicas"

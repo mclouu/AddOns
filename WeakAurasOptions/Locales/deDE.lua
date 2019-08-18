@@ -15,11 +15,23 @@ local L = WeakAuras.L
 	L["%i auras selected"] = "%i auras selected"
 	L["%i Matches"] = "%i Treffer"
 	--[[Translation missing --]]
+	L["%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"] = "%s %s, lines: %d, frequency: %0.2f, length: %d, thickness: %d"
+	--[[Translation missing --]]
+	L["%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"] = "%s %s, particles: %d, frequency: %0.2f, scale: %0.2f"
+	--[[Translation missing --]]
 	L["%s Color"] = "%s Color"
 	--[[Translation missing --]]
 	L["%s total auras"] = "%s total auras"
 	--[[Translation missing --]]
+	L["%s, border"] = "%s, border"
+	--[[Translation missing --]]
+	L["%s, offset: %0.2f;%0.2f"] = "%s, offset: %0.2f;%0.2f"
+	--[[Translation missing --]]
+	L["|c%02x%02x%02x%02xColor|r"] = "|c%02x%02x%02x%02xColor|r"
+	--[[Translation missing --]]
 	L["|cFFFF0000Duplicate Keys Found!|nPlease change the keys of the following options!|r"] = "|cFFFF0000Duplicate Keys Found!|nPlease change the keys of the following options!|r"
+	--[[Translation missing --]]
+	L["|cFFffcc00Glow:|r"] = "|cFFffcc00Glow:|r"
 	L["1 Match"] = "1 Treffer"
 	L["1. Text"] = "1. Text"
 	L["1. Text Settings"] = "1. Text Einstellungen"
@@ -76,6 +88,8 @@ Falls die Dauer der Animation auf |cFF00CC0010%|r gesetzt wurde und für die Anz
 	--[[Translation missing --]]
 	L["Any of"] = "Any of"
 	L["Apply Template"] = "Vorlage übernehmen"
+	--[[Translation missing --]]
+	L["Arc Length"] = "Arc Length"
 	L["Arcane Orb"] = "Arkane Kugel"
 	--[[Translation missing --]]
 	L["At a position a bit left of Left HUD position."] = "At a position a bit left of Left HUD position."
@@ -151,6 +165,10 @@ Soll die Anzeige in einer neuen |cFF22AA22Dynamischen Gruppe|r platziert werden?
 	L["Color"] = "Farbe"
 	L["color"] = "Farbe"
 	--[[Translation missing --]]
+	L["Column Height"] = "Column Height"
+	--[[Translation missing --]]
+	L["Column Space"] = "Column Space"
+	--[[Translation missing --]]
 	L["Combinations"] = "Combinations"
 	--[[Translation missing --]]
 	L["Combine Matches Per Unit"] = "Combine Matches Per Unit"
@@ -190,7 +208,11 @@ Soll die Anzeige in einer neuen |cFF22AA22Dynamischen Gruppe|r platziert werden?
 	L["Custom Configuration"] = "Custom Configuration"
 	L["Custom Function"] = "Benutzerdefiniert"
 	--[[Translation missing --]]
+	L["Custom Grow"] = "Custom Grow"
+	--[[Translation missing --]]
 	L["Custom Options"] = "Custom Options"
+	--[[Translation missing --]]
+	L["Custom Sort"] = "Custom Sort"
 	L["Custom Trigger"] = "Benutzerdefinierter Auslöser"
 	L["Custom trigger event tooltip"] = [=[Wähle die Ereignisse, die den benutzerdefinierten Auslöser aufrufen sollen.
 Mehrere Ereignisse können durch Komma oder Leerzeichen getrennt werden.
@@ -208,6 +230,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Custom Variables"] = "Custom Variables"
 	L["Debuff Type"] = "Debufftyp"
 	L["Default"] = "Standard"
+	--[[Translation missing --]]
+	L["Default Color"] = "Default Color"
 	L["Delete"] = "Löschen"
 	L["Delete all"] = "Alle löschen"
 	L["Delete children and group"] = "Kinder und Gruppe löschen"
@@ -306,6 +330,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	L["Foreground Texture"] = "Vordergrundtextur"
 	L["Frame"] = "Frame"
 	L["Frame Strata"] = "Frame-Schicht"
+	--[[Translation missing --]]
+	L["Frequency"] = "Frequency"
 	L["From Template"] = "Vorlage verwenden"
 	--[[Translation missing --]]
 	L["From version "] = "From version "
@@ -320,6 +346,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED]=]
 	--[[Translation missing --]]
 	L["Glow Type"] = "Glow Type"
 	L["Green Rune"] = "Grüne Rune"
+	--[[Translation missing --]]
+	L["Grid direction"] = "Grid direction"
 	L["Group"] = "Gruppe"
 	L["Group (verb)"] = "Gruppieren"
 	L["Group aura count description"] = [=[Die Anzahl der %s-Mitglieder, die von einer der Auren betroffen sein müssen, um den Trigger auszulösen.
@@ -347,6 +375,8 @@ Falls die Zahl als Dezimalzahl (z.B. 0.5), Bruch (z.B. 1/2) oder Prozentsatz (z.
 	L["Hawk"] = "Falke"
 	L["Height"] = "Höhe"
 	L["Hide"] = "Verbergen"
+	--[[Translation missing --]]
+	L["Hide Cooldown Text"] = "Hide Cooldown Text"
 	L["Hide on"] = "Verbergen falls"
 	L["Hide this group's children"] = "Die Kinder dieser Gruppe ausblenden"
 	L["Hide When Not In Group"] = "Ausblenden, wenn ich gruppenlos bin"
@@ -410,6 +440,10 @@ Falls die Zahl als Dezimalzahl (z.B. 0.5), Bruch (z.B. 1/2) oder Prozentsatz (z.
 	L["Legacy Aura Trigger"] = "Legacy Aura Trigger"
 	--[[Translation missing --]]
 	L["Length"] = "Length"
+	--[[Translation missing --]]
+	L["Limit"] = "Limit"
+	--[[Translation missing --]]
+	L["Lines & Particles"] = "Lines & Particles"
 	L["Load"] = "Laden"
 	L["Loaded"] = "Geladen"
 	L["Loop"] = "Schleife"
@@ -570,6 +604,10 @@ Nur ein Wert kann ausgewählt werden.]=]
 	L["Rotate Text"] = "Text rotieren"
 	L["Rotation"] = "Rotation"
 	L["Rotation Mode"] = "Rotationsmodus"
+	--[[Translation missing --]]
+	L["Row Space"] = "Row Space"
+	--[[Translation missing --]]
+	L["Row Width"] = "Row Width"
 	L["Same"] = "Gleich"
 	L["Scale"] = "Skalierung"
 	L["Search"] = "Suchen"
@@ -589,7 +627,6 @@ Nur ein Wert kann ausgewählt werden.]=]
 	L["Settings"] = "Einstellungen"
 	L["Shift-click to create chat link"] = "Shift-Klick, um einen Chatlink zu erstellen"
 	L["Show all matches (Auto-clone)"] = "Alle Treffer anzeigen (Auto-Klonen)"
-	L["Show Cooldown Text"] = "Abklingzeittext anzeigen"
 	--[[Translation missing --]]
 	L["Show Glow Effect"] = "Show Glow Effect"
 	--[[Translation missing --]]
@@ -678,6 +715,8 @@ Nur ein Wert kann ausgewählt werden.]=]
 	L["The type of trigger"] = "Auslösertyp"
 	L["Then "] = "Dann"
 	--[[Translation missing --]]
+	L["Thickness"] = "Thickness"
+	--[[Translation missing --]]
 	L["This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."] = "This adds %tooltip, %tooltip1, %tooltip2, %tooltip3 as text replacements."
 	--[[Translation missing --]]
 	L["This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"] = "This aura has legacy aura trigger(s). Convert them to the new system to benefit from enhanced performance and features"
@@ -733,6 +772,8 @@ Nur ein Wert kann ausgewählt werden.]=]
 	L["Update in Group"] = "Update in Group"
 	--[[Translation missing --]]
 	L["Update this Aura"] = "Update this Aura"
+	--[[Translation missing --]]
+	L["Use Display Info Id"] = "Use Display Info Id"
 	L["Use Full Scan (High CPU)"] = "Alle Auren scannen (CPU-Intensiv)"
 	--[[Translation missing --]]
 	L["Use nth value from tooltip:"] = "Use nth value from tooltip:"
@@ -763,11 +804,15 @@ Nur ein Wert kann ausgewählt werden.]=]
 	L["X Offset"] = "X-Versatz"
 	L["X Rotation"] = "X-Rotation"
 	L["X Scale"] = "Skalierung (X)"
+	--[[Translation missing --]]
+	L["X-Offset"] = "X-Offset"
 	L["Y Offset"] = "Y-Versatz"
 	L["Y Rotation"] = "Y-Rotation"
 	L["Y Scale"] = "Skalierung (Y)"
 	L["Yellow Rune"] = "Gelbe Rune"
 	L["Yes"] = "Ja"
+	--[[Translation missing --]]
+	L["Y-Offset"] = "Y-Offset"
 	L["You are about to delete %d aura(s). |cFFFF0000This cannot be undone!|r Would you like to continue?"] = "Du bist im Begriff %d Aura/Auren zu löschen. |cFFFF0000Das Löschen kann nicht rückgängig gemacht werden!|r Willst du fortfahren?"
 	L["Z Offset"] = "Z-Versatz"
 	L["Z Rotation"] = "Z-Rotation"

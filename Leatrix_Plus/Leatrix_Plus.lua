@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
--- 	Leatrix Plus 8.1.00 (12th December 2018, www.leatrix.com)
+-- 	Leatrix Plus 8.2.05 (31st July 2019, www.leatrix.com)
 ----------------------------------------------------------------------
 
 --	01:Functions	20:Live			50:RunOnce		70:Logout			
@@ -20,7 +20,7 @@
 	local void
 
 --	Version
-	LeaPlusLC["AddonVer"] = "8.1.00"
+	LeaPlusLC["AddonVer"] = "8.2.05"
 	LeaPlusLC["RestartReq"] = nil
 
 --	If client restart is required and has not been done, show warning and quit
@@ -390,6 +390,7 @@
 		LeaPlusLC:LockOption("FrmEnabled", "MoveFramesButton", true)			-- Manage frames
 		LeaPlusLC:LockOption("ShowPlayerChain", "ModPlayerChain", true)			-- Show player chain
 		LeaPlusLC:LockOption("ViewPortEnable", "ModViewportBtn", true)			-- Enable viewport
+		LeaPlusLC:LockOption("MuteGameSounds", "MuteGameSoundsBtn", false)		-- Mute game sounds
 	end
 
 ----------------------------------------------------------------------
@@ -453,6 +454,7 @@
 		or	(LeaPlusLC["NoBagAutomation"]		~= LeaPlusDB["NoBagAutomation"])		-- Disable bag automation
 		or	(LeaPlusLC["NoPetAutomation"]		~= LeaPlusDB["NoPetAutomation"])		-- Disable pet automation
 		or	(LeaPlusLC["CharAddonList"]			~= LeaPlusDB["CharAddonList"])			-- Show character addons
+		or	(LeaPlusLC["SaveProfFilters"]		~= LeaPlusDB["SaveProfFilters"])		-- Save profession filters
 		or	(LeaPlusLC["FasterLooting"]			~= LeaPlusDB["FasterLooting"])			-- Faster auto loot
 		or	(LeaPlusLC["FasterMovieSkip"]		~= LeaPlusDB["FasterMovieSkip"])		-- Faster movie skip
 		or	(LeaPlusLC["LockoutSharing"]		~= LeaPlusDB["LockoutSharing"])			-- Lockout sharing
@@ -596,6 +598,256 @@
 ----------------------------------------------------------------------
 
 	function LeaPlusLC:Isolated()
+
+		----------------------------------------------------------------------
+		-- Mute game sounds (no reload required)
+		----------------------------------------------------------------------
+
+		do
+
+			-- Create soundtable
+			local muteTable = {
+
+				["MuteFizzle"] = {			"sound/spells/fizzle/fizzlefirea.ogg#569773", "sound/spells/fizzle/FizzleFrostA.ogg#569775", "sound/spells/fizzle/FizzleHolyA.ogg#569772", "sound/spells/fizzle/FizzleNatureA.ogg#569774", "sound/spells/fizzle/FizzleShadowA.ogg#569776",},
+				["MuteInterface"] = {		"sound/interface/iUiInterfaceButtonA.ogg#567481", "sound/interface/uChatScrollButton.ogg#567407", "sound/interface/uEscapeScreenClose.ogg#567464", "sound/interface/uEscapeScreenOpen.ogg#567490",},
+				["MuteSniffing"] = {		"sound/creature/worgenfemale/worgenfemale_emotesniff_01.ogg#564422", "sound/creature/worgenfemale/worgenfemale_emotesniff_02.ogg#564378", "sound/creature/worgenfemale/worgenfemale_emotesniff_03.ogg#564383", "sound/creature/worgenfemale/worgenmale_emotesniff_01.ogg#564560", "sound/creature/worgenfemale/worgenmale_emotesniff_02.ogg#564544", "sound/creature/worgenfemale/worgenmale_emotesniff_03.ogg#564536",},
+
+			}
+
+			-- Give table file level scope (its used during logout and for wipe and admin commands)
+			LeaPlusLC["muteTable"] = muteTable
+
+			-- Load saved settings or set default values
+			for k, v in pairs(muteTable) do
+				if LeaPlusDB[k] and type(LeaPlusDB[k]) == "string" and LeaPlusDB[k] == "On" or LeaPlusDB[k] == "Off" then
+					LeaPlusLC[k] = LeaPlusDB[k]
+				else
+					LeaPlusLC[k] = "Off"
+					LeaPlusDB[k] = "Off"
+				end
+			end
+
+			-- Create configuration panel
+			local SoundPanel = LeaPlusLC:CreatePanel("Mute Game Sounds", "SoundPanel")
+
+			-- Add checkboxes
+			LeaPlusLC:MakeTx(SoundPanel, "Settings", 16, -72)
+			LeaPlusLC:MakeCB(SoundPanel, "MuteFizzle", "Fizzle", 16, -92, false, "If checked, the spell fizzle sounds will be muted.")
+			LeaPlusLC:MakeCB(SoundPanel, "MuteInterface", "Interface", 16, -112, false, "If checked, the interface button sound, the chat frame tab click sound and the game menu toggle sound will be muted.")
+			LeaPlusLC:MakeCB(SoundPanel, "MuteSniffing", "Sniffing", 16, -132, false, "If checked, the worgen sniffing sounds will be muted.")
+
+			-- Function to mute and unmute sounds
+			local function SetupMute()
+				for k, v in pairs(muteTable) do
+					if LeaPlusLC["MuteGameSounds"] == "On" and LeaPlusLC[k] == "On" then
+						for i, e in pairs(v) do
+							local file, soundID = e:match("([^,]+)%#([^,]+)")
+							MuteSoundFile(soundID)
+						end
+					else
+						for i, e in pairs(v) do
+							local file, soundID = e:match("([^,]+)%#([^,]+)")
+							UnmuteSoundFile(soundID)
+						end
+					end
+				end
+			end
+
+			-- Setup mute on startup if option is enabled
+			if LeaPlusLC["MuteGameSounds"] == "On" then SetupMute() end
+
+			-- Setup mute when options are clicked
+			for k, v in pairs(muteTable) do
+				LeaPlusCB[k]:HookScript("OnClick", SetupMute)
+			end
+			LeaPlusCB["MuteGameSounds"]:HookScript("OnClick", SetupMute)
+
+			-- Help button hidden
+			SoundPanel.h:Hide()
+
+			-- Back button handler
+			SoundPanel.b:SetScript("OnClick", function() 
+				SoundPanel:Hide(); LeaPlusLC["PageF"]:Show(); LeaPlusLC["Page7"]:Show()
+				return
+			end)
+
+			-- Reset button handler
+			SoundPanel.r:SetScript("OnClick", function()
+
+				-- Reset checkboxes
+				for k, v in pairs(muteTable) do
+					LeaPlusLC[k] = "Off"
+				end
+				SetupMute()
+
+				-- Refresh panel
+				SoundPanel:Hide(); SoundPanel:Show()
+
+			end)
+
+			-- Show panal when options panel button is clicked
+			LeaPlusCB["MuteGameSoundsBtn"]:SetScript("OnClick", function()
+				if IsShiftKeyDown() and IsControlKeyDown() then
+					-- Preset profile
+					for k, v in pairs(muteTable) do
+						LeaPlusLC[k] = "On"
+					end
+					SetupMute()
+				else
+					SoundPanel:Show()
+					LeaPlusLC:HideFrames()
+				end
+			end)
+
+		end
+
+		----------------------------------------------------------------------
+		-- Save profession filters
+		----------------------------------------------------------------------
+
+		if LeaPlusLC["SaveProfFilters"] == "On" then
+
+			-- Main function
+			local function SetProfFilterFunc()
+
+				local ts = {}
+
+				local tradeEvent = CreateFrame("FRAME")
+				tradeEvent:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
+				tradeEvent:SetScript("OnEvent", function()
+
+					-- Do nothing if trade skill UI is not open and loaded
+					if not C_TradeSkillUI.IsTradeSkillReady() then return end
+
+					-- Get current trade skill
+					local tradeSkillID = C_TradeSkillUI.GetTradeSkillLine()
+					if not tradeSkillID then return end
+
+					-- Set has materials checkbox
+					if ts["TradeSkillShowOnlyHasMaterials" .. tradeSkillID] then
+						C_TradeSkillUI.SetOnlyShowMakeableRecipes(ts["TradeSkillShowOnlyHasMaterials" .. tradeSkillID])
+					else
+						C_TradeSkillUI.SetOnlyShowMakeableRecipes(false)
+					end
+
+					-- Set has skill up checkbox
+					if ts["TradeSkillShowOnlySkillUps" .. tradeSkillID] then
+						C_TradeSkillUI.SetOnlyShowSkillUpRecipes(ts["TradeSkillShowOnlySkillUps" .. tradeSkillID])
+					else
+						C_TradeSkillUI.SetOnlyShowSkillUpRecipes(false)
+					end
+
+					-- Set slots filter
+					if ts["TradeSkillInventorySlot" .. tradeSkillID] then
+						C_TradeSkillUI.SetInventorySlotFilter(ts["TradeSkillInventorySlot" .. tradeSkillID], true, true)
+					end
+
+					-- Set category filter
+					if ts["TradeSkillRecipeCategory" .. tradeSkillID] then
+						C_TradeSkillUI.SetRecipeCategoryFilter(ts["TradeSkillRecipeCategory" .. tradeSkillID], ts["TradeSkillRecipeSubCategory" .. tradeSkillID])
+					end
+
+					-- Set source filter
+					local numSources = C_PetJournal.GetNumPetSources()
+					if numSources then
+						for i = 1, numSources do
+							if ts["TradeSkillSource" .. tradeSkillID .. i] then
+								C_TradeSkillUI.SetRecipeSourceTypeFilter(i, ts["TradeSkillSource" .. tradeSkillID .. i])
+							else
+								C_TradeSkillUI.SetRecipeSourceTypeFilter(i, false)
+							end
+						end
+					end
+
+				end)
+
+				-- Save has materials checkbox
+				hooksecurefunc(C_TradeSkillUI, "SetOnlyShowMakeableRecipes", function(state)
+					if not C_TradeSkillUI.IsTradeSkillReady() then return end
+					local tradeSkillID = C_TradeSkillUI.GetTradeSkillLine()
+					if tradeSkillID then
+						ts["TradeSkillShowOnlyHasMaterials" .. tradeSkillID] = state
+					end
+				end)
+
+				-- Save has skill up checkbox
+				hooksecurefunc(C_TradeSkillUI, "SetOnlyShowSkillUpRecipes", function(state)
+					if not C_TradeSkillUI.IsTradeSkillReady() then return end
+					local tradeSkillID = C_TradeSkillUI.GetTradeSkillLine()
+					if tradeSkillID then
+						ts["TradeSkillShowOnlySkillUps" .. tradeSkillID] = state
+					end
+				end)
+
+				-- Save slots filter
+				hooksecurefunc(C_TradeSkillUI, "SetInventorySlotFilter", function(state)
+					if not C_TradeSkillUI.IsTradeSkillReady() then return end
+					local tradeSkillID = C_TradeSkillUI.GetTradeSkillLine()
+					if tradeSkillID then
+						ts["TradeSkillInventorySlot" .. tradeSkillID] = state
+					end
+				end)
+
+				-- Save category filter
+				hooksecurefunc(C_TradeSkillUI, "SetRecipeCategoryFilter", function(categoryID, subCategoryID)
+					if not C_TradeSkillUI.IsTradeSkillReady() then return end
+					if categoryID then
+						local tradeSkillID = C_TradeSkillUI.GetTradeSkillLine()
+						if tradeSkillID then
+							ts["TradeSkillRecipeCategory" .. tradeSkillID] = categoryID
+							ts["TradeSkillRecipeSubCategory" .. tradeSkillID] = subCategoryID
+						end
+					end
+				end)
+
+				-- Save source filter
+				hooksecurefunc(C_TradeSkillUI, "SetRecipeSourceTypeFilter", function(sourceType, filtered)
+					if not C_TradeSkillUI.IsTradeSkillReady() then return end
+					local tradeSkillID = C_TradeSkillUI.GetTradeSkillLine()
+					if tradeSkillID then
+						ts["TradeSkillSource" .. tradeSkillID .. sourceType] = filtered
+					end
+				end)
+
+				-- Clear some settings when filter bar is closed
+				TradeSkillFrame.RecipeList.FilterBar.ExitButton:HookScript("OnClick", function()
+					local tradeSkillID = C_TradeSkillUI.GetTradeSkillLine()
+					if tradeSkillID then
+						ts["TradeSkillRecipeCategory" .. tradeSkillID] = nil -- Category
+						ts["TradeSkillRecipeSubCategory" .. tradeSkillID] = nil -- Subcategory
+						ts["TradeSkillInventorySlot" .. tradeSkillID] = nil -- Slots
+						-- Clear sources
+						local numSources = C_PetJournal.GetNumPetSources()
+						if numSources then
+							for i = 1, numSources do
+								ts["TradeSkillSource" .. tradeSkillID .. i] = nil
+							end
+						end
+					end
+				end)
+
+				-- Clear some settings on startup
+				C_TradeSkillUI.SetOnlyShowMakeableRecipes(false) -- Has materials
+				C_TradeSkillUI.SetOnlyShowSkillUpRecipes(false) -- Has skill up
+				C_TradeSkillUI.ClearRecipeSourceTypeFilter() -- Sources
+
+			end
+
+			-- Run function when Blizzard addon has loaded
+			if IsAddOnLoaded("Blizzard_TradeSkillUI") then
+				SetProfFilterFunc()
+			else
+				local waitFrame = CreateFrame("FRAME")
+				waitFrame:RegisterEvent("ADDON_LOADED")
+				waitFrame:SetScript("OnEvent", function(self, event, arg1)
+					if arg1 == "Blizzard_TradeSkillUI" then
+						SetProfFilterFunc()
+						waitFrame:UnregisterAllEvents()
+					end
+				end)
+			end
+
+		end
 
 		----------------------------------------------------------------------
 		-- Faster movie skip
@@ -822,7 +1074,7 @@
 						mEB.tiptext = questLink:match("%[(.-)%]") .. "|n" .. L["Press CTRL/C to copy."]
 					else
 						mEB.tiptext = ""
-						if mEB:IsMouseOver() and WorldMapTooltip:IsShown() then WorldMapTooltip:Hide() end
+						if mEB:IsMouseOver() and GameTooltip:IsShown() then GameTooltip:Hide() end
 					end
 				end
 			end
@@ -840,15 +1092,15 @@
 			mEB:HookScript("OnEnter", function()
 				mEB:HighlightText()
 				mEB:SetFocus()
-				WorldMapTooltip:SetOwner(mEB, "ANCHOR_BOTTOM", 0, -10)
-				WorldMapTooltip:SetText(mEB.tiptext, nil, nil, nil, nil, true)
-				WorldMapTooltip:Show()
+				GameTooltip:SetOwner(mEB, "ANCHOR_BOTTOM", 0, -10)
+				GameTooltip:SetText(mEB.tiptext, nil, nil, nil, nil, true)
+				GameTooltip:Show()
 			end)
 
 			mEB:HookScript("OnLeave", function()
 				mEB:HighlightText(0, 0)
 				mEB:ClearFocus()
-				WorldMapTooltip:Hide()
+				GameTooltip:Hide()
 				SetQuestInBox()
 			end)
 
@@ -1373,18 +1625,6 @@
 
 		do
 
-			-- Function to show quest dialog for popup quests in the objective tracker
-			local function PopupQuestComplete()
-				if GetNumAutoQuestPopUps() > 0 then
-					local questId, questType = GetAutoQuestPopUp(1)
-					if questType == "COMPLETE" then
-						local index = GetQuestLogIndexByID(questId)
-						ShowQuestComplete(index)
-					end
-					LeaPlusLC.PopupQuestTicker:Cancel()
-				end
-			end
-
 			-- Funcion to ignore specific NPCs
 			local function isNpcBlocked(actionType)
 				local npcGuid = UnitGUID("target") or nil
@@ -1467,6 +1707,9 @@
 										-- Item is a crafting reagent so do nothing
 										return true
 									end
+									if itemID == 104286 then -- Quivering Firestorm Egg
+										return true
+									end
 								end
 							end
 						end
@@ -1506,7 +1749,7 @@
 			if LeaPlusLC["AutomateQuests"] == "On" then SetupEvents() end
 
 			-- Event handler
-			qFrame:SetScript("OnEvent", function(self, event)
+			qFrame:SetScript("OnEvent", function(self, event, arg1)
 
 				-- Clear progress items when quest interaction has ceased
 				if event == "QUEST_FINISHED" then
@@ -1579,7 +1822,10 @@
 
 				-- Show quest dialog for quests that use the objective tracker (it will be completed automatically)
 				if event == "QUEST_AUTOCOMPLETE" then
-					LeaPlusLC.PopupQuestTicker = C_Timer.NewTicker(0.25, PopupQuestComplete, 20)
+					local index = GetQuestLogIndexByID(arg1)
+					if GetQuestLogIsAutoComplete(index) then
+						ShowQuestComplete(index)
+					end
 				end
 
 				----------------------------------------------------------------------
@@ -1596,43 +1842,33 @@
 
 						-- Select quests
 						if event == "QUEST_GREETING" then
-							-- Quest greeting
-							local availableCount = GetNumAvailableQuests() + GetNumActiveQuests()
-							if availableCount >= 1 then
-								for i = 1, availableCount do
-									if _G["QuestTitleButton" .. i].isActive == 0 then
-										-- Select available quests
-										SelectAvailableQuest(_G["QuestTitleButton" .. i]:GetID())
-										break
-									else
-										-- Select completed quests
-										local void, isComplete = GetActiveTitle(i)
-										if isComplete then
-											SelectActiveQuest(_G["QuestTitleButton" .. i]:GetID())
-											break
-										end
-									end
+							-- Select quest greeting completed quests
+							for i = 1, GetNumActiveQuests() do
+								local title, isComplete = GetActiveTitle(i)
+								if title and isComplete then
+									return SelectActiveQuest(i)
+								end
+							end
+							-- Select quest greeting available quests
+							for i = 1, GetNumAvailableQuests() do
+								local title, isComplete = GetAvailableTitle(i)
+								if title and not isComplete then
+									return SelectAvailableQuest(i)
 								end
 							end
 						else
-							-- Gossip frame
-							local availableCount = GetNumGossipAvailableQuests() + GetNumGossipActiveQuests()
-							if availableCount >= 1 then
-								for i = 1, availableCount do
-									if _G["GossipTitleButton" .. i].type == "Available" then
-										-- Select available quests
-										SelectGossipAvailableQuest(i)
-										break
-									else
-										-- Select completed quests
-										local isComplete = select(i * 6 - 5 + 3, GetGossipActiveQuests()) -- 4th argument of 6 argument line
-										if isComplete then
-											if _G["GossipTitleButton" .. i].type == "Active" then
-												SelectGossipActiveQuest(_G["GossipTitleButton" .. i]:GetID())
-												break
-											end
-										end
-									end
+							-- Select gossip completed quests
+							for i = 1, GetNumGossipActiveQuests() do
+								local title, level, isTrivial, isComplete, isLegendary, isIgnored = select(i * 6 - 5, GetGossipActiveQuests())
+								if title and isComplete then
+									return SelectGossipActiveQuest(i)
+								end
+							end
+							-- Select gossip available quests
+							for i = 1, GetNumGossipAvailableQuests() do
+								local title, level, isTrivial, isDaily, isRepeatable, isLegendary, isIgnored = select(i * 7 - 6, GetGossipAvailableQuests())
+								if title then
+									return SelectGossipAvailableQuest(i)
 								end
 							end
 						end
@@ -1923,7 +2159,9 @@
 				end)
 			else
 				-- If combat log is undocked, do nothing but show warning
-				LeaPlusLC:Print("Combat log cannot be hidden while undocked.")
+				C_Timer.After(1, function()
+					LeaPlusLC:Print("Combat log cannot be hidden while undocked.")
+				end)
 			end
 		end
 
@@ -2104,7 +2342,7 @@
 
 			-- Add slider control
 			LeaPlusLC:MakeTx(SideMinimap, "Scale", 356, -72)
-			LeaPlusLC:MakeSL(SideMinimap, "MinimapScale", "", 1, 2, 0.1, 356, -92, "%.2f")
+			LeaPlusLC:MakeSL(SideMinimap, "MinimapScale", "Drag to set the minimap scale.|n|nNote that if you are using the default action bars, rescaling the minimap will also rescale the right action bars at startup so you may want to leave this at 100%.", 1, 2, 0.1, 356, -92, "%.2f")
 
 			----------------------------------------------------------------------
 			-- Hide the zone text bar
@@ -2139,27 +2377,36 @@
 			local function SetTitleBarPos()
 				if OrderHallCommandBar then
 					if OrderHallCommandBar:IsShown() then
-						if LeaPlusLC["HideZoneTextBar"] == "On" then
-							MinimapCluster:ClearAllPoints()
-							MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
-						else
-							MinimapCluster:ClearAllPoints()
-							MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, -20)
+						-- Order hall command bar is showing so move minimap cluster to top
+						MinimapCluster:ClearAllPoints()
+						MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
+						if LeaPlusLC["HideZoneTextBar"] == "Off" then
+							-- Zone text bar is showing so hide it as it will be behind the order hall command bar
+							MinimapBorderTop:SetTexture("")
+							MinimapZoneTextButton:Hide()
+							MiniMapWorldMapButton:Hide()
 						end
 					else
+						-- Order hall command bar is not showing
 						if LeaPlusLC["HideZoneTextBar"] == "On" then
+							-- Zone text bar is being hidden so move minimap cluster down below the order hall command bar
 							MinimapCluster:ClearAllPoints()
 							MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 20)
 						else
+							-- Zone text bar is not being hidden so move order hall command bar to top
 							MinimapCluster:ClearAllPoints()
 							MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
+							-- Show zone text bar
+							MinimapZoneTextButton:Show()
+							MiniMapWorldMapButton:Show()
+							MinimapBorderTop:SetTexture("Interface\\Minimap\\UI-Minimap-Border")
 						end
 					end
 				else
+					-- Order hall command bar has not been loaded by the game yet
 					if LeaPlusLC["HideZoneTextBar"] == "On" then
 						MinimapCluster:ClearAllPoints()
 						MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 20)
-
 					else
 						MinimapCluster:ClearAllPoints()
 						MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
@@ -2411,7 +2658,7 @@
 			local QuestTextPanel = LeaPlusLC:CreatePanel("Quest Text", "QuestTextPanel")
 
 			LeaPlusLC:MakeTx(QuestTextPanel, "Text size", 16, -72)
-			LeaPlusLC:MakeSL(QuestTextPanel, "LeaPlusQuestFontSize", "", 10, 36, 1, 16, -92, "%.0f")
+			LeaPlusLC:MakeSL(QuestTextPanel, "LeaPlusQuestFontSize", "Drag to set the font size of quest text.", 10, 36, 1, 16, -92, "%.0f")
 
 			-- Function to update the font size
 			local function QuestSizeUpdate()
@@ -2469,7 +2716,7 @@
 			local MailTextPanel = LeaPlusLC:CreatePanel("Mail Text", "MailTextPanel")
 
 			LeaPlusLC:MakeTx(MailTextPanel, "Text size", 16, -72)
-			LeaPlusLC:MakeSL(MailTextPanel, "LeaPlusMailFontSize", "", 10, 36, 1, 16, -92, "%.0f")
+			LeaPlusLC:MakeSL(MailTextPanel, "LeaPlusMailFontSize", "Drag to set the font size of mail text.", 10, 36, 1, 16, -92, "%.0f")
 
 			-- Function to set the text size
 			local function MailSizeUpdate()
@@ -2542,12 +2789,12 @@
 
 				if where == "tip" then
 					-- Creare layout
+					GameTooltip:AddLine("|cffffffff")
+					GameTooltip:AddLine("|cffffffff")
+					GameTooltip:AddLine("|cffffffff")
 					_G["GameTooltipTextLeft1"]:SetText("|cffffffff"); _G["GameTooltipTextRight1"]:SetText("|cffffffff")
 					_G["GameTooltipTextLeft2"]:SetText("|cffffffff"); _G["GameTooltipTextRight2"]:SetText("|cffffffff")
 					_G["GameTooltipTextLeft3"]:SetText("|cffffffff"); _G["GameTooltipTextRight3"]:SetText("|cffffffff")
-					GameTooltip:AddLine("|cffffffff")
-					GameTooltip:AddLine("|cffffffff")
-					GameTooltip:AddLine("|cffffffff")
 				end
 
 				local validItems = false
@@ -2920,7 +3167,7 @@
 				-- Left button down
 				if arg1 == "LeftButton" then
 
-					-- Control key modifier toggles target tracking
+					-- Control key toggles target tracking
 					if IsControlKeyDown() and not IsShiftKeyDown() then
 						for i = 1, GetNumTrackingTypes() do
 							local name, texture, active, category = GetTrackingInfo(i)
@@ -2937,7 +3184,7 @@
 						return
 					end
 
-					-- Shift key modifier toggles the music
+					-- Shift key toggles music
 					if IsShiftKeyDown() and not IsControlKeyDown() then
 						Sound_ToggleMusic();
 						return
@@ -2963,7 +3210,7 @@
 				-- Right button down
 				if arg1 == "RightButton" then
 
-					-- Control key modifier toggles error messages
+					-- Control key toggles error messages
 					if IsControlKeyDown() and not IsShiftKeyDown() then
 						if LeaPlusDB["HideErrorMessages"] == "On" then -- Checks global
 							if LeaPlusLC["ShowErrorsFlag"] == 1 then 
@@ -2978,13 +3225,19 @@
 						return
 					end
 
+					-- Shift key toggles stopwatch
+					if IsShiftKeyDown() and not IsControlKeyDown() then
+						Stopwatch_Toggle()
+						return
+					end
+
 					-- Shift key and control key toggles maximised window mode
 					if IsShiftKeyDown() and IsControlKeyDown() then
 						if LeaPlusLC:PlayerInCombat() then
 							return
 						else
-							SetCVar("gxMaximize", tostring(1 - GetCVar("gxMaximize")));
-							RestartGx();
+							SetCVar("gxMaximize", tostring(1 - GetCVar("gxMaximize")))
+							UpdateWindow()
 						end
 						return
 					end
@@ -3003,39 +3256,34 @@
 
 			end
 
-			-- Create minimap button
-			if LibStub and LibStub("LibDBIcon-1.0", true) and LibStub("CallbackHandler-1.0", true) and LibStub("LibDataBroker-1.1", true) then
+			-- Create minimap button using LibDBIcon
+			local ldb = LibStub("LibDataBroker-1.1", true)
+			local miniButton = ldb:NewDataObject("Leatrix_Plus", {
+				type = "launcher",
+				icon = "Interface\\HELPFRAME\\ReportLagIcon-Movement",
+				OnClick = function(self, btn)
+					MiniBtnClickFunc(btn)
+				end,
+				OnTooltipShow = function(tooltip)
+					if not tooltip or not tooltip.AddLine then return end
+					tooltip:AddLine("Leatrix Plus")
+				end,
+			})
+			local icon = LibStub("LibDBIcon-1.0", true)
+			icon:Register("Leatrix_Plus", miniButton, LeaPlusDB)
 
-				-- LibDBIcon is being used so create LibDBIcon button
-				local ldb = LibStub("LibDataBroker-1.1", true)
-				local miniButton = ldb:NewDataObject("Leatrix_Plus", {
-					type = "launcher",
-					icon = "Interface\\HELPFRAME\\ReportLagIcon-Movement",
-					OnClick = function(self, btn)
-						MiniBtnClickFunc(btn)
-					end,
-					OnTooltipShow = function(tooltip)
-						if not tooltip or not tooltip.AddLine then return end
-						tooltip:AddLine("Leatrix Plus")
-					end,
-				})
-				local icon = LibStub("LibDBIcon-1.0", true)
-				icon:Register("Leatrix_Plus", miniButton, LeaPlusDB)
-
-				-- Function to toggle LibDBIcon
-				local function SetLibDBIconFunc()
-					if LeaPlusLC["ShowMinimapIcon"] == "On" then
-						icon:Show("Leatrix_Plus")
-					else
-						icon:Hide("Leatrix_Plus")
-					end
+			-- Function to toggle LibDBIcon
+			local function SetLibDBIconFunc()
+				if LeaPlusLC["ShowMinimapIcon"] == "On" then
+					icon:Show("Leatrix_Plus")
+				else
+					icon:Hide("Leatrix_Plus")
 				end
-
-				-- Set LibDBIcon when option is clicked and on startup
-				LeaPlusCB["ShowMinimapIcon"]:HookScript("OnClick", SetLibDBIconFunc)
-				SetLibDBIconFunc()
-
 			end
+
+			-- Set LibDBIcon when option is clicked and on startup
+			LeaPlusCB["ShowMinimapIcon"]:HookScript("OnClick", SetLibDBIconFunc)
+			SetLibDBIconFunc()
 
 		end
 
@@ -3131,9 +3379,12 @@
 	
 				-- Lock the create auction button if buyout gold box is empty (when using buyout only and gold only)
 				AuctionsCreateAuctionButton:HookScript("OnEnable", function()
+					-- Do nothing if wow token frame is showing
+					if AuctionsWowTokenAuctionFrame:IsShown() then return end
+					-- Lock the create auction button if both checkboxes are enabled and buyout gold price is empty
 					if LeaPlusLC["AhGoldOnly"] == "On" and LeaPlusLC["AhBuyoutOnly"] == "On" then
 						if BuyoutPriceGold:GetText() == "" then
-							AuctionsCreateAuctionButton:Disable();
+							AuctionsCreateAuctionButton:Disable()
 						end
 					end
 				end)
@@ -3171,13 +3422,13 @@
 						if BrowseWowTokenResults:IsShown() then
 							-- Stop if Game Time filter is currently shown
 							AuctionFrameTab1:Click()
-							LeaPlusLC:Print("To use the Find button, you need to deselect the Game Time filter.")
+							LeaPlusLC:Print("To use the Find Item button, you need to deselect the WoW Token category.")
 						else
 							-- Otherwise, search for the required item
 							local name = GetAuctionSellItemInfo()
 							BrowseName:SetText(name)
 							ExactMatchCheckButton:SetChecked(true) -- Necessary for scrolling through results pages with exact match
-							QueryAuctionItems(name, 0, 0, 0, 0, 0, false, true, 0)
+							QueryAuctionItems(name, 0, 0, 0, false, 0, false, true)
 							AuctionFrameTab1:Click()
 						end
 					end
@@ -3354,8 +3605,26 @@
 			local buffSetPos = BuffFrame.SetPoint
 			local powerBarAltSetPos = PlayerPowerBarAlt.SetPoint
 
+			-- Create and manage container for UIWidgetTopCenterContainerFrame
+			local topCenterHolder = CreateFrame("Frame", "LeaPlusTopCenterContainerHolder", UIParent)
+			topCenterHolder:SetPoint("TOP", UIParent, "TOP", 0, -30)
+			topCenterHolder:SetSize(10, 58)
+
+			local topCenterContainer = _G.UIWidgetTopCenterContainerFrame
+			topCenterContainer:ClearAllPoints()
+			topCenterContainer:SetPoint('CENTER', topCenterHolder)
+
+			hooksecurefunc(topCenterContainer, 'SetPoint', function(self, void, b)
+				local holder = _G.LeaPlusTopCenterContainerHolder
+				if b and (b ~= holder) then
+					self:ClearAllPoints()
+					self:SetPoint('CENTER', holder)
+					self:SetParent(holder)
+				end
+			end)
+
 			-- Create frame table (used for local traversal)
-			local FrameTable = {DragPlayerFrame = PlayerFrame, DragTargetFrame = TargetFrame, DragGhostFrame = GhostFrame, DragMirrorTimer1 = MirrorTimer1, DragUIWidgetTopCenterContainerFrame = UIWidgetTopCenterContainerFrame, DragBuffFrame = BuffFrame, DragPlayerPowerBarAlt = PlayerPowerBarAlt}
+			local FrameTable = {DragPlayerFrame = PlayerFrame, DragTargetFrame = TargetFrame, DragGhostFrame = GhostFrame, DragMirrorTimer1 = MirrorTimer1, DragLeaPlusTopCenterContainerHolder = LeaPlusTopCenterContainerHolder, DragBuffFrame = BuffFrame, DragPlayerPowerBarAlt = PlayerPowerBarAlt}
 
 			-- Create main table structure in saved variables if it doesn't exist
 			if (LeaPlusDB["Frames"]) == nil then
@@ -3364,14 +3633,14 @@
 
 			-- Create frame based table structure in saved variables if it doesn't exist and set initial scales
 			for k,v in pairs(FrameTable) do
-				local vf = v:GetName();
+				local vf = v:GetName()
 				-- Create frame table structure if it doesn't exist
 				if not LeaPlusDB["Frames"][vf] then
 					LeaPlusDB["Frames"][vf] = {}
 				end
 				-- Set saved scale value to default if it doesn't exist
 				if not LeaPlusDB["Frames"][vf]["Scale"] then
-					LeaPlusDB["Frames"][vf]["Scale"] = 1.00;
+					LeaPlusDB["Frames"][vf]["Scale"] = 1.00
 				end
 				-- Set frame scale to saved value
 				_G[vf]:SetScale(LeaPlusDB["Frames"][vf]["Scale"])
@@ -3379,17 +3648,18 @@
 
 			-- Set cached status
 			local function LeaPlusFramesSaveCache(frame)
+				_G[frame]:SetMovable(true)
 				if frame == "PlayerFrame" or frame == "TargetFrame" then
-					_G[frame]:SetUserPlaced(true);
+					_G[frame]:SetUserPlaced(true)
 				else
-					_G[frame]:SetUserPlaced(false);
+					_G[frame]:SetUserPlaced(false)
 				end
 			end
 
 			-- Set frames to manual values
 			local function LeaFramesSetPos(frame, point, parent, relative, xoff, yoff)
-				frame:SetMovable(true);
-				frame:ClearAllPoints();
+				frame:SetMovable(true)
+				frame:ClearAllPoints()
 				if frame:GetName() == "BuffFrame" then
 					buffSetPos(BuffFrame, point, parent, relative, xoff, yoff)
 				elseif frame:GetName() == "PlayerPowerBarAlt" then
@@ -3405,7 +3675,7 @@
 				LeaFramesSetPos(TargetFrame						, "TOPLEFT"	, UIParent, "TOPLEFT"	, 250, -4)
 				LeaFramesSetPos(GhostFrame						, "TOP"		, UIParent, "TOP"		, -5, -29)
 				LeaFramesSetPos(MirrorTimer1					, "TOP"		, UIParent, "TOP"		, -5, -96)
-				LeaFramesSetPos(UIWidgetTopCenterContainerFrame	, "TOP"		, UIParent, "TOP"		, 0, -15)
+				LeaFramesSetPos(LeaPlusTopCenterContainerHolder	, "TOP"		, UIParent, "TOP"		, 0, -15)
 				LeaFramesSetPos(BuffFrame						, "TOPRIGHT", UIParent, "TOPRIGHT"	, -205, -13)
 				LeaFramesSetPos(PlayerPowerBarAlt				, "BOTTOM"	, UIParent, "BOTTOM"	, 0, 115)
 			end
@@ -3423,20 +3693,24 @@
 			LeaPlusLC["FrameScale"] = 1.00
 
 			-- Create scale slider
-			LeaPlusLC:MakeSL(SideFrames, "FrameScale", "", 0.5, 3.0, 0.05, 16, -92, "%.2f")
+			LeaPlusLC:MakeSL(SideFrames, "FrameScale", "Drag to set the scale of the selected frame.", 0.5, 3.0, 0.05, 16, -92, "%.2f")
 			LeaPlusCB["FrameScale"]:HookScript("OnValueChanged", function(self, value)
 				if currentframe then -- If a frame is selected
 					-- Set real and drag frame scale
-					LeaPlusDB["Frames"][currentframe]["Scale"] = value;
-					_G[currentframe]:SetScale(LeaPlusDB["Frames"][currentframe]["Scale"]);
-					LeaPlusLC["Drag" .. currentframe]:SetScale(LeaPlusDB["Frames"][currentframe]["Scale"]);
+					LeaPlusDB["Frames"][currentframe]["Scale"] = value
+					_G[currentframe]:SetScale(LeaPlusDB["Frames"][currentframe]["Scale"])
+					LeaPlusLC["Drag" .. currentframe]:SetScale(LeaPlusDB["Frames"][currentframe]["Scale"])
 					-- If target frame scale is changed, also change combo point frame
 					if currentframe == "TargetFrame" then
-						ComboFrame:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"]);
+						ComboFrame:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"])
 					end
 					-- If buff frame scale is changed, also change temporary enchant frame
 					if currentframe == "BuffFrame" then
-						TemporaryEnchantFrame:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"]);
+						TemporaryEnchantFrame:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"])
+					end
+					-- If widget top holder scale is changed, also change real widget top center frame
+					if currentframe == "LeaPlusTopCenterContainerHolder" then
+						UIWidgetTopCenterContainerFrame:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
 					end
 					-- Set slider formatted text
 					LeaPlusCB["FrameScale"].f:SetFormattedText("%.0f%%", LeaPlusLC["FrameScale"] * 100)
@@ -3462,14 +3736,14 @@
 			-- Back button handler
 			SideFrames.b:SetScript("OnClick", function()
 				-- Hide outer control frame
-				SideFrames:Hide();
+				SideFrames:Hide()
 				-- Hide drag frames
 				for k, void in pairs(FrameTable) do
-					LeaPlusLC[k]:Hide();
+					LeaPlusLC[k]:Hide()
 				end
 				-- Show options panel at frame section
-				LeaPlusLC["PageF"]:Show();
-				LeaPlusLC["Page6"]:Show();
+				LeaPlusLC["PageF"]:Show()
+				LeaPlusLC["Page6"]:Show()
 			end) 
 
 			-- Reset button handler
@@ -3479,48 +3753,53 @@
 					return
 				else
 					-- Set frames to default positions (presets)
-					LeaPlusFramesDefaults();
+					LeaPlusFramesDefaults()
 					for k,v in pairs(FrameTable) do
 						local vf = v:GetName()
 						-- Store frame locations
-						LeaPlusDB["Frames"][vf]["Point"], void, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"] = _G[vf]:GetPoint();
+						LeaPlusDB["Frames"][vf]["Point"], void, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"] = _G[vf]:GetPoint()
 						-- Reset real frame scales and save them
-						LeaPlusDB["Frames"][vf]["Scale"] = 1.00;
-						_G[vf]:SetScale(LeaPlusDB["Frames"][vf]["Scale"]);
+						LeaPlusDB["Frames"][vf]["Scale"] = 1.00
+						_G[vf]:SetScale(LeaPlusDB["Frames"][vf]["Scale"])
 						-- Reset drag frame scales
-						LeaPlusLC[k]:SetScale(LeaPlusDB["Frames"][vf]["Scale"]);
+						LeaPlusLC[k]:SetScale(LeaPlusDB["Frames"][vf]["Scale"])
 					end
 					-- Set combo frame scale to match target frame scale
-					ComboFrame:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"]);
+					ComboFrame:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"])
 					-- Set temporary enchant frame scale to match buff frame scale
-					TemporaryEnchantFrame:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"]);
+					TemporaryEnchantFrame:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"])
+					-- Set real widget top center frame scale to match holder frame
+					UIWidgetTopCenterContainerFrame:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
+					LeaPlusTopCenterContainerHolder:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
 					-- Set the scale slider value to the selected frame scale
-					LeaPlusCB["FrameScale"]:SetValue(LeaPlusDB["Frames"][currentframe]["Scale"]);
+					LeaPlusCB["FrameScale"]:SetValue(LeaPlusDB["Frames"][currentframe]["Scale"])
 					-- Refresh the panel
-					SideFrames:Hide();SideFrames:Show();
+					SideFrames:Hide(); SideFrames:Show()
 				end
 			end)
 
 			-- Show drag frames with configuration panel
 			SideFrames:HookScript("OnShow", function()
 				for k, void in pairs(FrameTable) do
-					LeaPlusLC[k]:Show();
+					LeaPlusLC[k]:Show()
 				end
 			end)
 			SideFrames:HookScript("OnHide", function()
 				for k, void in pairs(FrameTable) do
-					LeaPlusLC[k]:Hide();
+					LeaPlusLC[k]:Hide()
 				end
 			end)
 
 			-- Save frame positions
 			local function SaveAllFrames()
 				for k, v in pairs(FrameTable) do
-					local vf = v:GetName();
+					local vf = v:GetName()
 					-- Stop real frames from moving
-					v:StopMovingOrSizing();
+					v:StopMovingOrSizing()
 					-- Save frame positions
-					LeaPlusDB["Frames"][vf]["Point"], void, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"] = v:GetPoint();
+					LeaPlusDB["Frames"][vf]["Point"], void, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"] = v:GetPoint()
+					v:SetMovable(true)
+					v:ClearAllPoints()
 					v:SetPoint(LeaPlusDB["Frames"][vf]["Point"], UIParent, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"])
 					LeaPlusFramesSaveCache(vf)
 				end
@@ -3530,19 +3809,19 @@
 			SideFrames:RegisterEvent("PLAYER_REGEN_DISABLED")
 			SideFrames:SetScript("OnEvent", function()
 				-- Hide controls frame
-				SideFrames:Hide();
+				SideFrames:Hide()
 				-- Hide drag frames
 				for k,void in pairs(FrameTable) do
-					LeaPlusLC[k]:Hide();
+					LeaPlusLC[k]:Hide()
 				end
 				-- Save frame positions
-				SaveAllFrames();
+				SaveAllFrames()
 			end)
 
 			-- Create drag frames
 			local function LeaPlusMakeDrag(dragframe,realframe)
 
-				local dragframe = CreateFrame("Frame", nil);
+				local dragframe = CreateFrame("Frame", nil)
 				LeaPlusLC[dragframe] = dragframe
 				dragframe:SetSize(realframe:GetSize())
 				if realframe:GetName() == "BuffFrame" then
@@ -3552,12 +3831,13 @@
 				else
 					dragframe:SetPoint("TOP", realframe, "TOP", 0, 2.5)
 				end
-				dragframe:SetBackdropColor(0.0, 0.5, 1.0);
+				dragframe:SetBackdropColor(0.0, 0.5, 1.0)
 				dragframe:SetBackdrop({ 
 					edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
 					tile = false, tileSize = 0, edgeSize = 16,
-					insets = { left = 0, right = 0, top = 0, bottom = 0 }});
+					insets = { left = 0, right = 0, top = 0, bottom = 0 }})
 				dragframe:SetToplevel(true)
+				dragframe:SetFrameStrata("HIGH")
 
 				-- Set frame clamps
 				if realframe:GetName() == "BuffFrame" or realframe:GetName() == "PlayerPowerBarAlt" then
@@ -3568,13 +3848,14 @@
 
 				-- Hide the drag frame and make real frame movable
 				dragframe:Hide()
-				realframe:SetMovable(true);
+				realframe:SetMovable(true)
 
 				-- Click handler
 				dragframe:SetScript("OnMouseDown", function(self, btn)
 
 					-- Start dragging if left clicked
 					if btn == "LeftButton" then
+						realframe:SetMovable(true)
 						realframe:StartMoving()
 					end
 
@@ -3586,7 +3867,7 @@
 
 					-- Set currentframe variable to selected frame and set the scale slider value
 					currentframe = realframe:GetName();
-					LeaPlusCB["FrameScale"]:SetValue(LeaPlusDB["Frames"][currentframe]["Scale"]);
+					LeaPlusCB["FrameScale"]:SetValue(LeaPlusDB["Frames"][currentframe]["Scale"])
 
 				end)
 
@@ -3608,7 +3889,7 @@
 				if realframe:GetName() == "TargetFrame" 					then dragframe.f:SetText(L["Target"]) end
 				if realframe:GetName() == "MirrorTimer1" 					then dragframe.f:SetText(L["Timer"]) end
 				if realframe:GetName() == "GhostFrame" 						then dragframe.f:SetText(L["Ghost"]) end
-				if realframe:GetName() == "UIWidgetTopCenterContainerFrame" then dragframe.f:SetText(L["Widget"] .. "|n" .. L["Top Center"]) end
+				if realframe:GetName() == "LeaPlusTopCenterContainerHolder" then dragframe.f:SetText(L["Widget"] .. "|n" .. L["Top Center"]) end
 				if realframe:GetName() == "BuffFrame" 						then dragframe.f:SetText(L["Buffs"]) end
 				if realframe:GetName() == "PlayerPowerBarAlt" 				then dragframe.f:SetText(L["Power"]) end
 				return LeaPlusLC[dragframe]
@@ -3621,22 +3902,25 @@
 
 			-- Set frame scales
 			for k,v in pairs(FrameTable) do
-				local vf = v:GetName();
-				_G[vf]:SetScale(LeaPlusDB["Frames"][vf]["Scale"]);
-				LeaPlusLC[k]:SetScale(LeaPlusDB["Frames"][vf]["Scale"]);
+				local vf = v:GetName()
+				_G[vf]:SetScale(LeaPlusDB["Frames"][vf]["Scale"])
+				LeaPlusLC[k]:SetScale(LeaPlusDB["Frames"][vf]["Scale"])
 			end
 			ComboFrame:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"]);
-			TemporaryEnchantFrame:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"]);
+			TemporaryEnchantFrame:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"])
+			UIWidgetTopCenterContainerFrame:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
+			LeaPlusTopCenterContainerHolder:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
 
 			-- Load defaults first then overwrite with saved values if they exist
-			LeaPlusFramesDefaults();
+			LeaPlusFramesDefaults()
 			if LeaPlusDB["Frames"] then
 				for k,v in pairs(FrameTable) do
 					local vf = v:GetName()
 					if LeaPlusDB["Frames"][vf] then
 						if LeaPlusDB["Frames"][vf]["Point"] and LeaPlusDB["Frames"][vf]["Relative"] and LeaPlusDB["Frames"][vf]["XOffset"] and LeaPlusDB["Frames"][vf]["YOffset"] then
 							LeaPlusFramesSaveCache(vf)
-							_G[vf]:ClearAllPoints();
+							_G[vf]:SetMovable(true)
+							_G[vf]:ClearAllPoints()
 							_G[vf]:SetPoint(LeaPlusDB["Frames"][vf]["Point"], UIParent, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"])
 						end
 					end
@@ -3646,6 +3930,7 @@
 			-- Prevent changes to buff frame position
 			hooksecurefunc(BuffFrame, "SetPoint", function()
 				if LeaPlusDB["Frames"]["BuffFrame"]["Point"] and LeaPlusDB["Frames"]["BuffFrame"]["Relative"] and LeaPlusDB["Frames"]["BuffFrame"]["XOffset"] and LeaPlusDB["Frames"]["BuffFrame"]["YOffset"] then
+					BuffFrame:SetMovable(true)
 					BuffFrame:ClearAllPoints()
 					buffSetPos(BuffFrame, LeaPlusDB["Frames"]["BuffFrame"]["Point"], UIParent, LeaPlusDB["Frames"]["BuffFrame"]["Relative"], LeaPlusDB["Frames"]["BuffFrame"]["XOffset"], LeaPlusDB["Frames"]["BuffFrame"]["YOffset"])
 				end
@@ -3654,6 +3939,7 @@
 			-- Prevent changes to player power bar alt frame position
 			hooksecurefunc(PlayerPowerBarAlt, "SetPoint", function()
 				if LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Point"] and LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Relative"] and LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["XOffset"] and LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["YOffset"] then
+					PlayerPowerBarAlt:SetMovable(true)
 					PlayerPowerBarAlt:ClearAllPoints()
 					powerBarAltSetPos(PlayerPowerBarAlt, LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Point"], UIParent, LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Relative"], LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["XOffset"], LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["YOffset"])
 				end
@@ -3670,33 +3956,42 @@
 						LeaFramesSetPos(TargetFrame						, "TOPLEFT"	, UIParent, "TOPLEFT"	,	"190"	, "-14")
 						LeaFramesSetPos(GhostFrame						, "CENTER"	, UIParent, "CENTER"	,	"3"		, "-142")
 						LeaFramesSetPos(MirrorTimer1					, "TOP"		, UIParent, "TOP"		,	"0"		, "-120")
-						LeaFramesSetPos(UIWidgetTopCenterContainerFrame	, "TOP"		, UIParent, "TOP"		,	"0"		, "-542")
+						LeaFramesSetPos(LeaPlusTopCenterContainerHolder	, "TOP"		, UIParent, "TOP"		,	"0"		, "-432")
 						LeaFramesSetPos(BuffFrame						, "TOPRIGHT", UIParent, "TOPRIGHT"	,	"-271"	, "0")
 						LeaFramesSetPos(PlayerPowerBarAlt				, "CENTER"	, UIParent, "CENTER"	,	"0"		, "-160")
+						-- Player
 						LeaPlusDB["Frames"]["PlayerFrame"]["Scale"] = 1.20;
-						PlayerFrame:SetScale(LeaPlusDB["Frames"]["PlayerFrame"]["Scale"]);
-						LeaPlusLC["DragPlayerFrame"]:SetScale(LeaPlusDB["Frames"]["PlayerFrame"]["Scale"]);
+						PlayerFrame:SetScale(LeaPlusDB["Frames"]["PlayerFrame"]["Scale"])
+						LeaPlusLC["DragPlayerFrame"]:SetScale(LeaPlusDB["Frames"]["PlayerFrame"]["Scale"])
+						-- Target
 						LeaPlusDB["Frames"]["TargetFrame"]["Scale"] = 1.20;
-						TargetFrame:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"]);
-						LeaPlusLC["DragTargetFrame"]:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"]);
+						TargetFrame:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"])
+						LeaPlusLC["DragTargetFrame"]:SetScale(LeaPlusDB["Frames"]["TargetFrame"]["Scale"])
+						-- LeaPlusTopCenterContainerHolder
+						LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"] = 1.25
+						UIWidgetTopCenterContainerFrame:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
+						LeaPlusTopCenterContainerHolder:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
+						LeaPlusLC["DragLeaPlusTopCenterContainerHolder"]:SetScale(LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"])
+						-- Buff
 						LeaPlusDB["Frames"]["BuffFrame"]["Scale"] = 0.80
 						BuffFrame:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"])
-						LeaPlusLC["DragBuffFrame"]:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"]);
+						LeaPlusLC["DragBuffFrame"]:SetScale(LeaPlusDB["Frames"]["BuffFrame"]["Scale"])
+						-- PlayerPowerBarAlt
 						LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Scale"] = 1.25
 						PlayerPowerBarAlt:SetScale(LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Scale"])
-						LeaPlusLC["DragPlayerPowerBarAlt"]:SetScale(LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Scale"]);
+						LeaPlusLC["DragPlayerPowerBarAlt"]:SetScale(LeaPlusDB["Frames"]["PlayerPowerBarAlt"]["Scale"])
 						-- Set the slider to the selected frame (if there is one)
 						if currentframe then LeaPlusCB["FrameScale"]:SetValue(LeaPlusDB["Frames"][currentframe]["Scale"]); end
 						-- Save locations
 						for k,v in pairs(FrameTable) do
-							local vf = v:GetName();
-							LeaPlusDB["Frames"][vf]["Point"], void, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"] = _G[vf]:GetPoint();
-							LeaPlusFramesSaveCache(vf);
+							local vf = v:GetName()
+							LeaPlusDB["Frames"][vf]["Point"], void, LeaPlusDB["Frames"][vf]["Relative"], LeaPlusDB["Frames"][vf]["XOffset"], LeaPlusDB["Frames"][vf]["YOffset"] = _G[vf]:GetPoint()
+							LeaPlusFramesSaveCache(vf)
 						end
 					else
 						-- Show mover frame
-						SideFrames:Show();
-						LeaPlusLC:HideFrames();
+						SideFrames:Show()
+						LeaPlusLC:HideFrames()
 
 						-- Find out if the UI has a non-standard scale
 						if GetCVar("useuiscale") == "1" then
@@ -3712,11 +4007,11 @@
 						end
 
 						-- Set specific scaled sizes for stubborn frames
-						LeaPlusLC["DragMirrorTimer1"]:SetSize(206 * LeaPlusLC["gscale"], 50 * LeaPlusLC["gscale"]);
-						LeaPlusLC["DragGhostFrame"]:SetSize(130 * LeaPlusLC["gscale"], 46 * LeaPlusLC["gscale"]);
-						LeaPlusLC["DragUIWidgetTopCenterContainerFrame"]:SetSize(160 * LeaPlusLC["gscale"], 79 * LeaPlusLC["gscale"]);
-						LeaPlusLC["DragBuffFrame"]:SetSize(280 * LeaPlusLC["gscale"], 225 * LeaPlusLC["gscale"]);
-						LeaPlusLC["DragPlayerPowerBarAlt"]:SetSize(130 * LeaPlusLC["gscale"], 46 * LeaPlusLC["gscale"]);
+						LeaPlusLC["DragMirrorTimer1"]:SetSize(206 * LeaPlusLC["gscale"], 50 * LeaPlusLC["gscale"])
+						LeaPlusLC["DragGhostFrame"]:SetSize(130 * LeaPlusLC["gscale"], 46 * LeaPlusLC["gscale"])
+						LeaPlusLC["DragLeaPlusTopCenterContainerHolder"]:SetSize(160 * LeaPlusLC["gscale"], 79 * LeaPlusLC["gscale"])
+						LeaPlusLC["DragBuffFrame"]:SetSize(280 * LeaPlusLC["gscale"], 225 * LeaPlusLC["gscale"])
+						LeaPlusLC["DragPlayerPowerBarAlt"]:SetSize(130 * LeaPlusLC["gscale"], 46 * LeaPlusLC["gscale"])
 					end
 				end
 			end)
@@ -3857,8 +4152,8 @@
 			local hideUI = false
 			local function HideRecentChatFrame() if editFrame:IsShown() then hideUI = true editFrame:Hide() end	end
 			local function ShowRecentChatFrame() if hideUI and not PetBattleFrame:IsShown() then editFrame:Show() hideUI = false end end
-			hooksecurefunc(UIParent, "Hide", HideRecentChatFrame)
-			hooksecurefunc(UIParent, "Show", ShowRecentChatFrame)
+			UIParent:HookScript("OnHide", HideRecentChatFrame)
+			UIParent:HookScript("OnShow", ShowRecentChatFrame)
 			hooksecurefunc("PetBattleFrame_Display", HideRecentChatFrame)
 			hooksecurefunc("PetBattleFrame_Remove", ShowRecentChatFrame)
 
@@ -3885,17 +4180,9 @@
 
 			-- Create editbox
 			local editBox = editFrame.EditBox
-			editBox:SetFontObject("ChatFontNormal")
-			editBox:SetFont(editBox:GetFont(), 18 * UIParent:GetEffectiveScale())
 			editBox:SetAltArrowKeyMode(false)
 			editBox:SetTextInsets(4, 4, 4, 4)
 			editBox:SetWidth(editFrame:GetWidth() - 30)
-
-			-- Set font size when UI scale is changed
-			editFrame:RegisterEvent("UI_SCALE_CHANGED")
-			editFrame:SetScript("OnEvent", function()
-				editBox:SetFont(editBox:GetFont(), 18 * UIParent:GetEffectiveScale())
-			end)
 
 			-- Close frame with right-click of editframe or editbox
 			local function CloseRecentChatWindow()
@@ -3910,11 +4197,6 @@
 
 			editBox:SetScript("OnMouseDown", function(self, btn)
 				if btn == "RightButton" then CloseRecentChatWindow() end
-			end)
-
-			-- Maintain editbox effective height
-			editFrame:HookScript("OnVerticalScroll", function(self, offset)
-				editBox:SetHitRectInsets(0, 0, offset, editBox:GetHeight() - offset - editBox:GetHeight())
 			end)
 
 			-- Disable text changes while still allowing editing controls to work
@@ -4459,7 +4741,7 @@
 			LeaPlusLC:MakeCB(SideTip, "TipHideInCombat", "Hide tooltips for world units during combat", 16, -172, false, "If checked, tooltips for world units will be hidden during combat.|n|nYou can hold the shift key down to override this setting.")
 
 			LeaPlusLC:MakeTx(SideTip, "Scale", 356, -72)
-			LeaPlusLC:MakeSL(SideTip, "LeaPlusTipSize", "", 0.50, 2.00, 0.05, 356, -92, "%.2f")
+			LeaPlusLC:MakeSL(SideTip, "LeaPlusTipSize", "Drag to set the tooltip scale.", 0.50, 2.00, 0.05, 356, -92, "%.2f")
 
 			-- Help button hidden
 			SideTip.h:Hide()
@@ -4601,10 +4883,7 @@
 					if ShoppingTooltip1 then ShoppingTooltip1:SetScale(LeaPlusLC["LeaPlusTipSize"]) end
 					if ShoppingTooltip2 then ShoppingTooltip2:SetScale(LeaPlusLC["LeaPlusTipSize"]) end
 
-					-- World map (objectives, story, comparisons)
-					if WorldMapTooltip then WorldMapTooltip:SetScale(LeaPlusLC["LeaPlusTipSize"]) end
-					if WorldMapCompareTooltip1 then WorldMapCompareTooltip1:SetScale(LeaPlusLC["LeaPlusTipSize"]) end
-					if WorldMapCompareTooltip2 then WorldMapCompareTooltip2:SetScale(LeaPlusLC["LeaPlusTipSize"]) end
+					-- World map (story)
 					if QuestScrollFrame.WarCampaignTooltip then	QuestScrollFrame.WarCampaignTooltip:SetScale(LeaPlusLC["LeaPlusTipSize"]) end
 					if QuestScrollFrame.StoryTooltip then
 						QuestScrollFrame.StoryTooltip:SetScale(LeaPlusLC["LeaPlusTipSize"])
@@ -5033,7 +5312,10 @@
 
 					-- Find the level line
 					LT["MobInfoLine"] = 0
-					local line2, line3, line4 = _G["GameTooltipTextLeft2"]:GetText(), _G["GameTooltipTextLeft3"]:GetText(), _G["GameTooltipTextLeft4"]:GetText()
+					local line2, line3, line4
+					if _G["GameTooltipTextLeft2"] then line2 = _G["GameTooltipTextLeft2"]:GetText() end
+					if _G["GameTooltipTextLeft3"] then line3 = _G["GameTooltipTextLeft3"]:GetText() end
+					if _G["GameTooltipTextLeft4"] then line4 = _G["GameTooltipTextLeft4"]:GetText() end
 					if GameLocale == "ruRU" then -- Additional check for ruRU
 						if line2 and string.lower(line2):find(LevelString2) then LT["MobInfoLine"] = 2 end
 						if line3 and string.lower(line3):find(LevelString2) then LT["MobInfoLine"] = 3 end
@@ -5254,23 +5536,23 @@
 
 			-- Create slider controls
 			LeaPlusLC:MakeTx(SideViewport, "Top", 16, -72)
-			LeaPlusLC:MakeSL(SideViewport, "ViewPortTop", "", 0, 300, 5, 16, -92, "%.0f")
+			LeaPlusLC:MakeSL(SideViewport, "ViewPortTop", "Drag to set the size of the top border.", 0, 300, 5, 16, -92, "%.0f")
 			LeaPlusCB["ViewPortTop"]:HookScript("OnValueChanged", RefreshViewport)
 
 			LeaPlusLC:MakeTx(SideViewport, "Bottom", 16, -132)
-			LeaPlusLC:MakeSL(SideViewport, "ViewPortBottom", "", 0, 300, 5, 16, -152, "%.0f")
+			LeaPlusLC:MakeSL(SideViewport, "ViewPortBottom", "Drag to set the size of the bottom border.", 0, 300, 5, 16, -152, "%.0f")
 			LeaPlusCB["ViewPortBottom"]:HookScript("OnValueChanged", RefreshViewport)
 
 			LeaPlusLC:MakeTx(SideViewport, "Left", 186, -72)
-			LeaPlusLC:MakeSL(SideViewport, "ViewPortLeft", "", 0, 300, 5, 186, -92, "%.0f")
+			LeaPlusLC:MakeSL(SideViewport, "ViewPortLeft", "Drag to set the size of the left border.", 0, 300, 5, 186, -92, "%.0f")
 			LeaPlusCB["ViewPortLeft"]:HookScript("OnValueChanged", RefreshViewport)
 
 			LeaPlusLC:MakeTx(SideViewport, "Right", 186, -132)
-			LeaPlusLC:MakeSL(SideViewport, "ViewPortRight", "", 0, 300, 5, 186, -152, "%.0f")
+			LeaPlusLC:MakeSL(SideViewport, "ViewPortRight", "Drag to set the size of the right border.", 0, 300, 5, 186, -152, "%.0f")
 			LeaPlusCB["ViewPortRight"]:HookScript("OnValueChanged", RefreshViewport)
 
 			LeaPlusLC:MakeTx(SideViewport, "Transparency", 356, -132)
-			LeaPlusLC:MakeSL(SideViewport, "ViewPortAlpha", "", 0, 0.9, 0.1, 356, -152, "%.1f")
+			LeaPlusLC:MakeSL(SideViewport, "ViewPortAlpha", "Drag to set the transparency of the borders.", 0, 0.9, 0.1, 356, -152, "%.1f")
 			LeaPlusCB["ViewPortAlpha"]:HookScript("OnValueChanged", RefreshViewport)
 
 			-- Help button tooltip
@@ -5446,6 +5728,9 @@
 			local uframe = CreateFrame("FRAME")
 			local prefol = "|cffffffaa{" .. L["right-click to go back"] .. "}"
 
+			-- These categories will not appear in random track selections
+			local randomBannedList = {L["Narration"], L["Cinematics"], "MUS_51_DarkmoonFaire_MerryGoRound_01#34440"}
+
 			-- Create a table for each heading
 			ZoneList = {L["Zones"], L["Dungeons"], L["Various"], L["Random"], L["Search"], L["Movies"]}
 			for k, v in ipairs(ZoneList) do
@@ -5460,6 +5745,7 @@
 			-- Debug
 			-- Zn(L["Zones"], L["Eastern Kingdoms"], "Debug1", {"|cffffd800" .. L["Zones"] .. ": Debug1", "1020#1020", "1021#1021", "1022#1022", "1023#1023", "1024#1024",})
 			-- Zn(L["Zones"], L["Eastern Kingdoms"], "Debug2", {"|cffffd800" .. L["Zones"] .. ": Debug2", "1020#1020",})
+			-- Zn(L["Zones"], L["Eastern Kingdoms"], "Debug3", {"|cffffd800" .. L["Zones"] .. ": Debug2", "1020#1020", "sound/creature/hagara/vo_ds_hagara_crystalhit_01.ogg#574431#1",})
 
 			-- Zones: Eastern Kingdoms
 			Zn(L["Zones"], L["Eastern Kingdoms"], "|cffffd800" .. L["Eastern Kingdoms"], {""})
@@ -5596,12 +5882,14 @@
 			Zn(L["Zones"], L["Kul Tiras"], "|cffffd800", {""})
 			Zn(L["Zones"], L["Kul Tiras"], "|cffffd800" .. L["Kul Tiras"], {""})
 			Zn(L["Zones"], L["Kul Tiras"], L["Drustvar"]								, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Drustvar"], prefol, "MUS_80_Drustvar_AromsStand#115790", "MUS_80_Drustvar_Chandlery#116862", "MUS_80_Drustvar_Corlain#115798", "MUS_80_Drustvar_CrimsonForest#115793", "MUS_80_Drustvar_Fallhaven_Day#116808", "MUS_80_Drustvar_Fallhaven_Night#116809", "MUS_80_Drustvar_HighroadPass#115787", "MUS_80_Drustvar_Town#93658", "MUS_80_Drustvar_Waycrest#115809", "MUS_80_Vol'dun_Azerite#116567",})
+			Zn(L["Zones"], L["Kul Tiras"], L["Mechagon"]								, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Mechagon"], prefol, "MUS_82_Mechagon_GeneralWalk#137815", "MUS_82_Mechagon_BondosYard#138271", "MUS_82_Mechagon_ForestWalk#138266", "MUS_82_Mechagon_Rustbolt#138270", "MUS_82_Mechagon_ScrapboneDenWalk#138267", "MUS_82_Mechagon_WesternSprayWalk#138269",})
 			Zn(L["Zones"], L["Kul Tiras"], L["Stormsong Valley"]						, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Stormsong Valley"], prefol, "MUS_80_StormsongValley_Walk_Day#116050", "MUS_80_StormsongValley_Walk_Night#116068", "MUS_80_StormsongValley_Ashvane#116055", "MUS_80_StormsongValley_Horde#116057", "MUS_80_StormsongValley_Naga#116054", "MUS_80_StormsongValley_OldGods#116056", "MUS_80_StormsongValley_Quilboar#116052", "MUS_80_StormsongValley_ShrineofStorms#116091", "MUS_80_StormsongValley_Tortollan#116070",})
 			Zn(L["Zones"], L["Kul Tiras"], L["Tiragarde Sound"]							, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Tiragarde Sound"], prefol, "MUS_80_TiragardeSound_Walk_Day#115888", "MUS_80_TiragardeSound_Walk_Night#115896", "MUS_80_TiragardeSound_Anglepoint_OldGods#116661", "MUS_80_TiragardeSound_Ashvane#115988", "MUS_80_TiragardeSound_Boralus_Day#116005", "MUS_80_TiragardeSound_Boralus_Night#116006", "MUS_80_TiragardeSound_Estate_Day#115967", --[["MUS_80_TiragardeSound_Estate_Night#115968",]] "MUS_80_TirgardeSound_Freehold#116110", "MUS_80_TiragardeSound_SirenSong#115999", "MUS_80_TiragardeSound_SirenSong_Cave#116659", "MUS_80_TiragardeSound_Proudmore_Day#116290", "MUS_80_TiragardeSound_Proudmore_Night#116291", "MUS_80_TiragardeSound_VigilHill_Day#115997", --[["MUS_80_TiragardeSound_VigilHill_Night#115998",]] "MUS_80_TiragardeSound_Witch#116660", --[["MUS_80_TiragardeSound_Taverns_Day#116559", "MUS_80_TiragardeSound_Taverns_Night#116560",]] "MUS_80_Vol'dun_Azerite#116567",})
 
 			-- Zones: Zandalar
 			Zn(L["Zones"], L["Zandalar"], "|cffffd800", {""})
 			Zn(L["Zones"], L["Zandalar"], "|cffffd800" .. L["Zandalar"], {""})
+			Zn(L["Zones"], L["Zandalar"], L["Nazjatar"]									, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Nazjatar"], prefol, "MUS_82_Nazjatar_GeneralWalk_01#137770", "MUS_82_Nazjatar_AzsharaWalk_01#138519", "MUS_82_Nazjatar_CaveWalk_01#138516", "MUS_82_Nazjatar_HubWalk_01#138520", "MUS_82_Nazjatar_LandingWalk_01#138506", "MUS_82_Nazjatar_SeaweedWalk_01#138513", "MUS_82_Nazjatar_ZinAzshariWalk_01#138508",})
 			Zn(L["Zones"], L["Zandalar"], L["Nazmir"]									, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Nazmir"], prefol, "MUS_80_Nazmir_GeneralWalk_Day#93666", "MUS_80_Nazmir_GeneralWalk_Night#116065", "MUS_80_Nazmir_Jurassic#116224", "MUS_80_Nazmir_Naga#116115", "MUS_80_Nazmir_Necropolis#116108", "MUS_80_Nazmir_Sethrak#116116", "MUS_80_Nazmir_Void#93672",})
 			Zn(L["Zones"], L["Zandalar"], L["Vol'dun"]									, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Vol'dun"], prefol, "MUS_80_Vol'dun_GeneralWalk_Day#116281", --[["MUS_80_Vol'dun_GeneralWalk_Night#116284",]] "MUS_80_Vol'dun_Ashvane#116538", "MUS_80_Vol'dun_Azerite#116567", "MUS_80_Vol'dun_Distorted#116561", "MUS_80_Vol'dun_Naga#116486", "MUS_80_Vol'dun_Sethrak#116484", "MUS_80_Vol'dun_Tortollan#116485", "MUS_80_Nazmir_Necropolis#116108",})
 			Zn(L["Zones"], L["Zandalar"], L["Zuldazar"]									, {	"|cffffd800" .. L["Zones"] .. ": " .. L["Zuldazar"], prefol, "MUS_80_Zuldazar_GeneralWalk_Day#116611", --[["MUS_80_Zuldazar_GeneralWalk_Night#116629",]] "MUS_80_Zuldazar_Atal'Dazar#117049", "MUS_80_Zuldazar_Azerite#116609", "MUS_80_Zuldazar_BloodMagic#117025", "MUS_80_Zuldazar_Dazar'alor_Day#116674", "MUS_80_Zuldazar_Dazar'alor_Night#116986", --[["MUS_80_Zuldazar_Gral'sGrotto#117011",]] "MUS_80_Zuldazar_Naga#116962", "MUS_80_Zuldazar_Sethrak#116951", "MUS_80_Zuldazar_Tortollan#116964", "MUS_80_DGN_CityofGold_Grand#93663",})
@@ -5735,10 +6023,12 @@
 			Zn(L["Dungeons"], L["Battle for Azeroth"], "|cffffd800" .. L["Battle for Azeroth"], {""})
 			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Atal'Dazar"]					, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Atal'Dazar"], prefol, "MUS_80_DGN_CityofGold#93663",})
 			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Battle of Dazar'alor"]		, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Battle of Dazar'alor"], prefol, "MUS_81_RAID_Zuldazar_Alliance_BloodMoon#126421", "MUS_81_RAID_Zuldazar_Alliance_Port#126352", "MUS_81_RAID_Zuldazar_Horde_Walk#125915", "MUS_81_RAID_Zuldazar_Horde_Port#126348", "MUS_81_RAID_Zuldazar_Pyramid#126329", "MUS_81_RAID_Zuldazar_Boss_Jaina02#126356",})
-			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Crucible of Storms"]			, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Crucible of Storms"], prefol, "MUS_80_DGN_ShrineOfStorms_Shadows#116123",})
+			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Crucible of Storms"]			, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Crucible of Storms"], prefol, "MUS_815_CrucibleofStorms#129930", "MUS_815_RAID_CrucibleofStorms_GeneralWalk01#129976", "MUS_815_RAID_CrucibleofStorms_Boss01#129975", "MUS_815_RAID_CrucibleofStorms_Boss02#129979", "MUS_80_DGN_ShrineOfStorms_Shadows#116123",})
+			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Eternal Palace"]				, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Eternal Palace"], prefol, "MUS_82_EternalPalace_Raid_UnderwaterlWalk#138630",})
 			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Freehold"]					, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Freehold"], prefol, "MUS_70_Nightmare_Solo#73392", "MUS_80_DGN_Freehold_Outskirts#93660",})
-			Zn(L["Dungeons"], L["Battle for Azeroth"], L["King's Rest"]					, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["King's Rest"], prefol, "MUS_80_DGN_King'sRest#117218",})
+			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Kings' Rest"]					, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Kings' Rest"], prefol, "MUS_80_DGN_King'sRest#117218",})
 			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Motherlode"]					, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Motherlode"], prefol, "MUS_80_DGN_TheMotherlode_General_Walk#117425", "MUS_80_DGN_TheMotherlode_BombArea_Walk#117427",})
+			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Operation Mechagon"]			, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Operation Mechagon"], prefol, "MUS_82_DGN_Mechagon_IslandWalk#138441",})
 			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Shrine of the Storm"]			, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Shrine of the Storm"], prefol, "MUS_80_DGN_ShrineOfStorms_Walk#116118", "MUS_80_DGN_ShrineOfStorms_Shadows#116123",})
 			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Siege of Boralus"]			, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Siege of Boralus"], prefol, "MUS_80_DGN_SiegeOfBoralus_Walk#116219", "MUS_80_DGN_SiegeOfBoralus_Kraken#116225",})
 			Zn(L["Dungeons"], L["Battle for Azeroth"], L["Temple of Sethraliss"]		, {	"|cffffd800" .. L["Dungeons"] .. ": " .. L["Temple of Sethraliss"], prefol, "MUS_80_DGN_TempleofSethraliss#117251",})
@@ -5752,19 +6042,126 @@
 			Zn(L["Various"], L["Various"], L["Allied Races"], {	"|cffffd800" .. L["Various"] .. ": " .. L["Allied Races"], prefol, 
 				"|cffffd800", "|cffffd800" .. L["Dark Iron Dwarves"], "MUS_80_AlliedRace_DarkIronDwarf_Intro#117230", "MUS_80_AlliedRace_DarkIronDwarf_Intro02#117258", "MUS_80_AlliedRace_DarkIronDwarf_Intro03#117261", "MUS_80_AlliedRace_DarkIronDwarf01_Start#117245", "MUS_80_AlliedRace_DarkIronDwarf02_Start#117246", "MUS_80_AlliedRace_DarkIronDwarf_Scenario_SFC#117250", "MUS_80_AlliedRace_DarkIronDwarf_Scenario_Firelands#117260",
 				"|cffffd800", "|cffffd800" .. L["Highmountain Tauren"], "MUS_735_AR_RTC_HighmountainTauren_Flythrough#98204",
+				"|cffffd800", "|cffffd800" .. L["Kul Tiran Humans"], "MUS_815_AlliedRace_KulTiran_Harbormaster#129703", "MUS_815_AlliedRace_KulTiran_Brennadam#129705", "MUS_815_AlliedRace_KulTiran_Atwater#129706", "MUS_815_AlliedRace_KulTiran_FogtideComplete#129715", "MUS_815_AlliedRace_KulTiran_Boat#129717", "MUS_815_AlliedRace_KulTiran_EvergreenGrove#129733",
 				"|cffffd800", "|cffffd800" .. L["Lightforged Draenei"], "MUS_735_AR_RTC_LightforgedDraenei_Flythrough#98201", "MUS_735_AlliedRace_LightforgedDraenei_Vindicaar_01#97314", "MUS_735_AlliedRace_LightforgedDraenei_ForgeofAeons#97316", "MUS_735_AR_RTC_LightforgedDraenei_PreScenario_01#98199", "MUS_735_AR_RTC_LightforgedDraenei_PreScenario_02#98200",
 				"|cffffd800", "|cffffd800" .. L["Mag'har Orcs"], "MUS_80_AlliedRace_Mag'harOrc_Intro#117279", "MUS_80_AlliedRace_Mag'harOrc02_Intro#117436", "MUS_80_AlliedRace_Mag'harOrc01#117280", "MUS_80_AlliedRace_Mag'harOrc02#117281", "MUS_80_AlliedRace_Mag'harOrc_Light#117286", "MUS_80_AlliedRace_Mag'harOrc_Light_Intro#117441",
 				"|cffffd800", "|cffffd800" .. L["Nightborne"], "MUS_735_AR_RTC_Nightborne_Flythrough#98205", "MUS_735_AR_RTC_Nightborne_Silvermoon_01#98214", "MUS_735_AR_RTC_Nightborne_Silvermoon_03#98215", "MUS_735_AR_RTC_Nightborne_ThalyssraEstate_01#98195", "MUS_735_AR_RTC_Nightborne_ThalyssraEstate_02#98196", "MUS_735_AR_RTC_Nightborne_ThalyssraEstate_03#98197",
 				"|cffffd800", "|cffffd800" .. L["Void Elves"], "MUS_735_AR_RTC_VoidElf_Flythrough#98206", "MUS_735_AlliedRace_VoidElf_01#97311", "MUS_735_AlliedRace_VoidElf_02#97312", "MUS_735_AlliedRace_VoidElf_Scenario_01#97782", "MUS_735_AlliedRace_VoidElf_Scenario_02#97783", "MUS_735_AlliedRace_VoidElf_Scenario_03#97784", "MUS_735_AR_ThunderBluff_VoidAttack#97785",
+				"|cffffd800", "|cffffd800" .. L["Zandalari Trolls"], "MUS_815_AlliedRace_Zandalari_Instigators#129762", "MUS_815_AlliedRace_Zandalari_LoaBwonsamdi#129666", "MUS_815_AlliedRace_Zandalari_LoaFly#129773", "MUS_815_AlliedRace_Zandalari_LoaGonk#129663", "MUS_815_AlliedRace_Zandalari_LoaPaku#129664", "MUS_815_AlliedRace_Zandalari_Start#129774",
 				"|cffffd800", "|cffffd800" .. L["Embassies"], "MUS_735_AlliedRace_EmbassyAlliance_01#97594", "MUS_735_AlliedRace_EmbassyHorde_01#97593",
 			})
 			Zn(L["Various"], L["Various"], L["Arenas"]									, {	"|cffffd800" .. L["Various"] .. ": " .. L["Arenas"], prefol, "Intro-NagrandDimond#10623", "MUS_50_Scenario_ArenaofAnnihilation#34019", "MUS_51_PVP_BrawlersGuild_Horde#34967", --[["MUS_80_PVP_ZandalarArena#117041", "MUS_80_PVP_KulTirasArena#114680",--]] "PVP-Battle Grounds#8233", "Zone-BladesEdge#9002",})
-			Zn(L["Various"], L["Various"], L["Battlegrounds"]							, {	"|cffffd800" .. L["Various"] .. ": " .. L["Battlegrounds"], prefol, "Altervac Valley_PVP#8014", "MUS_50_Scenario_TempleofKotmogu#33978", "MUS_BattleForGilneas_BG#23612", "MUS_TwinPeaks_BG#23613", "PVP-Battle Grounds#8233", "PVP-Battle Grounds--DeepwindGorge#37659", "PVP-Battle Grounds-Pandaria#33714", "PVP-Battle Grounds-SilvershardMines#33713", "PVPVictoryAlliance#8455", "PVPVictoryHorde#8454", "Zone-WintergraspContested#14912",})
+			Zn(L["Various"], L["Various"], L["Battlegrounds"]							, {	"|cffffd800" .. L["Various"] .. ": " .. L["Battlegrounds"], prefol, "Altervac Valley_PVP#8014", "MUS_50_Scenario_TempleofKotmogu#33978", "MUS_815_PVP_ArathiBasin_Intro#129818", "MUS_815_PVP_WarsongGultch_Intro#129817", "MUS_BattleForGilneas_BG#23612", "MUS_TwinPeaks_BG#23613", "PVP-Battle Grounds#8233", "PVP-Battle Grounds--DeepwindGorge#37659", "PVP-Battle Grounds-Pandaria#33714", "PVP-Battle Grounds-SilvershardMines#33713", "PVPVictoryAlliance#8455", "PVPVictoryHorde#8454", "Zone-WintergraspContested#14912",})
+			Zn(L["Various"], L["Various"], L["Cinematics"]								, {	"|cffffd800" .. L["Various"] .. ": " .. L["Cinematics"], prefol, 
+				-- Cinematic Music: World of Warcraft
+				"|cffffd800", "|cffffd800" .. L["World of Warcraft"], 
+				"|Cffffffff" .. L["Ten Years of Warcraft"] .. " |r#625988#27", -- interface/cinematics/logo.mp3
+				"|Cffffffff" .. L["World of Warcraft"] .. " |r#625564#170", -- interface/cinematics/wow_intro.mp3
+
+				-- Cinematic Music: The Burning Crusade
+				"|cffffd800", "|cffffd800" .. L["The Burning Crusade"], 
+				"|Cffffffff" .. L["The Burning Crusade"] .. " |r#625565#168", -- interface/cinematics/wow_intro_bc.mp3
+
+				-- Cinematic Music: Wrath of the Lich King
+				"|cffffd800", "|cffffd800" .. L["Wrath of the Lich King"], 
+				"|Cffffffff" .. L["Wrath of the Lich King"] .. " |r#457498#198", -- interface/cinematics/wow_intro_lk.mp3
+				"|Cffffffff" .. L["Battle of Angrathar the Wrathgate"] .. " |r#458394#265", -- interface/cinematics/wow_wrathgate.mp3
+				"|Cffffffff" .. L["Fall of the Lich King"] .. " |r#625989#231", -- interface/cinematics/wow_fotlk.mp3
+
+				-- Cinematic Music: Cataclysm
+				"|cffffd800", "|cffffd800" .. L["Cataclysm"], 
+				"|Cffffffff" .. L["Cataclysm"] .. " |r#455939#144", -- interface/cinematics/wow3x_intro.mp3
+				"|Cffffffff" .. L["Last Stand"] .. " |r#455940#101", -- interface/cinematics/worgen.mp3
+				"|Cffffffff" .. L["Leaving Kezan"] .. " |r#452603#104", -- interface/cinematics/goblin.mp3
+				"|Cffffffff" .. L["The Dragon Soul"] .. " |r#576955#29", -- interface/cinematics/dsi_act1.mp3
+				"|Cffffffff" .. L["Spine of Deathwing"] .. " |r#576956#21", -- interface/cinematics/dsi_act2.mp3
+				"|Cffffffff" .. L["Madness of Deathwing"] .. " |r#576957#27", -- interface/cinematics/dsi_act3.mp3
+				"|Cffffffff" .. L["Fall of Deathwing"] .. " |r#577085#94", -- interface/cinematics/dsi_act4.mp3
+
+				-- Cinematic Music: Mists of Pandaria
+				"|cffffd800", "|cffffd800" .. L["Mists of Pandaria"], 
+				"|Cffffffff" .. L["Mists of Pandaria"] .. " |r#644071#228", -- interface/cinematics/wow_intro_mop.mp3
+				"|Cffffffff" .. L["Risking It All"] .. " |r#644128#62", -- interface/cinematics/mop_gse.mp3
+				"|Cffffffff" .. L["Leaving the Wandering Isle"] .. " |r#644124#40", -- interface/cinematics/mop_br.mp3
+				"|Cffffffff" .. L["Jade Forest Crash"] .. " |r#654949#18", -- interface/cinematics/mop_jade_crash.mp3
+				"|Cffffffff" .. L["The King's Command"] .. " |r#644136#59", -- interface/cinematics/mop_wra.mp3
+				"|Cffffffff" .. L["The Art of War"] .. " |r#644138#56", -- interface/cinematics/mop_wrh.mp3
+				"|Cffffffff" .. L["Battle of Serpent's Heart"] .. " |r#644134#106", -- interface/cinematics/mop_jade.mp3
+				"|Cffffffff" .. L["The Fleet in Krasarang (Horde)"] .. " |r#668416#27", -- interface/cinematics/mop_hsl.mp3
+				"|Cffffffff" .. L["The Fleet in Krasarang (Alliance)"] .. " |r#668414#27", -- interface/cinematics/mop_asl.mp3
+				"|Cffffffff" .. L["Hellscream's Downfall (Horde)"] .. " |r#916419#161", -- interface/cinematics/oro_horde.mp3
+				"|Cffffffff" .. L["Hellscream's Downfall (Alliance)"] .. " |r#916417#140", -- interface/cinematics/oro_alliance.mp3
+
+				-- Cinematic Music: Warlords of Draenor
+				"|cffffd800", "|cffffd800" .. L["Warlords of Draenor"], 
+				"|Cffffffff" .. L["Warlords of Draenor"] .. " |r#1068826#258", -- interface/cinematics/wod_mainintro.mp3
+				--"|Cffffffff" .. L["Darkness Falls"] .. " |r#1068485#610", -- interface/cinematics/wod_vel.mp3
+				--"|Cffffffff" .. L["The Battle of Thunder Pass"] .. " |r#1068482#43", -- interface/cinematics/wod_fwv.mp3
+				--"|Cffffffff" .. L["A Taste of Iron"] .. " |r#1068481#19", -- interface/cinematics/wod_dpo.mp3
+				--"|Cffffffff" .. L["Bigger is Better (Alliance)"] .. " |r#1068478#13", -- interface/cinematics/wod_gar_alliance_tier1-2.mp3
+				--"|Cffffffff" .. L["Gul'dan Ascendant"] .. " |r#1112524#278", -- interface/cinematics/wod_gto.mp3
+				--"|Cffffffff" .. L["Shipyard Construction (Horde)"] .. " |r#1137841#14", -- interface/cinematics/wod_gar_shipyard_lj_h.mp3
+
+				-- Cinematic Music: Legion
+				"|cffffd800", "|cffffd800" .. L["Legion"], 
+				"|Cffffffff" .. L["Legion"] .. " |r#1487144#225", -- interface/cinematics/legion_intro.mp3
+				"|Cffffffff" .. L["The Invasion Begins"] .. " |r#1487142#64", -- interface/cinematics/legion_dh1.mp3
+				"|Cffffffff" .. L["Return to the Black Temple"] .. " |r#1487143#129", -- interface/cinematics/legion_dh2.mp3
+				"|Cffffffff" .. L["The Demon's Trail"] .. " |r#1487148#38", -- interface/cinematics/legion_val_yx.mp3
+				"|Cffffffff" .. L["The Fate of Val'sharah"] .. " |r#1487147#82", -- interface/cinematics/legion_val_yd.mp3
+				"|Cffffffff" .. L["Fate of the Horde"] .. " |r#1487145#145", -- interface/cinematics/legion_org_vs.mp3
+				"|Cffffffff" .. L["A New Life for Undeath"] .. " |r#1487146#114", -- interface/cinematics/legion_sth.mp3
+				"|Cffffffff" .. L["Harbingers Gul'dan"] .. " |r#1487156#364", -- interface/cinematics/legion_hrb_g.mp3
+				"|Cffffffff" .. L["Harbingers Khadgar"] .. " |r#1487155#311", -- interface/cinematics/legion_hrb_k.mp3
+				"|Cffffffff" .. L["Harbingers Illidan"] .. " |r#1487157#245", -- interface/cinematics/legion_hrb_i.mp3
+				"|Cffffffff" .. L["The Nightborne Pact"] .. " |r#1510277#129", -- interface/cinematics/legion_su_i.mp3
+				"|Cffffffff" .. L["Stormheim (Horde)"] .. " |r#1506511#19", -- interface/cinematics/legion_g_h_sth.mp3
+				"|Cffffffff" .. L["Stormheim (Alliance)"] .. " |r#1506512#20", -- interface/cinematics/legion_g_a_sth.mp3
+				"|Cffffffff" .. L["Tomb of Sargeras"] .. " |r#1505326#15", -- interface/cinematics/legion_bs_i.mp3
+				"|Cffffffff" .. L["The Battle for Broken Shore (Alliance)"] .. " |r#1506318#252", -- interface/cinematics/legion_bs_a.mp3
+				"|Cffffffff" .. L["The Battle for Broken Shore (Horde)"] .. " |r#1506319#260", -- interface/cinematics/legion_bs_h.mp3
+				"|Cffffffff" .. L["A Falling Star"] .. " |r#1510075#77", -- interface/cinematics/legion_iq_lv.mp3
+				"|Cffffffff" .. L["Destiny Unfulfilled"] .. " |r#1510074#50", -- interface/cinematics/legion_iq_id.mp3
+				"|Cffffffff" .. L["The Nighthold"] .. " |r#1558961#81", -- interface/cinematics/legion_su_r.mp3
+				"|Cffffffff" .. L["Victory at The Nighthold"] .. " |r#1617300#161", -- interface/cinematics/legion_72_tst.mp3
+				"|Cffffffff" .. L["A Found Memento"] .. " |r#1617299#164", -- interface/cinematics/legion_72_ars.mp3
+				"|Cffffffff" .. L["Assault on the Broken Shore"] .. " |r#1617301#29", -- interface/cinematics/legion_72_ots.mp3
+				"|Cffffffff" .. L["Kil'Jaeden's Downfall"] .. " |r#1671790#137", -- interface/cinematics/legion_72_tsf.mp3
+				"|Cffffffff" .. L["Arrival on Argus"] .. " |r#1720225#195", -- interface/cinematics/legion_73_agi.mp3
+				"|Cffffffff" .. L["Rejection of the Gift"] .. " |r#1720226#198", -- interface/cinematics/legion_73_rtg.mp3
+				"|Cffffffff" .. L["Reincarnation of Alleria Windrunner"] .. " |r#1720227#32", -- interface/cinematics/legion_73_avt.mp3
+				"|Cffffffff" .. L["Rise of Argus"] .. " |r#1720231#57", -- interface/cinematics/legion_73_pan.mp3
+				"|Cffffffff" .. L["Antorus Ending"] .. " |r#1780281#182", -- interface/cinematics/legion_73_afn.mp3
+				"|Cffffffff" .. L["Epilogue (Horde)"] .. " |r#1862317#145", -- interface/cinematics/legion_735_eph.mp3
+				"|Cffffffff" .. L["Epilogue (Alliance)"] .. " |r#1862316#157", -- interface/cinematics/legion_735_epa.mp3
+
+				-- Cinematic Music: Battle for Azeroth
+				"|cffffd800", "|cffffd800" .. L["Battle for Azeroth"], 
+				"|Cffffffff" .. L["Battle for Azeroth"] .. " |r#2125419#263", -- interface/cinematics/bfa_800_rb.mp3
+				"|Cffffffff" .. L["Warbringers Sylvanas"] .. " |r#2175009#232", -- interface/cinematics/bfa_800_sv.mp3
+				"|Cffffffff" .. L["The Fall of Lordaeron"] .. " |r#2175023#223", -- interface/cinematics/bfa_800_ltc_h.mp3
+				"|Cffffffff" .. L["Jaina Joins the Battle"] .. " |r#2175028#86", -- interface/cinematics/bfa_800_ltt.mp3
+				"|Cffffffff" .. L["Embers of War"] .. " |r#2175018#178", -- interface/cinematics/bfa_800_ltc_a.mp3
+				"|Cffffffff" .. L["Arrival to Zandalar"] .. " |r#2175033#183", -- interface/cinematics/bfa_800_stz.mp3
+				"|Cffffffff" .. L["Vision of Sailor's Memory"] .. " |r#2175038#25", -- interface/cinematics/bfa_800_zia.mp3
+				"|Cffffffff" .. L["Jaina Returns to Kul Tiras"] .. " |r#2175043#118", -- interface/cinematics/bfa_800_kta.mp3
+				"|Cffffffff" .. L["Jaina's Nightmare"] .. " |r#2175048#96", -- interface/cinematics/bfa_800_jnm.mp3
+				"|Cffffffff" .. L["Warbringers Jaina"] .. " |r#2175053#274", -- interface/cinematics/bfa_800_ja.mp3
+				"|Cffffffff" .. L["The Return of Hope"] .. " |r#2175068#152", -- interface/cinematics/bfa_800_ktf.mp3
+				"|Cffffffff" .. L["Realm Of Torment"] .. " |r#2175073#164", -- interface/cinematics/bfa_800_rot.mp3
+				"|Cffffffff" .. L["Terror of Darkshore"] .. " |r#2543204#164", -- interface/cinematics/bfa_810_tod.mp3
+				"|Cffffffff" .. L["An Unexpected Reunion"] .. " |r#2845776#170", -- interface/cinematics/bfa_815_dpr.mp3
+				"|Cffffffff" .. L["Siege of Dazar'alor"] .. " |r#2565179#128", -- interface/cinematics/bfa_810_akt.mp3
+				"|Cffffffff" .. L["Battle of Dazar'alor"] .. " |r#2543223#121", -- interface/cinematics/bfa_810_dor.mp3
+				"|Cffffffff" .. L["Warbringers Azshara"] .. " |r#2991597#425",
+				"|Cffffffff" .. L["Rise of Azshara"] .. " |r#3039647#133",
+			})
 			Zn(L["Various"], L["Various"], L["Class Trials"]							, {	"|cffffd800" .. L["Various"] .. ": " .. L["Class Trials"], prefol, "MUS_70_ClassTrial_Horde_BattleWalk#71954", "MUS_70_ClassTrial_Alliance_BattleWalk#71959",})
 			Zn(L["Various"], L["Various"], L["Credits"]									, {	"|cffffd800" .. L["Various"] .. ": " .. L["Credits"], prefol, "Menu-Credits01#10763", "Menu-Credits02#10804", "Menu-Credits03#13822", "Menu-Credits04#23812", "Menu-Credits05#32015", "Menu-Credits06#34020", "Menu-Credits07#56354", "Menu-Credits08#113560"})
 			Zn(L["Various"], L["Various"], L["Events"]									, {	"|cffffd800" .. L["Various"] .. ": " .. L["Events"], prefol, 
 				"|cffffd800", "|cffffd800" .. L["Darkmoon Faire"], "MUS_43_DarkmoonFaire_IslandWalk#26536", "MUS_43_DarkmoonFaire_PavillionWalk#26539", "MUS_51_DarkmoonFaire_MerryGoRound_01#34440",
 				"|cffffd800", "|cffffd800" .. L["Plants vs Zombies"], "EVENT_PvZ_Babbling#23487", "EVENT_PvZ_Dadadoo#23488", "EVENT_PvZ_Doobeedoo#23489", "EVENT_PvZ_Lalala#23490", "EVENT_PvZ_Sunflower#23491", "EVENT_PvZ_Zombieonyourlawn#23492",
+				"|cffffd800", "|cffffd800" .. L["Trial of Style"], "MUS_725_Event_Transmog_TrialOfStyle_1_Preparation#85957", "MUS_725_Event_Transmog_TrialOfStyle_2_Competition#85958", "MUS_725_Event_Transmog_TrialOfStyle_4_EndOfCompetition#85960",
 			})
 			Zn(L["Various"], L["Various"], L["Island Expeditions"]						, {	"|cffffd800" .. L["Various"] .. ": " .. L["Island Expeditions"], prefol,
 				"|cffffd800", "|cffffd800" .. L["Adventure"], "MUS_80_Islands_Adventure_Walk#115050", "MUS_80_Islands_Adventure_Invasion_Walk#115414", "MUS_80_Islands_Adventure_Victory#115053",
@@ -5775,6 +6172,7 @@
 			})
 			Zn(L["Various"], L["Various"], L["Main Titles"]								, {	"|cffffd800" .. L["Various"] .. ": " .. L["Main Titles"], prefol, "GS_Retail#10924", "GS_BurningCrusade#10925", "GS_LichKing#12765", "GS_Cataclysm#23640", "MUS_50_HeartofPandaria_MainTitle#28509", "MUS_60_MainTitle#40169", "MUS_70_MainTitle#56353", "MUS_80_MainTitle#113559"}) -- "MUS_1.0_MainTitle_Original#47598"
 			Zn(L["Various"], L["Various"], L["Music Rolls"]								, {	"|cffffd800" .. L["Various"] .. ": " .. L["Music Rolls"], prefol, "MUS_61_GarrisonMusicBox_01#49511", "MUS_61_GarrisonMusicBox_02#49512", "MUS_61_GarrisonMusicBox_03#49513", "MUS_61_GarrisonMusicBox_04#49514", "MUS_61_GarrisonMusicBox_05#49515", "MUS_61_GarrisonMusicBox_06#49516", "MUS_61_GarrisonMusicBox_07#49529", "MUS_61_GarrisonMusicBox_08#49530", "MUS_61_GarrisonMusicBox_09#49531", "MUS_61_GarrisonMusicBox_10#49533", "MUS_61_GarrisonMusicBox_11#49535", "MUS_61_GarrisonMusicBox_12#49536", "MUS_61_GarrisonMusicBox_13#49538", "MUS_61_GarrisonMusicBox_14#49539", "MUS_61_GarrisonMusicBox_15#49540", "MUS_61_GarrisonMusicBox_16#49541", "MUS_61_GarrisonMusicBox_17#49543", "MUS_61_GarrisonMusicBox_18#49544", "MUS_61_GarrisonMusicBox_19#49545", "MUS_61_GarrisonMusicBox_20#49546", "MUS_61_GarrisonMusicBox_21#49526", "MUS_61_GarrisonMusicBox_22#49528", "MUS_61_GarrisonMusicBox_23_Alliance#49517", "MUS_61_GarrisonMusicBox_24_Alliance#49518", "MUS_61_GarrisonMusicBox_25_Alliance#49519", "MUS_61_GarrisonMusicBox_26_Alliance#49520", "MUS_61_GarrisonMusicBox_27_Alliance#49521", "MUS_61_GarrisonMusicBox_28_Alliance#49522", "MUS_61_GarrisonMusicBox_29_Alliance#49523", "MUS_61_GarrisonMusicBox_30_Alliance#49524", "MUS_61_GarrisonMusicBox_31_Alliance#49525", "MUS_61_GarrisonMusicBox_23_Horde#49555", "MUS_61_GarrisonMusicBox_24_Horde#49554", "MUS_61_GarrisonMusicBox_25_Horde#49553", "MUS_61_GarrisonMusicBox_26_Horde#49552", "MUS_61_GarrisonMusicBox_27_Horde#49551", "MUS_61_GarrisonMusicBox_28_Horde#49550", "MUS_61_GarrisonMusicBox_29_Horde#49549", "MUS_61_GarrisonMusicBox_30_Horde#49548", "MUS_61_GarrisonMusicBox_31_Horde#49547",})
+			Zn(L["Various"], L["Various"], L["Narration"]								, {	"|cffffd800" .. L["Various"] .. ": " .. L["Narration"], prefol, "BloodElfFlybyNarration#9156", "DeathKnightFlybyNarration#12938", "DraeneiFlybyNarration#9155", "DwarfFlyByNarration#3740", "GnomeFlyByNarration#3841", "GoblinFlybyNarration#23106", "HumanFlyByNarration#3840", "NightElfFlyByNarration#3800", "OrcFlyByNarration#3760", "PandarenFlybyNarration#31699", "TaurenFlyByNarration#4122", "TrollFlyByNarration#4080", "WorgenFlybyNarration#23105", "UndeadFlybyNarration#3358",})
 			Zn(L["Various"], L["Various"], L["Pet Battles"]								, {	"|cffffd800" .. L["Various"] .. ": " .. L["Pet Battles"], prefol, "MUS_50_PetBattles_01#28753", "MUS_50_PetBattles_02#28754",})
 			Zn(L["Various"], L["Various"], L["Themes"]									, {	"|cffffd800" .. L["Various"] .. ": " .. L["Themes"], prefol,
 				"|cffffd800", "|cffffd800" .. L["Anduin's Theme"], "MUS_70_Zone_Stormwind_PostBrokenShore_Funeral_01#75552", "MUS_70_Zone_Stormwind_LionsRest_Day#73345", "MUS_70_BrokenShore_ShipIntro#73387", "MUS_72_BrokenShore_Wyrnnfall_Intro#85166", 
@@ -5794,10 +6192,10 @@
 			Zn(L["Movies"], L["Movies"], L["The Burning Crusade"]						, {	"|cffffd800" .. L["Movies"] .. ": " .. L["The Burning Crusade"], prefol, L["The Burning Crusade"] .. " |r(27)"})
 			Zn(L["Movies"], L["Movies"], L["Wrath of the Lich King"]					, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Wrath of the Lich King"], prefol, L["Wrath of the Lich King"] .. " |r(18)", L["Battle of Angrathar the Wrathgate"] .. " |r(14)", L["Fall of the Lich King"] .. " |r(16)"})
 			Zn(L["Movies"], L["Movies"], L["Cataclysm"]									, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Cataclysm"], prefol, L["Cataclysm"] .. " |r(23)", L["Last Stand"] .. " |r(21)", L["Leaving Kezan"] .. " |r(22)", L["The Dragon Soul"] .. " |r(73)", L["Spine of Deathwing"] .. " |r(74)", L["Madness of Deathwing"] .. " |r(75)", L["Fall of Deathwing"] .. " |r(76)"})
-			Zn(L["Movies"], L["Movies"], L["Mists of Pandaria"]							, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Mists of Pandaria"], prefol, L["Mists of Pandaria"] .. " |r(115)", L["Risking It All"] .. " |r(117)", L["Leaving the Wandering Isle"] .. " |r(116)", L["The King's Command"] .. " |r(119)", L["The Art of War"] .. " |r(120)", L["Battle of Serpent's Heart"] .. " |r(118)", L["The Fleet in Krasarang (Horde)"] .. " |r(128)", L["The Fleet in Krasarang (Alliance)"] .. " |r(127)", L["Hellscream's Downfall (Horde)"] .. " |r(151)", L["Hellscream's Downfall (Alliance)"] .. " |r(152)"})
+			Zn(L["Movies"], L["Movies"], L["Mists of Pandaria"]							, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Mists of Pandaria"], prefol, L["Mists of Pandaria"] .. " |r(115)", L["Risking It All"] .. " |r(117)", L["Leaving the Wandering Isle"] .. " |r(116)", L["Jade Forest Crash"] .. " |r(121)", L["The King's Command"] .. " |r(119)", L["The Art of War"] .. " |r(120)", L["Battle of Serpent's Heart"] .. " |r(118)", L["The Fleet in Krasarang (Horde)"] .. " |r(128)", L["The Fleet in Krasarang (Alliance)"] .. " |r(127)", L["Hellscream's Downfall (Horde)"] .. " |r(151)", L["Hellscream's Downfall (Alliance)"] .. " |r(152)"})
 			Zn(L["Movies"], L["Movies"], L["Warlords of Draenor"]						, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Warlords of Draenor"], prefol, L["Warlords of Draenor"] .. " |r(195)", L["Darkness Falls"] .. " |r(167)", L["The Battle of Thunder Pass"] .. " |r(168)", L["And Justice for Thrall"] .. " |r(177)", L["Into the Portal"] .. " |r(185)", L["A Taste of Iron"] .. " |r(187)", L["The Battle for Shattrath"] .. " |r(188)", L["Establish Your Garrison (Horde)"] .. " |r(189)", L["Establish Your Garrison (Alliance)"] .. " |r(192)", L["Bigger is Better (Horde)"] .. " |r(190)", L["Bigger is Better (Alliance)"] .. " |r(193)", L["My Very Own Castle (Horde)"] .. " |r(191)", L["My Very Own Castle (Alliance)"] .. " |r(194)", L["Gul'dan Ascendant"] .. " |r(270)", L["Shipyard Construction (Horde)"] .. " |r(292)", L["Shipyard Construction (Alliance)"] .. " |r(293)", L["Gul'dan's Plan"] .. "  |r(294)", L["Victory in Draenor!"] .. "  |r(295)"})
-			Zn(L["Movies"], L["Movies"], L["Legion"]									, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Legion"], prefol, L["Legion"] .. " |r(470)", L["The Invasion Begins"] .. " |r(469)", L["Return to the Black Temple"] .. " |r(471)", L["The Demon's Trail"] .. " |r(473)", L["The Fate of Val'sharah"] .. " |r(472)", L["Fate of the Horde"] .. " |r(474)", L["A New Life for Undeath"] .. " |r(475)", L["Harbingers Gul'dan"] .. " |r(476)", L["Harbingers Khadgar"] .. " |r(477)", L["Harbingers Illidan"] .. " |r(478)", L["The Nightborne Pact"] .. " |r(485)", L["The Battle for Broken Shore"] .. " |r(487)", L["A Falling Star"] .. " |r(489)", L["Destiny Unfulfilled"] .. " |r(490)", L["Victory at The Nighthold"] .. " |r(635)", L["A Found Memento"] .. " |r(636)", L["Kil'jaeden's Downfall"] .. " |r(656)", L["Arrival on Argus"] .. " |r(677)", L["Rejection of the Gift"] .. " |r(679)", L["Reincarnation of Alleria Windrunner"] .. " |r(682)", L["Rise of Argus"] .. " |r(687)", L["Antorus Ending"] .. " |r(689)", L["Epilogue (Horde)"] .. " |r(717)", L["Epilogue (Alliance)"] .. " |r(716)"})
-			Zn(L["Movies"], L["Movies"], L["Battle for Azeroth"]						, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Battle for Azeroth"], prefol, L["Battle for Azeroth"] .. " |r(852)", L["Warbringers Sylvanas"] .. " |r(853)", L["Battle for Lordaeron (Horde)"] .. " |r(855)", L["Battle for Lordaeron (Alliance)"] .. " |r(856)", L["Embers of War"] .. " |r(854)", L["Zandalar Intro"] .. " |r(857)", L["Zandalar Battle"] .. " |r(858)", L["Jaina Returns to Kul Tiras"] .. " |r(859)", L["Jaina's Nightmare"] .. " |r(860)",L["Terror of Darkshore"] .. " |r(874)",})
+			Zn(L["Movies"], L["Movies"], L["Legion"]									, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Legion"], prefol, L["Legion"] .. " |r(470)", L["The Invasion Begins"] .. " |r(469)", L["Return to the Black Temple"] .. " |r(471)", L["The Demon's Trail"] .. " |r(473)", L["The Fate of Val'sharah"] .. " |r(472)", L["Fate of the Horde"] .. " |r(474)", L["A New Life for Undeath"] .. " |r(475)", L["Harbingers Gul'dan"] .. " |r(476)", L["Harbingers Khadgar"] .. " |r(477)", L["Harbingers Illidan"] .. " |r(478)", L["The Nightborne Pact"] .. " |r(485)", L["Stormheim (Alliance)"] .. " |r(483)", L["Stormheim (Horde)"] .. " |r(484)", L["Tomb of Sargeras"] .. " |r(486)", L["The Battle for Broken Shore"] .. " |r(487)", L["A Falling Star"] .. " |r(489)", L["Destiny Unfulfilled"] .. " |r(490)", L["The Nighthold"] .. " |r(549)", L["Victory at The Nighthold"] .. " |r(635)", L["A Found Memento"] .. " |r(636)", L["Assault on the Broken Shore"] .. " |r(637)", L["Kil'jaeden's Downfall"] .. " |r(656)", L["Arrival on Argus"] .. " |r(677)", L["Rejection of the Gift"] .. " |r(679)", L["Reincarnation of Alleria Windrunner"] .. " |r(682)", L["Rise of Argus"] .. " |r(687)", L["Antorus Ending"] .. " |r(689)", L["Epilogue (Horde)"] .. " |r(717)", L["Epilogue (Alliance)"] .. " |r(716)"})
+			Zn(L["Movies"], L["Movies"], L["Battle for Azeroth"]						, {	"|cffffd800" .. L["Movies"] .. ": " .. L["Battle for Azeroth"], prefol, L["Battle for Azeroth"] .. " |r(852)", L["Warbringers Sylvanas"] .. " |r(853)", L["The Fall of Lordaeron"] .. " |r(855)", L["Jaina Joins the Battle"] .. " |r(856)", L["Embers of War"] .. " |r(854)", L["Arrival to Zandalar"] .. " |r(857)", L["Vision of Sailor's Memory"] .. " |r(858)", L["Jaina Returns to Kul Tiras"] .. " |r(859)", L["Jaina's Nightmare"] .. " |r(860)", L["Warbringers Jaina"] .. " |r(861)", L["The Return of Hope"] .. " |r(864)", L["Realm Of Torment"] .. " |r(865)", L["Terror of Darkshore"] .. " |r(874)", L["An Unexpected Reunion"] .. " |r(879)", L["Siege of Dazar'alor"] .. " |r(876)", L["Battle of Dazar'alor"] .. " |r(875)", L["Warbringers Azshara"] .. " |r(884)", L["Rise of Azshara"] .. " |r(894)",})
 
 			-- Give zone table a file level scope so slash command function can access it
 			LeaPlusLC["ZoneList"] = ZoneList
@@ -5995,7 +6393,9 @@
 					LastFolder = ""
 					UpdateList()
 				end
-				-- Lock button and cancel update script
+				-- Cancel sound file music timer
+				if LeaPlusLC.TrackTimer then LeaPlusLC.TrackTimer:Cancel() end
+				-- Lock button and unregister next track events
 				LeaPlusLC:LockItem(stopBtn, true)
 				uframe:UnregisterEvent("SOUNDKIT_FINISHED")
 				uframe:UnregisterEvent("LOADING_SCREEN_DISABLED")
@@ -6008,8 +6408,29 @@
 			local function PlayTrack()
 				-- Play tracks
 				if musicHandle then StopSound(musicHandle) end
-				local file, soundID = playlist[tracknumber]:match("([^,]+)%#([^,]+)")
-				willPlay, musicHandle = PlaySound(soundID, "Master", false, true)
+				local file, soundID, trackTime
+				if playlist[tracknumber]:match("([^,]+)%#([^,]+)%#([^,]+)") then
+					-- Music file with track time
+					file, soundID, trackTime = playlist[tracknumber]:match("([^,]+)%#([^,]+)%#([^,]+)")
+					willPlay, musicHandle = PlaySoundFile(soundID, "Master", false, true)
+				else
+					-- Sound kit without track time
+					file, soundID = playlist[tracknumber]:match("([^,]+)%#([^,]+)")
+					willPlay, musicHandle = PlaySound(soundID, "Master", false, true)
+				end
+				-- Cancel existing music timer for a sound file
+				if LeaPlusLC.TrackTimer then LeaPlusLC.TrackTimer:Cancel() end
+				if playlist[tracknumber]:match("([^,]+)%#([^,]+)%#([^,]+)") then
+					-- Track is a sound file with track time so create track timer
+					LeaPlusLC.TrackTimer = C_Timer.NewTimer(trackTime + 1, function()
+						if musicHandle then StopSound(musicHandle) end
+						if tracknumber == #playlist then
+							-- Playlist is at the end, restart from first track
+							tracknumber = 1
+						end
+						PlayTrack()
+					end)
+				end
 				-- Store its handle for later use
 				LastMusicHandle = musicHandle
 				LastPlayed = playlist[tracknumber]
@@ -6019,12 +6440,25 @@
 					local button = scrollFrame.buttons[index]
 					local item = button:GetText()
 					if item then
-						local item, void = item:match("([^,]+)%#([^,]+)")
-						if item then
-							if item == file and LastFolder == TempFolder then
-								button.s:Show()
-							else
-								button.s:Hide()
+						if item:match("([^,]+)%#([^,]+)%#([^,]+)") then
+							-- Music file with track time
+							local item, void, void = item:match("([^,]+)%#([^,]+)%#([^,]+)")
+							if item then
+								if item == file and LastFolder == TempFolder then
+									button.s:Show()
+								else
+									button.s:Hide()
+								end
+							end
+						else
+							-- Sound kit without track time
+							local item, void = item:match("([^,]+)%#([^,]+)")
+							if item then
+								if item == file and LastFolder == TempFolder then
+									button.s:Show()
+								else
+									button.s:Hide()
+								end
 							end
 						end
 					end
@@ -6169,9 +6603,11 @@
 					local rZone = random(1, #ZoneList[rCategory])
 					-- Get random track within zone
 					local rTrack = ZoneList[rCategory][rZone].tracks[random(1, #ZoneList[rCategory][rZone].tracks)]
-					-- Insert track into ListData if it's not a duplicate
+					-- Insert track into ListData if it's not a duplicate or on the banned list
 					if rTrack and rTrack ~= "" and strfind(rTrack, "#") and not tContains(ListData, "|Cffffffaa" .. ZoneList[rCategory][rZone].zone .. " |r" .. rTrack) then
-						tinsert(ListData, "|Cffffffaa" .. ZoneList[rCategory][rZone].zone .. " |r" .. rTrack)
+						if not tContains(randomBannedList, L[ZoneList[rCategory][rZone].zone]) and not tContains(randomBannedList, rTrack) then
+							tinsert(ListData, "|Cffffffaa" .. ZoneList[rCategory][rZone].zone .. " |r" .. rTrack)
+						end
 					end
 				end
 				-- Refresh the track listing
@@ -6857,12 +7293,14 @@
 				LeaPlusLC:LoadVarNum("ViewPortAlpha", 0, 0, 0.9)			-- Border alpha
 
 				LeaPlusLC:LoadVarChk("NoRestedEmotes", "Off")				-- Silence rested emotes
+				LeaPlusLC:LoadVarChk("MuteGameSounds", "Off")				-- Mute game sounds
 
 				LeaPlusLC:LoadVarChk("NoBagAutomation", "Off")				-- Disable bag automation
 				LeaPlusLC:LoadVarChk("NoPetAutomation", "Off")				-- Disable pet automation
 				LeaPlusLC:LoadVarChk("CharAddonList", "Off")				-- Show character addons
 				LeaPlusLC:LoadVarChk("NoRaidRestrictions", "Off")			-- Remove raid restrictions
 				LeaPlusLC:LoadVarChk("NoConfirmLoot", "Off")				-- Disable loot warnings
+				LeaPlusLC:LoadVarChk("SaveProfFilters", "Off")				-- Save profession filters
 				LeaPlusLC:LoadVarChk("FasterLooting", "Off")				-- Faster auto loot
 				LeaPlusLC:LoadVarChk("FasterMovieSkip", "Off")				-- Faster movie skip
 				LeaPlusLC:LoadVarChk("LockoutSharing", "Off")				-- Lockout sharing
@@ -7017,12 +7455,14 @@
 			LeaPlusDB["ViewPortAlpha"]			= LeaPlusLC["ViewPortAlpha"]
 
 			LeaPlusDB["NoRestedEmotes"]			= LeaPlusLC["NoRestedEmotes"]
+			LeaPlusDB["MuteGameSounds"]			= LeaPlusLC["MuteGameSounds"]
 
 			LeaPlusDB["NoBagAutomation"]		= LeaPlusLC["NoBagAutomation"]
 			LeaPlusDB["NoPetAutomation"]		= LeaPlusLC["NoPetAutomation"]
 			LeaPlusDB["CharAddonList"]			= LeaPlusLC["CharAddonList"]
 			LeaPlusDB["NoRaidRestrictions"]		= LeaPlusLC["NoRaidRestrictions"]
 			LeaPlusDB["NoConfirmLoot"] 			= LeaPlusLC["NoConfirmLoot"]
+			LeaPlusDB["SaveProfFilters"] 		= LeaPlusLC["SaveProfFilters"]
 			LeaPlusDB["FasterLooting"] 			= LeaPlusLC["FasterLooting"]
 			LeaPlusDB["FasterMovieSkip"] 		= LeaPlusLC["FasterMovieSkip"]
 			LeaPlusDB["LockoutSharing"] 		= LeaPlusLC["LockoutSharing"]
@@ -7043,12 +7483,17 @@
 			-- Start page
 			LeaPlusDB["LeaStartPage"]			= LeaPlusLC["LeaStartPage"]
 
+			-- Mute game sounds (LeaPlusLC["MuteGameSounds"])
+			for k, v in pairs(LeaPlusLC["muteTable"]) do
+				LeaPlusDB[k] = LeaPlusLC[k]
+			end
+
 		end
 
 	end
 
 --	Register event handler
-	LpEvt:SetScript("OnEvent", eventHandler);
+	LpEvt:SetScript("OnEvent", eventHandler)
 
 ----------------------------------------------------------------------
 --	L70: Player logout
@@ -7083,8 +7528,13 @@
 			ChangeChatColor("INSTANCE_CHAT", 1, 0.50, 0)
 			ChangeChatColor("INSTANCE_CHAT_LEADER", 1, 0.28, 0.04)
 
-			-- Enable map fade
-			SetCVar("mapFade", "1")
+			-- Mute game sounds (LeaPlusLC["MuteGameSounds"])
+			for k, v in pairs(LeaPlusLC["muteTable"]) do
+				for i, e in pairs(v) do
+					local file, soundID = e:match("([^,]+)%#([^,]+)")
+					UnmuteSoundFile(soundID)
+				end
+			end
 
 		end
 
@@ -7105,7 +7555,9 @@
 
 		-- Prevent frame caching if frame customisation is enabled
 		if LeaPlusDB["FrmEnabled"] == "On" then
+			PlayerFrame:SetMovable(true)
 			PlayerFrame:SetUserPlaced(false)
+			TargetFrame:SetMovable(true)
 			TargetFrame:SetUserPlaced(false)
 		end
 
@@ -7278,6 +7730,9 @@
 		Slider:SetWidth(100)
 		Slider:SetHeight(20)
 		Slider:SetHitRectInsets(0, 0, 0, 0);
+		Slider.tiptext = L[caption]
+		Slider:SetScript("OnEnter", LeaPlusLC.TipSee)
+		Slider:SetScript("OnLeave", GameTooltip_Hide)
 
 		-- Remove slider text
 		_G[Slider:GetName().."Low"]:SetText('');
@@ -7860,7 +8315,7 @@
 					GameTooltip:HookScript("OnUpdate", function() 
 						local a = _G["GameTooltipTextLeft1"]:GetText() or "" 
 						if a == "Dark Soil" then
-							PlaySound(8959)
+							PlaySound(8959, "Master")
 						end
 					end)
 					LeaPlusLC["DarkScriptlEnabled"] = true
@@ -8132,6 +8587,23 @@
 				end
 				LeaPlusLC:Print("Total movies: |cffffffff" .. count)
 				return
+			elseif str == "movietime" then
+				-- Show movie length
+				if not LeaPlusLC.movieTimeLoaded then
+					hooksecurefunc(MovieFrame, "Show", function()
+						LeaPlusLC.startMovieTime = GetTime()
+					end)
+					hooksecurefunc(MovieFrame, "Hide", function()
+						LeaPlusLC.endMovieTime = GetTime()
+						local ttime = LeaPlusLC.endMovieTime - LeaPlusLC.startMovieTime
+						print(string.format("%0.0f", ttime))
+					end)
+					LeaPlusLC.movieTimeLoaded = true
+					LeaPlusLC:Print("MovieTime loaded.")
+				else
+					LeaPlusLC:Print("MovieTime is already loaded.")
+				end
+				return
 			elseif str == "movie" then
 				-- Playback movie by ID
 				arg1 = tonumber(arg1)
@@ -8164,19 +8636,20 @@
 								for k, v in pairs(b.tracks) do
 									-- Check for bad sound IDs
 									if not strfind(v, "|c") then
-										local temFile, temSoundID = v:match("([^,]+)%#([^,]+)")
-										if temSoundID then
-											local temPlay, temHandle = PlaySound(temSoundID, "Master", false, true)
-											if temHandle then StopSound(temHandle) end
-											temPlay, temHandle = PlaySound(temSoundID, "Master", false, true)
-											if not temPlay and not temHandle then
-												print("|cffff5400" .. L["Bad ID"] .. ": |r" .. e, v)
-												badidfound = true
-											else
+										if not v:match("([^,]+)%#([^,]+)%#([^,]+)") then
+											local temFile, temSoundID = v:match("([^,]+)%#([^,]+)")
+											if temSoundID then
+												local temPlay, temHandle = PlaySound(temSoundID, "Master", false, true)
 												if temHandle then StopSound(temHandle) end
+												temPlay, temHandle = PlaySound(temSoundID, "Master", false, true)
+												if not temPlay and not temHandle then
+													print("|cffff5400" .. L["Bad ID"] .. ": |r" .. e, v)
+													badidfound = true
+												else
+													if temHandle then StopSound(temHandle) end
+												end
 											end
 										end
-
 										-- Check for duplicate IDs
 										if tContains(same, v) and mask == false then 
 											mask = true
@@ -8311,7 +8784,7 @@
 								-- Select current button
 								bt[eBtn].line:Show()
 								selectedBtn = b
-								PlaySoundFile("Sound\\Interface\\PlaceHolder.ogg")
+								PlaySound(115, "Master", false, true)
 								-- Print button data
 								eFrame.f:SetText(L["Enigma"] .. " " .. eBtn .. ": |cffffffff" .. eData[eBtn][#eData[eBtn]])
 							end
@@ -8532,6 +9005,26 @@
 					if not qLink then qTicker = C_Timer.NewTicker(0.5, GetLinkFunc, 3) end
 				end
 				return
+			elseif str == "realm" then
+				-- Show list of connected realms
+				local titleRealm = GetRealmName()
+				local userRealm = GetNormalizedRealmName()
+				local connectedServers = GetAutoCompleteRealms()
+				if titleRealm and userRealm and connectedServers then
+					LeaPlusLC:Print(L["Connections for"] .. "|cffffffff " .. titleRealm)
+					if #connectedServers > 0 then
+						local count = 1
+						for i = 1, #connectedServers do
+							if userRealm ~= connectedServers[i] then
+								LeaPlusLC:Print(count .. ".  " .. connectedServers[i])
+								count = count + 1
+							end
+						end
+					else
+						LeaPlusLC:Print("None")
+					end
+				end
+				return
 			elseif str == "admin" then
 				-- Preset profile (used for testing)
 				LpEvt:UnregisterAllEvents()						-- Prevent changes
@@ -8624,11 +9117,12 @@
 				LeaPlusDB["Frames"]["MirrorTimer1"]["XOffset"] = 0
 				LeaPlusDB["Frames"]["MirrorTimer1"]["YOffset"] = -120
 
-				LeaPlusDB["Frames"]["UIWidgetTopCenterContainerFrame"] = {}
-				LeaPlusDB["Frames"]["UIWidgetTopCenterContainerFrame"]["Point"] = "TOP"
-				LeaPlusDB["Frames"]["UIWidgetTopCenterContainerFrame"]["Relative"] = "TOP"
-				LeaPlusDB["Frames"]["UIWidgetTopCenterContainerFrame"]["XOffset"] = 0
-				LeaPlusDB["Frames"]["UIWidgetTopCenterContainerFrame"]["YOffset"] = -542
+				LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"] = {}
+				LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Point"] = "TOP"
+				LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Relative"] = "TOP"
+				LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["XOffset"] = 0
+				LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["YOffset"] = -432
+				LeaPlusDB["Frames"]["LeaPlusTopCenterContainerHolder"]["Scale"] = 1.25
 
 				LeaPlusDB["Frames"]["BuffFrame"] = {}
 				LeaPlusDB["Frames"]["BuffFrame"]["Point"] = "TOPRIGHT"
@@ -8666,12 +9160,14 @@
 				LeaPlusDB["MaxCameraZoom"] = "On"				-- Max camera zoom
 				LeaPlusDB["ViewPortEnable"] = "On"				-- Enable viewport
 				LeaPlusDB["NoRestedEmotes"] = "On"				-- Silence rested emotes
+				LeaPlusDB["MuteGameSounds"] = "On"				-- Mute game sounds
 
 				LeaPlusDB["NoBagAutomation"] = "On"				-- Disable bag automation
 				LeaPlusDB["NoPetAutomation"] = "On"				-- Disable pet automation
 				LeaPlusDB["CharAddonList"] = "On"				-- Show character addons
 				LeaPlusDB["NoRaidRestrictions"] = "On"			-- Remove raid restrictions
 				LeaPlusDB["NoConfirmLoot"] = "On"				-- Disable loot warnings
+				LeaPlusDB["SaveProfFilters"] = "On"				-- Save profession filters
 				LeaPlusDB["FasterLooting"] = "On"				-- Faster auto loot
 				LeaPlusDB["FasterMovieSkip"] = "On"				-- Faster movie skip
 				LeaPlusDB["LockoutSharing"] = "On"				-- Lockout sharing
@@ -8752,6 +9248,11 @@
 
 				setIcon("DEMONHUNTER", 	1, --[[Havoc]]  		--[[1]] 0, 0, 		--[[2]] 0, 0, 		--[[3]] 0, 0, 		--[[4]] 0, 0, 		--[[5]] 0, 0)
 				setIcon("DEMONHUNTER", 	2, --[[Vengeance]]  	--[[1]] 0, 0, 		--[[2]] 0, 0, 		--[[3]] 0, 0, 		--[[4]] 0, 0, 		--[[5]] 0, 0)
+
+				-- Mute game sounds (LeaPlusLC["MuteGameSounds"])
+				for k, v in pairs(LeaPlusLC["muteTable"]) do
+					LeaPlusDB[k] = "On"
+				end
 
 				-- Reload
 				ReloadUI()
@@ -8838,10 +9339,10 @@
 	function LeaPlusLC:MakePage(name, title, menu, menuname, menuparent, menuanchor, menux, menuy, menuwidth, menuheight)
 
 		-- Create frame
-		local oPage = CreateFrame("Frame", nil, LeaPlusLC["PageF"]); 
+		local oPage = CreateFrame("Frame", nil, LeaPlusLC["PageF"])
 		LeaPlusLC[name] = oPage
 		oPage:SetAllPoints(LeaPlusLC["PageF"])
-		oPage:Hide();
+		oPage:Hide()
 
 		-- Add page title
 		oPage.s = oPage:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
@@ -8855,7 +9356,7 @@
 			LeaPlusLC[name]:SetScript("OnHide", function() LeaPlusLC[menu .. ".s"]:Hide(); end)
 		end
 
-		return oPage;
+		return oPage
 	
 	end
 
@@ -8875,8 +9376,8 @@
 	for i = 0, LeaPlusLC["NumberOfPages"] do
 		LeaPlusLC["LeaPlusNav"..i]:SetScript("OnClick", function()
 			LeaPlusLC:HideFrames()
-			LeaPlusLC["PageF"]:Show();
-			LeaPlusLC["Page"..i]:Show();
+			LeaPlusLC["PageF"]:Show()
+			LeaPlusLC["Page"..i]:Show()
 			LeaPlusLC["LeaStartPage"] = i
 		end)
 	end
@@ -8888,28 +9389,28 @@
 -- 	LC0: Welcome
 ----------------------------------------------------------------------
 
-	pg = "Page0";
+	pg = "Page0"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Welcome to Leatrix Plus.", 146, -72);
-	LeaPlusLC:MakeWD(LeaPlusLC[pg], "To begin, choose an options page.", 146, -92);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Welcome to Leatrix Plus.", 146, -72)
+	LeaPlusLC:MakeWD(LeaPlusLC[pg], "To begin, choose an options page.", 146, -92)
 
 	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Support", 146, -132);
-	LeaPlusLC:MakeWD(LeaPlusLC[pg], "www.leatrix.com", 146, -152);
+	LeaPlusLC:MakeWD(LeaPlusLC[pg], "www.curseforge.com/wow/addons/leatrix-plus", 146, -152)
 
 ----------------------------------------------------------------------
 -- 	LC1: Automation
 ----------------------------------------------------------------------
 
-	pg = "Page1";
+	pg = "Page1"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Character"					, 	146, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Character"					, 	146, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutomateQuests"			,	"Automate quests"				,	146, -92, 	false,	"If checked, quests will be selected, accepted and turned-in automatically.|n|nQuests which have a gold, currency or crafting reagent requirement will not be turned-in automatically.|n|nYou can hold the shift key down when you talk to a quest giver to override this setting.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutomateGossip"			,	"Automate gossip"				,	146, -112, 	false,	"If checked, you can hold down the alt key while opening a gossip window to automatically select a single gossip option.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutoAcceptSummon"			,	"Accept summon"					, 	146, -132, 	false,	"If checked, summon requests will be accepted automatically unless you are in combat.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutoAcceptRes"				,	"Accept resurrection"			, 	146, -152, 	false,	"If checked, resurrection requests will be accepted automatically as long as the player resurrecting you is not in combat.|n|nResurrection requests from a Brazier of Awakening or a Failure Detection Pylon will not be accepted automatically.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutoReleasePvP"			,	"Release in PvP"				, 	146, -172, 	false,	"If checked, you will release automatically after you die in Ashran, Tol Barad (PvP), Wintergrasp or any battleground.|n|nYou will not release automatically if you have the ability to self-resurrect (soulstone, reincarnation, etc).")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Vendors"					, 	340, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Vendors"					, 	340, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutoSellJunk"				,	"Sell junk automatically"		,	340, -92, 	false,	"If checked, all grey items in your bags will be sold automatically when you visit a merchant.|n|nYou can hold the shift key down when you talk to a merchant to override this setting.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutoRepairGear"			, 	"Repair automatically"			,	340, -112, 	false,	"If checked, your gear will be repaired automatically when you visit a suitable merchant.|n|nYou can hold the shift key down when you talk to a merchant to override this setting.")
 
@@ -8919,15 +9420,15 @@
 -- 	LC2: Social
 ----------------------------------------------------------------------
 
-	pg = "Page2";
+	pg = "Page2"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Blocks"					, 	146, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Blocks"					, 	146, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoDuelRequests"			, 	"Block duels"					,	146, -92, 	false,	"If checked, duel requests will be blocked unless the player requesting the duel is in your friends list or guild.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoPetDuels"				, 	"Block pet battle duels"		,	146, -112, 	false,	"If checked, pet battle duel requests will be blocked unless the player requesting the duel is in your friends list or guild.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoPartyInvites"			, 	"Block party invites"			, 	146, -132, 	false,	"If checked, party invitations will be blocked unless the player inviting you is in your friends list or guild.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoFriendRequests"			, 	"Block friend requests"			, 	146, -152, 	false,	"If checked, BattleTag and Real ID friend requests will be automatically declined.|n|nEnabling this option will automatically decline any pending requests.")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Groups"					, 	340, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Groups"					, 	340, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AcceptPartyFriends"		, 	"Party from friends"			, 	340, -92, 	false,	"If checked, party invitations from friends or guild members will be automatically accepted unless you are queued in Dungeon Finder.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AutoConfirmRole"			, 	"Queue from friends"			,	340, -112, 	false,	"If checked, requests initiated by your party leader to join the Dungeon Finder queue will be automatically accepted if the party leader is in your friends list or guild.|n|nThis option requires that you have selected a role for your character in the Dungeon Finder window.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "InviteFromWhisper"			,   "Invite from whispers"			,	340, -132,	false,	"If checked, a group invite will be sent to anyone who whispers you with the keyword INV.|n|nYou need to be either ungrouped or party leader in your own group for this to work.")
@@ -8936,9 +9437,9 @@
 -- 	LC3: Chat
 ----------------------------------------------------------------------
 
-	pg = "Page3";
+	pg = "Page3"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Chat Frame"				, 	146, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Chat Frame"				, 	146, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "UseEasyChatResizing"		,	"Use easy resizing"				,	146, -92,	true,	"If checked, dragging the General chat tab while the chat frame is locked will expand the chat frame upwards.|n|n\If the chat frame is unlocked, dragging the General chat tab will move the chat frame.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoCombatLogTab" 			, 	"Hide the combat log"			, 	146, -112, 	true,	"If checked, the combat log will be hidden.|n|nThe combat log must be docked in order for this option to work.|n|nIf the combat log is undocked, you can dock it by dragging the tab (and reloading your UI) or by resetting the chat windows (from the chat menu).")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoChatButtons"				,	"Hide chat buttons"				,	146, -132,	true,	"If checked, chat frame buttons will be hidden.|n|nClicking chat tabs will automatically show the latest messages.|n|nUse the mouse wheel to scroll through the chat history.  Hold down SHIFT for page jump or CTRL to jump to the top or bottom of the chat history.")
@@ -8946,7 +9447,7 @@
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "UnclampChat"				,	"Unclamp chat frame"			,	146, -172,	true,	"If checked, you will be able to drag the chat frame to the edge of the screen.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "MoveChatEditBoxToTop" 		, 	"Move editbox to top"			,	146, -192, 	true,	"If checked, the editbox will be moved to the top of the chat frame.")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Mechanics"					, 	340, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Mechanics"					, 	340, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoStickyChat"				, 	"Disable sticky chat"			,	340, -92,	true,	"If checked, sticky chat will be disabled.|n|nNote that this does not apply to temporary chat windows.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "UseArrowKeysInChat"		, 	"Use arrow keys in chat"		, 	340, -112, 	true,	"If checked, you can press the arrow keys to move the insertion point left and right in the chat frame.|n|nIf unchecked, the arrow keys will use the default keybind setting.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoChatFade"				, 	"Disable chat fade"				, 	340, -132, 	true,	"If checked, chat text will not fade out after a time period.")
@@ -8958,15 +9459,15 @@
 -- 	LC4: Text
 ----------------------------------------------------------------------
 
-	pg = "Page4";
+	pg = "Page4"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Visibility"				, 	146, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Visibility"				, 	146, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "HideErrorMessages"			, 	"Hide error messages"			,	146, -92, 	true,	"If checked, most error messages (such as 'Not enough rage') will not be shown.  Some important errors are excluded.|n|nIf you have the minimap button enabled, you can hold down the control key and right-click it to toggle error messages without affecting this setting.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoHitIndicators"			, 	"Hide portrait numbers"			,	146, -112, 	true,	"If checked, damage and healing numbers in the player and pet portrait frames will be hidden.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "HideCraftedNames"			, 	"Hide crafted names"			,	146, -132, 	true,	"If checked, crafted items will no longer show the name of the crafter.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "HideZoneText"				,	"Hide zone text"				,	146, -152, 	true,	"If checked, zone text will not be shown (eg. 'Ironforge').")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Text Size"					, 	340, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Text Size"					, 	340, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "MailFontChange"			,	"Resize mail text"				, 	340, -92, 	true,	"If checked, you will be able to change the font size of standard mail text.|n|nThis does not affect mail created using templates (such as auction house invoices).")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "QuestFontChange"			,	"Resize quest text"				, 	340, -112, 	true,	"If checked, you will be able to change the font size of quest text.|n|nEnabling this option will also change the text size of other frames which inherit the same font (such as the Dungeon Finder frame).")
 
@@ -8977,14 +9478,14 @@
 -- 	LC5: Interface
 ----------------------------------------------------------------------
 
-	pg = "Page5";
+	pg = "Page5"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Enhancements"				, 	146, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Enhancements"				, 	146, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "MinimapMod"				,	"Customise minimap"				, 	146, -92, 	true,	"If checked, you will be able to customise the minimap.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "TipModEnable"				,	"Manage tooltip"				,	146, -112, 	true,	"If checked, the tooltip will be color coded and you will be able to modify the tooltip layout and scale.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "EnhanceDressup"			, 	"Enhance dressup"				,	146, -132, 	true,	"If checked, additional functionality will be added to the dressup frame.|n|nNude and tabard toggle buttons will be added, model positioning controls will be removed and special model animations will be disabled.")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Extras"					, 	340, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Extras"					, 	340, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ShowVolume"				, 	"Show volume slider"			, 	340, -92, 	true,	"If checked, a master volume slider will be shown on the character sheet.|n|nThe volume slider can be placed in either of two locations on the character sheet.  To toggle between them, hold the shift key down and right-click the slider.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "AhExtras"					, 	"Show auction controls"			, 	340, -112, 	true,	"If checked, additional functionality will be added to the auction house.|n|nBuyout only - create buyout auctions without filling in the starting price.|n|nGold only - set the copper and silver prices at 99 to speed up new auctions.|n|nFind item - search the auction house for the item you are selling.|n|nIn addition, the auction price type and duration settings will be saved account-wide.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ShowCooldowns"				, 	"Show cooldowns"				, 	340, -132, 	true,	"If checked, you will be able to place up to five beneficial cooldown icons above the target frame.")
@@ -9000,16 +9501,16 @@
 -- 	LC6: Frames
 ----------------------------------------------------------------------
 
-	pg = "Page6";
+	pg = "Page6"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Features"					, 	146, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Features"					, 	146, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "FrmEnabled"				,	"Manage frames"					, 	146, -92, 	true,	"If checked, you will be able to change the position and scale of the following frames:|n|n- Player frame|n- Target frame|n- Buffs frame|n- Widget top center frame|n- Ghost frame|n- Timer bar|n- Player power bar")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ClassColFrames"			, 	"Class colored frames"			,	146, -112, 	true,	"If checked, class coloring will be used in the player frame, target frame and focus frame.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ShowPlayerChain"			, 	"Show player chain"				,	146, -132, 	true,	"If checked, you will be able to show a rare, elite or rare elite chain around the player frame.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ShowRaidToggle"			, 	"Raid frame toggle"				,	146, -152, 	true,	"If checked, the button to toggle the raid container frame will be shown just above the raid management frame (left side of the screen) instead of in the raid management frame itself.|n|nThis allows you to toggle the raid container frame without needing to open the raid management frame.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "CombatPlates"				, 	"Combat plates"					,	146, -172, 	true,	"If checked, enemy nameplates will be shown during combat and hidden when combat ends.")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Visibility"				, 	340, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Visibility"				, 	340, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoAlerts"					,	"Hide alerts"					, 	340, -92, 	true,	"If checked, alert frames will not be shown.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "HideBodyguard"				, 	"Hide bodyguard gossip"			, 	340, -112, 	true,	"If checked, the gossip window will not be shown when you talk to an active garrison bodyguard.|n|nYou can hold the shift key down when you talk to a bodyguard to override this setting.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "HideTalkingFrame"			, 	"Hide talking frame"			, 	340, -132, 	true,	"If checked, the talking frame will not be shown.|n|nThe talking frame normally appears in the lower portion of the screen when certain NPCs communicate with you.")
@@ -9027,41 +9528,44 @@
 -- 	LC7: System
 ----------------------------------------------------------------------
 
-	pg = "Page7";
+	pg = "Page7"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Graphics and Sound"		, 	146, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Graphics and Sound"		, 	146, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoScreenGlow"				, 	"Disable screen glow"			, 	146, -92, 	false,	"If checked, the screen glow will be disabled.|n|nEnabling this option will also disable the drunken haze effect.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoScreenEffects"			, 	"Disable screen effects"		, 	146, -112, 	false,	"If checked, the grey screen of death and the netherworld effect will be disabled.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "MaxCameraZoom"				, 	"Max camera zoom"				, 	146, -132, 	false,	"If checked, you will be able to zoom out to a greater distance.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ViewPortEnable"			,	"Enable viewport"				,	146, -152, 	true,	"If checked, you will be able to create a viewport.  A viewport adds adjustable black borders around the game world.|n|nThe borders are placed on top of the game world but under the UI so you can place UI elements over them.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoRestedEmotes"			, 	"Silence rested emotes"			,	146, -172, 	true,	"If checked, emote sounds will be silenced while your character is:|n|n- resting|n- in a pet battle|n- at the Halfhill Market|n- at the Grim Guzzler|n|nEmote sounds will be enabled when none of the above apply.")
+	LeaPlusLC:MakeCB(LeaPlusLC[pg], "MuteGameSounds"			, 	"Mute game sounds"				,	146, -192, 	false,	"If checked, you will be able to mute a selection of game sounds.")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Game Options"				, 	340, -72);
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Game Options"				, 	340, -72)
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoBagAutomation"			, 	"Disable bag automation"		, 	340, -92, 	true,	"If checked, your bags will not be opened or closed automatically when you interact with a merchant, bank or mailbox.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoPetAutomation"			, 	"Disable pet automation"		, 	340, -112, 	true, 	"If checked, battle pets which are automatically summoned will be dismissed within a few seconds.|n|nThis includes dragging a pet onto the first team slot in the pet journal and entering a battle pet team save command.|n|nNote that pets which are automatically summoned during combat will be dismissed when combat ends.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "CharAddonList"				, 	"Show character addons"			, 	340, -132, 	true,	"If checked, the addon list (accessible from the game menu) will show character based addons by default.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoRaidRestrictions"		, 	"Remove raid restrictions"		,	340, -152, 	false,	"If checked, converting a party group to a raid group will succeed even if there are low level characters in the group.|n|nEveryone in the group needs to have Leatrix Plus installed with this option enabled.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "NoConfirmLoot"				, 	"Disable loot warnings"			,	340, -172, 	false,	"If checked, confirmations will no longer appear when you choose a loot roll option or attempt to sell or mail a tradable item.")
-	LeaPlusLC:MakeCB(LeaPlusLC[pg], "FasterLooting"				, 	"Faster auto loot"				,	340, -192, 	true,	"If checked, the amount of time it takes to auto loot creatures will be significantly reduced.")
-	LeaPlusLC:MakeCB(LeaPlusLC[pg], "FasterMovieSkip"			, 	"Faster movie skip"				,	340, -212, 	true,	"If checked, you will be able to cancel cinematics without being prompted for confirmation.")
-	LeaPlusLC:MakeCB(LeaPlusLC[pg], "LockoutSharing"			, 	"Lockout sharing"				, 	340, -232, 	true, 	"If checked, the 'Display only character achievements to others' setting in the game options panel ('Social' menu) will be permanently checked and locked.")
+	LeaPlusLC:MakeCB(LeaPlusLC[pg], "SaveProfFilters"			, 	"Save profession filters"		, 	340, -192, 	true, 	"If checked, profession filter settings will be saved for the remainder of your login session.")
+	LeaPlusLC:MakeCB(LeaPlusLC[pg], "FasterLooting"				, 	"Faster auto loot"				,	340, -212, 	true,	"If checked, the amount of time it takes to auto loot creatures will be significantly reduced.")
+	LeaPlusLC:MakeCB(LeaPlusLC[pg], "FasterMovieSkip"			, 	"Faster movie skip"				,	340, -232, 	true,	"If checked, you will be able to cancel cinematics without being prompted for confirmation.")
+	LeaPlusLC:MakeCB(LeaPlusLC[pg], "LockoutSharing"			, 	"Lockout sharing"				, 	340, -252, 	true, 	"If checked, the 'Display only character achievements to others' setting in the game options panel ('Social' menu) will be permanently checked and locked.")
 
 	LeaPlusLC:CfgBtn("ModViewportBtn", LeaPlusCB["ViewPortEnable"])
+	LeaPlusLC:CfgBtn("MuteGameSoundsBtn", LeaPlusCB["MuteGameSounds"])
 
 ----------------------------------------------------------------------
 -- 	LC8: Settings
 ----------------------------------------------------------------------
 
-	pg = "Page8";
+	pg = "Page8"
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Addon"						, 146, -72);
-	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ShowMinimapIcon"			, "Show minimap button"				, 146, -92,		false,	"If checked, a minimap button will be available.|n|nClick - Toggle options panel.|n|nSHIFT/Left-click - Toggle music.|n|nCTRL/Left-click - Toggle minimap target tracking.|n|nCTRL/Right-click - Toggle errors (if enabled).|n|nCTRL/SHIFT/Left-click - Toggle Zygor (if installed).|n|nCTRL/SHIFT/Right-click - Toggle windowed mode.")
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Addon"						, 146, -72)
+	LeaPlusLC:MakeCB(LeaPlusLC[pg], "ShowMinimapIcon"			, "Show minimap button"				, 146, -92,		false,	"If checked, a minimap button will be available.|n|nClick - Toggle options panel.|n|nSHIFT/Left-click - Toggle music.|n|nSHIFT/Right-click - Toggle stopwatch.|n|nCTRL/Left-click - Toggle minimap target tracking.|n|nCTRL/Right-click - Toggle errors (if enabled).|n|nCTRL/SHIFT/Left-click - Toggle Zygor (if installed).|n|nCTRL/SHIFT/Right-click - Toggle windowed mode.")
 	LeaPlusLC:MakeCB(LeaPlusLC[pg], "EnableHotkey"				, "Enable hotkey"					, 146, -112,	true,	"If checked, you can open Leatrix Plus by pressing CTRL/Z.")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Scale", 340, -72);
-	LeaPlusLC:MakeSL(LeaPlusLC[pg], "PlusPanelScale", "", 1, 2, 0.1, 340, -92, "%.1f")
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Scale", 340, -72)
+	LeaPlusLC:MakeSL(LeaPlusLC[pg], "PlusPanelScale", "Drag to set the scale of the Leatrix Plus panel.", 1, 2, 0.1, 340, -92, "%.1f")
 
-	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Transparency", 340, -132);
-	LeaPlusLC:MakeSL(LeaPlusLC[pg], "PlusPanelAlpha", "", 0, 1, 0.1, 340, -152, "%.1f")
+	LeaPlusLC:MakeTx(LeaPlusLC[pg], "Transparency", 340, -132)
+	LeaPlusLC:MakeSL(LeaPlusLC[pg], "PlusPanelAlpha", "Drag to set the transparency of the Leatrix Plus panel.", 0, 1, 0.1, 340, -152, "%.1f")
 
 	LeaPlusLC:ShowMemoryUsage(LeaPlusLC[pg], "TOPLEFT", 146, -262)

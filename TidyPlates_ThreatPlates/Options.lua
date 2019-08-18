@@ -333,6 +333,12 @@ end
 local function SetThemeValue(info, val)
   SetValuePlain(info, val)
   Addon:SetThemes(TidyPlatesThreat)
+
+  -- Update TargetArt widget as it depends on some settings of customtext and name
+  if info.arg[1] == "HeadlineView" and (info.arg[2] == "customtext" or info.arg[2] == "name") and (info.arg[3] == "y" or info.arg[3] == "size") then
+    Addon.Widgets:UpdateSettings("TargetArt")
+  end
+
   Addon:ForceUpdate()
 end
 
@@ -2189,7 +2195,7 @@ local function CreateBossModsWidgetOptions()
           },
           Layout = {
             name = L["Layout"],
-            order = pos,
+            order = 20,
             type = "group",
             inline = true,
             args = {
@@ -2199,10 +2205,10 @@ local function CreateBossModsWidgetOptions()
           } ,
         },
       },
-      Placement = GetPlacementEntryWidget(20, "BossModsWidget", true),
+      Placement = GetPlacementEntryWidget(30, "BossModsWidget", true),
       Config = {
         name = L["Configuration Mode"],
-        order = 30,
+        order = 40,
         type = "group",
         inline = true,
         args = {
@@ -2285,47 +2291,87 @@ local function CreateAurasWidgetOptions()
                 desc = L["Show a tooltip when hovering above an aura."],
                 arg = { "AuraWidget", "ShowTooltips" },
               },
-              Spacer1 = GetSpacerEntry(45),
+--              Spacer1 = GetSpacerEntry(45),
+--              AuraTypeColors = {
+--                name = L["Color by Dispel Type"],
+--                type = "toggle",
+--                order = 50,
+--                desc = L["This will color the aura based on its type (poison, disease, magic, curse) - for Icon Mode the icon border is colored, for Bar Mode the bar itself."],
+--                arg = { "AuraWidget", "ShowAuraType" },
+--              },
+--              DefaultBuffColor = {
+--                name = L["Buff Color"], type = "color",	order = 54,	arg = {"AuraWidget", "DefaultBuffColor"},	hasAlpha = true,
+--                set = SetColorAlphaWidget,
+--                get = GetColorAlpha,
+--              },
+--              DefaultDebuffColor = {
+--                name = L["Debuff Color"], type = "color",	order = 56, arg = {"AuraWidget","DefaultDebuffColor"},	hasAlpha = true,
+--                set = SetColorAlphaWidget,
+--                get = GetColorAlpha,
+--              },
+            },
+          },
+          Highlight = {
+            type = "group",
+            order = 15,
+            name = L["Highlight"],
+            inline = true,
+            args = {
               AuraTypeColors = {
-                name = L["Color by Dispel Type"],
+                name = L["Dispel Type"],
                 type = "toggle",
-                order = 50,
+                order = 10,
                 desc = L["This will color the aura based on its type (poison, disease, magic, curse) - for Icon Mode the icon border is colored, for Bar Mode the bar itself."],
                 arg = { "AuraWidget", "ShowAuraType" },
               },
               DefaultBuffColor = {
-                name = L["Buff Color"], type = "color",	order = 54,	arg = {"AuraWidget", "DefaultBuffColor"},	hasAlpha = true,
+                name = L["Buff Color"],
+                type = "color",
+                order = 20,
+                arg = {"AuraWidget", "DefaultBuffColor"},
+                hasAlpha = true,
                 set = SetColorAlphaWidget,
                 get = GetColorAlpha,
               },
               DefaultDebuffColor = {
-                name = L["Debuff Color"], type = "color",	order = 56, arg = {"AuraWidget","DefaultDebuffColor"},	hasAlpha = true,
+                name = L["Debuff Color"],
+                type = "color",
+                order = 30,
+                arg = {"AuraWidget","DefaultDebuffColor"},
+                hasAlpha = true,
                 set = SetColorAlphaWidget,
                 get = GetColorAlpha,
               },
-
---              TestBorderEdgeSize = {
---                name = "Edge Size",
---                order = 530,
---                type = "range",
---                min = 0, max = 32, step = 0.1,
---                arg = { "TestWidget", "EdgeSize" },
---              },
---              TestBorderOffset = {
---                name = "Offset",
---                order = 540,
---                type = "range",
---                min = -16, max = 16, step = 0.1,
---                arg = { "TestWidget", "Offset" },
---              },
---              TestBorderInset = {
---                name = "Inset",
---                order = 545,
---                type = "range",
---                min = -16, max = 16, step = 0.1,
---                arg = { "TestWidget", "Inset" },
---              },
-
+              Spacer1 = GetSpacerEntry(35),
+              EnableGlow = {
+                name = L["Steal or Purge Glow"],
+                type = "toggle",
+                order = 40,
+                desc = L["Shows a glow effect on auras that you can steal or purge."],
+                arg = { "AuraWidget", "Highlight", "Enabled" },
+              },
+              GlowType = {
+                name = L["Glow Type"],
+                type = "select",
+                values = Addon.GLOW_TYPES,
+                order = 50,
+                arg = { "AuraWidget", "Highlight", "Type" },
+              },
+              GlowColorEnable = {
+                name = L["Glow Color"],
+                type = "toggle",
+                order = 60,
+                arg = { "AuraWidget", "Highlight", "CustomColor" },
+              },
+              GlowColor = {
+                name = L["Color"],
+                type = "color",
+                order = 70,
+                arg = {"AuraWidget", "Highlight", "Color" },
+                hasAlpha = true,
+                set = SetColorAlphaWidget,
+                get = GetColorAlpha,
+              },
             },
           },
           SortOrder = {
@@ -2799,9 +2845,10 @@ local function CreateAurasWidgetOptions()
                 desc = L["Show all buffs on enemy units."],
                 set = function(info, val)
                   local db = db.AuraWidget.Buffs
-                  if db.ShowOnEnemyNPCs or db.ShowDispellable then
+                  if val and not db.ShowAllEnemy then
                     db.ShowOnEnemyNPCs = false
                     db.ShowDispellable = false
+                    db.ShowMagic = false
                     SetValueWidget(info, val)
                   end
                 end,
@@ -2815,7 +2862,7 @@ local function CreateAurasWidgetOptions()
                 desc = L["Show all buffs on NPCs."],
                 set = function(info, val)
                   local db = db.AuraWidget.Buffs
-                  db.ShowAllEnemy = not (val or db.ShowDispellable)
+                  db.ShowAllEnemy = not (val or db.ShowDispellable or db.ShowMagic)
                   SetValueWidget(info, val)
                 end,
                 arg = { "AuraWidget", "Buffs", "ShowOnEnemyNPCs" },
@@ -2828,21 +2875,43 @@ local function CreateAurasWidgetOptions()
                 desc = L["Show buffs that you can dispell."],
                 set = function(info, val)
                   local db = db.AuraWidget.Buffs
-                  db.ShowAllEnemy = not (val or db.ShowOnEnemyNPCs)
+                  db.ShowAllEnemy = not (db.ShowOnEnemyNPCs or val or db.ShowMagic)
                   SetValueWidget(info, val)
                 end,
                 arg = { "AuraWidget", "Buffs", "ShowDispellable" },
                 disabled = function() return not db.AuraWidget.Buffs.ShowEnemy end
               },
-              Header = { type = "header", order = 70, name = "Show Unlimited Buffs", },
-              Always = {
-                name = L["Always"],
-                order = 80,
+              Magics = {
+                name = L["Magic"],
+                order = 60,
                 type = "toggle",
-                desc = L["Always show buffs with unlimited duration."],
+                desc = L["Show buffs of dispell type Magic."],
                 set = function(info, val)
                   local db = db.AuraWidget.Buffs
-                  if db.ShowUnlimitedInCombat or db.ShowUnlimitedInInstances or db.ShowUnlimitedOnBosses then
+                  db.ShowAllEnemy = not (db.ShowOnEnemyNPCs or db.ShowDispellable or val)
+                  SetValueWidget(info, val)
+                end,
+                arg = { "AuraWidget", "Buffs", "ShowMagic" },
+                disabled = function() return not db.AuraWidget.Buffs.ShowEnemy end
+              },
+              Header2 = { type = "header", order = 200, name = L["Unlimited Duration"], },
+              UnlimitedDuration = {
+                name = L["Disable"],
+                order = 210,
+                type = "toggle",
+                desc = L["Do not show buffs with umlimited duration."],
+                arg = { "AuraWidget", "Buffs", "HideUnlimitedDuration" },
+                disabled = function() return not db.AuraWidget.Buffs.ShowEnemy end
+              },
+              Spacer1 = GetSpacerEntry(220),
+              Always = {
+                name = L["Show Always"],
+                order = 230,
+                type = "toggle",
+                desc = L["Show buffs with unlimited duration in all situations (e.g., in and out of combat)."],
+                set = function(info, val)
+                  local db = db.AuraWidget.Buffs
+                  if val and not db.ShowUnlimitedAlways then
                     db.ShowUnlimitedInCombat = false
                     db.ShowUnlimitedInInstances = false
                     db.ShowUnlimitedOnBosses = false
@@ -2854,7 +2923,7 @@ local function CreateAurasWidgetOptions()
               },
               InCombat = {
                 name = L["In Combat"],
-                order = 90,
+                order = 240,
                 type = "toggle",
                 desc = L["Show unlimited buffs in combat."],
                 set = function(info, val)
@@ -2867,7 +2936,7 @@ local function CreateAurasWidgetOptions()
               },
               InInstances = {
                 name = L["In Instances"],
-                order = 100,
+                order = 250,
                 type = "toggle",
                 desc = L["Show unlimited buffs in instances (e.g., dungeons or raids)."],
                 set = function(info, val)
@@ -2880,7 +2949,7 @@ local function CreateAurasWidgetOptions()
               },
               OnBosses = {
                 name = L["On Bosses & Rares"],
-                order = 110,
+                order = 260,
                 type = "toggle",
                 desc = L["Show unlimited buffs on bosses and rares."],
                 set = function(info, val)
@@ -3434,26 +3503,56 @@ local function CreateVisibilitySettings()
         args = {
           Description = GetDescriptionEntry(L["These options allow you to control which nameplates are visible within the game field while you play."]),
           Spacer0 = GetSpacerEntry(1),
-          AllUnits = { name = L["Enable Nameplates"], order = 10, type = "toggle", arg = "nameplateShowAll" },
-          AllUnitsDesc = { name = L["Show all nameplates (CTRL-V)."], order = 15, type = "description", width = "double", },
-          Spacer1 = { type = "description", name = "", order = 19, },
-          AllFriendly = { name = L["Enable Friendly"], order = 20, type = "toggle", arg = "nameplateShowFriends" },
-          AllFriendlyDesc = { name = L["Show friendly nameplates (SHIFT-V)."], order = 25, type = "description", width = "double", },
-          Spacer2 = { type = "description", name = "", order = 29, },
-          AllHostile = { name = L["Enable Enemy"], order = 30, type = "toggle", arg = "nameplateShowEnemies" },
-          AllHostileDesc = { name = L["Show enemy nameplates (ALT-V)."], order = 35, type = "description", width = "double", },
-          Header = { type = "header", order = 40, name = "", },
+          AllPlates = {
+            name = L["Always Show Nameplates"],
+            desc = L["Show nameplates at all times."],
+            type = "toggle",
+            order = 10,
+            width = "full",
+            arg = "nameplateShowAll"
+          },
+          AllUnits = {
+            name = L["Show All Nameplates (Friendly and Enemy Units) (CTRL-V)"],
+            order = 20,
+            type = "toggle",
+            width = "full",
+            set = function(info, value)
+              Addon.CVars:OverwriteProtected("nameplateShowFriends", (value and 1) or 0)
+              Addon.CVars:OverwriteProtected("nameplateShowEnemies", (value and 1) or 0)
+            end,
+            get = function(info)
+              return GetCVarBool("nameplateShowFriends") and GetCVarBool("nameplateShowEnemies")
+            end,
+          },
+          AllFriendly = {
+            name = L["Show Friendly Nameplates (SHIFT-V)"],
+            type = "toggle",
+            order = 30,
+            width = "full",
+            arg = "nameplateShowFriends"
+          },
+          AllHostile = {
+            name = L["Show Enemy Nameplates (ALT-V)"],
+            order = 40,
+            type = "toggle",
+            width = "full",
+            arg = "nameplateShowEnemies"
+          },
+          Header = { type = "header", order = 45, name = "", },
           ShowBlizzardFriendlyNameplates = {
             name = L["Show Blizzard Nameplates for Friendly Units"],
             order = 50,
             type = "toggle",
             width = "full",
             set = function(info, val)
-              SetValue(info, val)
-              Addon:SetBaseNamePlateSize() -- adjust clickable area if switching from Blizzard plates to Threat Plate plates
-              for plate, unitid in pairs(Addon.PlatesVisible) do
-                Addon:UpdateNameplateStyle(plate, unitid)
-              end
+              info = t.CopyTable(info)
+              Addon:CallbackWhenOoC(function()
+                SetValue(info, val)
+                Addon:SetBaseNamePlateSize() -- adjust clickable area if switching from Blizzard plates to Threat Plate plates
+                for plate, unitid in pairs(Addon.PlatesVisible) do
+                  Addon:UpdateNameplateStyle(plate, unitid)
+                end
+              end, L["Unable to change a setting while in combat."])
             end,
             get = GetValue,
             desc = L["Use Blizzard default nameplates for friendly nameplates and disable ThreatPlates for these units."],
@@ -3465,11 +3564,14 @@ local function CreateVisibilitySettings()
             type = "toggle",
             width = "full",
             set = function(info, val)
-              SetValue(info, val)
-              Addon:SetBaseNamePlateSize() -- adjust clickable area if switching from Blizzard plates to Threat Plate plates
-              for plate, unitid in pairs(Addon.PlatesVisible) do
-                Addon:UpdateNameplateStyle(plate, unitid)
-              end
+              info = t.CopyTable(info)
+              Addon:CallbackWhenOoC(function()
+                SetValue(info, val)
+                Addon:SetBaseNamePlateSize() -- adjust clickable area if switching from Blizzard plates to Threat Plate plates
+                for plate, unitid in pairs(Addon.PlatesVisible) do
+                  Addon:UpdateNameplateStyle(plate, unitid)
+                end
+              end, L["Unable to change a setting while in combat."])
             end,
             get = GetValue,
             desc = L["Use Blizzard default nameplates for neutral and enemy nameplates and disable ThreatPlates for these units."],
@@ -3621,8 +3723,12 @@ local function CreateBlizzardSettings()
             type = "toggle",
             desc = L["The size of the clickable area is always derived from the current size of the healthbar."],
             set = function(info, val)
-              SetValue(info, val)
-              Addon:SetBaseNamePlateSize()
+              if InCombatLockdown() then
+                t.Print("We're unable to change this while in combat", true)
+              else
+                SetValue(info, val)
+                Addon:SetBaseNamePlateSize()
+              end
             end,
             arg = { "settings", "frame", "SyncWithHealthbar"},
           },
@@ -3634,8 +3740,12 @@ local function CreateBlizzardSettings()
             max = 500,
             step = 1,
             set = function(info, val)
-              SetValue(info, val)
-              Addon:SetBaseNamePlateSize()
+              if InCombatLockdown() then
+                t.Print("We're unable to change this while in combat", true)
+              else
+                SetValue(info, val)
+                Addon:SetBaseNamePlateSize()
+              end
             end,
             disabled = function() return db.settings.frame.SyncWithHealthbar end,
             arg = { "settings", "frame", "width" },
@@ -3648,8 +3758,12 @@ local function CreateBlizzardSettings()
             max = 100,
             step = 1,
             set = function(info, val)
-              SetValue(info, val)
-              Addon:SetBaseNamePlateSize()
+              if InCombatLockdown() then
+                t.Print("We're unable to change this while in combat", true)
+              else
+                SetValue(info, val)
+                Addon:SetBaseNamePlateSize()
+              end
             end,
             disabled = function() return db.settings.frame.SyncWithHealthbar end,
             arg = { "settings", "frame", "height"},
@@ -4083,6 +4197,12 @@ local function CreateCastbarOptions()
             desc = L["This option allows you to control whether a spell's icon is hidden or shown on castbars."],
             arg = { "settings", "spellicon", "show" },
           },
+          EnableSpark = {
+            name = L["Spark"],
+            order = 45,
+            type = "toggle",
+            arg = { "settings", "castbar", "ShowSpark" },
+          },
           EnableCastBarBorder = {
             type = "toggle",
             order = 50,
@@ -4502,7 +4622,13 @@ local function CreateOptionsTable()
                         end
                       end),
                     Spacer1 = GetSpacerEntry(25),
-                    ShowAbsorb = {
+                    ShowHealAbsorbs = {
+                      name = L["Heal Absorbs"],
+                      order = 29,
+                      type = "toggle",
+                      arg = { "settings", "healthbar", "ShowHealAbsorbs" },
+                    },
+                    ShowAbsorbs = {
                       name = L["Absorbs"],
                       order = 30,
                       type = "toggle",
@@ -4887,16 +5013,16 @@ local function CreateOptionsTable()
                     OnlyAttackedUnits = {
                       type = "toggle",
                       order = 2,
-                      name = L["Only on Attacked Units"],
-                      desc = L["Show threat glow only on units in combat with the player."],
+                      name = L["Threat Detection Heuristic"],
+                      desc = L["Use a heuristic instead of a mob's threat table to detect if you are in combat with a mob (see Threat System - General Settings for a more detailed explanation)."],
                       width = "double",
-                      get = GetValue,
-                      set = SetValue,
+                      set = function(info, val) SetValue(info, not val) end,
+                      get = function(info) return not GetValue(info) end,
                       arg = { "ShowThreatGlowOnAttackedUnitsOnly" },
                     },
                     Header = { name = L["Colors"], type = "header", order = 10, },
                     Low = {
-                      name = L["|cff00ff00Low Threat|r"],
+                      name = L["|cffffffffLow Threat|r"],
                       type = "color",
                       order = 20,
                       arg = { "settings", "normal", "threatcolor", "LOW" },
@@ -6132,7 +6258,7 @@ local function CreateOptionsTable()
                       desc = L["If checked, threat feedback from boss level mobs will be shown."],
                       arg = { "threat", "toggle", "Boss" },
                     },
-                    Header2 = { type = "header", order = 20, name = L["Neutral Units & Minions & Status"], },
+                    Header2 = { type = "header", order = 20, name = L["Neutral Units & Minions"], },
                     NeutralNPCs = {
                       type = "toggle",
                       name = L["Neutral NPCs"],
@@ -6147,28 +6273,18 @@ local function CreateOptionsTable()
                       desc = L["If checked, threat feedback from minor mobs will be shown."],
                       arg = { "threat", "toggle", "Minus" },
                     },
-                    IgnoreNonCombat = {
-                      type = "toggle",
-                      name = L["Non-Attacked Units"],
-                      order = 23,
-                      desc = L["If checked, threat feedback from mobs you're currently not in combat with will be shown."],
-                      set = function(info, val) SetValue(info, not val) end,
-                      get = function(info) return not GetValue(info) end,
-                      arg = { "threat", "nonCombat" },
-                    },
+                    Header3 = { type = "header", order = 30, name = L["Status & Environment"], },
                     Tapped = {
                       type = "toggle",
                       name = L["Tapped Units"],
-                      order = 24,
+                      order = 40,
                       desc = L["If checked, threat feedback from tapped mobs will be shown regardless of unit type."],
                       arg = { "threat", "toggle", "Tapped" },
                     },
-                    Header3 = { type = "header", order = 30, name = L["Area"], },
                     OnlyInInstances = {
                       type = "toggle",
                       name = L["Only in Instances"],
-                      order = 31,
-                      width = "full",
+                      order = 50,
                       desc = L["If checked, threat feedback will only be shown in instances (dungeons, raids, arenas, battlegrounds), not in the open world."],
                       arg = { "threat", "toggle", "InstancesOnly" },
                     },
@@ -6177,17 +6293,51 @@ local function CreateOptionsTable()
                 General = {
                   name = L["Special Effects"],
                   type = "group",
-                  order = 20,
+                  order = 10,
                   inline = true,
                   args = {
                     OffTank = {
                       type = "toggle",
                       name = L["Highlight Mobs on Off-Tanks"],
-                      order = 2,
+                      order = 10,
                       width = "full",
                       desc = L["If checked, nameplates of mobs attacking another tank can be shown with different color, scale, and transparency."],
                       descStyle = "inline",
                       arg = { "threat", "toggle", "OffTank" },
+                    },
+                  },
+                },
+                ThreatHeuristic = {
+                  name = L["Threat Detection"],
+                  type = "group",
+                  order = 20,
+                  inline = true,
+                  args = {
+                    Note = {
+                      name = L["By default, the threat system works based on a mob's threat table. Some mobs do not have such a threat table even if you are in combat with them. The threat detection heuristic uses other factors to determine if you are in combat with a mob. This works well in instances. In the open world, this can show units in combat with you that are actually just in combat with another player (and not you)."],
+                      order = 0,
+                      type = "description",
+                    },
+                    ThreatTable = {
+                      type = "toggle",
+                      name = L["Threat Table"],
+                      order = 10,
+                      arg = { "threat", "UseThreatTable" },
+                    },
+                    Heuristic = {
+                      type = "toggle",
+                      name = L["Heuristic"],
+                      order = 20,
+                      set = function(info, val) SetValue(info, not val) end,
+                      get = function(info) return not GetValue(info) end,
+                      arg = { "threat", "UseThreatTable" },
+                    },
+                    HeuristicOnlyInInstances = {
+                      type = "toggle",
+                      name = L["Heuristic In Instances"],
+                      order = 30,
+                      desc = L["Use a heuristic to detect if a mob is in combat with you, but only in instances (like dungeons or raids)."],
+                      arg = { "threat", "UseHeuristicInInstances" },
                     },
                   },
                 },

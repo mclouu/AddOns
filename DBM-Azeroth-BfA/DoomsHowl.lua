@@ -4,10 +4,10 @@ if UnitFactionGroup("player") == "Alliance" then
 else--Horde
 	dungeonID, creatureID = 2212, 137374--Lion's Roar
 end
-local mod	= DBM:NewMod(dungeonID, "DBM-Azeroth-BfA", nil, 1028)
+local mod	= DBM:NewMod(dungeonID, "DBM-Azeroth-BfA", 3, 1028)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision(("$Revision: 18147 $"):sub(12, -3))
+mod:SetRevision("20190719021921")
 mod:SetCreatureID(creatureID)--Dooms Howl 138122, Lion's Roar 137374
 --mod:SetEncounterID(encounterID)
 mod:SetReCombatTime(20)
@@ -165,7 +165,7 @@ mod.SPELL_PERIODIC_MISSED = mod.SPELL_PERIODIC_DAMAGE
 function mod:UNIT_DIED(args)
 	local cid = self:GetCIDFromGUID(args.destGUID)
 	if cid == 124396 then
-		
+
 	end
 end
 --]]

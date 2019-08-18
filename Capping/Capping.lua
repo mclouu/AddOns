@@ -62,9 +62,8 @@ function mod:UnregisterEvent(event)
 end
 
 function mod:START_TIMER(_, timeSeconds)
-	self.prevTimer = GetTime() -- Used for some BG checks
-	local _, t = GetInstanceInfo();
-	if t == "pvp" or t == "arena" then
+	local _, t = GetInstanceInfo()
+	if t == "pvp" or t == "arena" or t == "scenario" then
 		for i = 1, #TimerTracker.timerList do
 			TimerTracker.timerList[i].bar:Hide() -- Hide the Blizz start timer
 		end
@@ -136,14 +135,21 @@ function mod:PLAYER_LOGIN()
 	end
 
 	-- Fix flag carriers for some people
-	SetCVar("showArenaEnemyCastbar", "1")
-	SetCVar("showArenaEnemyFrames", "1")
-	SetCVar("showArenaEnemyPets", "1")
+	C_CVar.SetCVar("showArenaEnemyCastbar", "1")
+	C_CVar.SetCVar("showArenaEnemyFrames", "1")
+	C_CVar.SetCVar("showArenaEnemyPets", "1")
 
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
 	self:RegisterEvent("START_TIMER")
 	self:ZONE_CHANGED_NEW_AREA()
+
+	C_Timer.After(15, function()
+		local x = GetLocale()
+		if x ~= "enUS" and x ~= "enGB" then -- XXX temp
+			print("|cFF33FF99Capping|r is missing locale for", x, "and needs your help! Please visit the project page on GitHub for more info.")
+		end
+	end)
 end
 mod:RegisterEvent("PLAYER_LOGIN")
 
@@ -323,7 +329,7 @@ do
 				if not timeLeft:find("[:%.]") then timeLeft = "0:"..timeLeft end
 				SendChatMessage(format("Capping: %s - %s %s", bar:GetLabel(), timeLeft, faction == "" and faction or "("..faction..")"), channel)
 			else
-				local msg = custom()
+				local msg = custom(bar)
 				if msg then
 					SendChatMessage(format("Capping: %s", msg), channel)
 				end
@@ -389,7 +395,7 @@ do
 		frame.RearrangeBars = RearrangeBars
 	end
 
-	function mod:StartBar(name, remaining, icon, colorid, priority)
+	function mod:StartBar(name, remaining, icon, colorid, priority, maxBarTime)
 		self:StopBar(name)
 		local bar = candy:New(media:Fetch("statusbar", db.profile.barTexture), db.profile.width, db.profile.height)
 		activeBars[bar] = true
@@ -433,7 +439,7 @@ do
 		else
 			bar:EnableMouse(false)
 		end
-		bar:Start()
+		bar:Start(maxBarTime)
 		RearrangeBars()
 		return bar
 	end

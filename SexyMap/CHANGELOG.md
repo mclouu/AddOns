@@ -1,6 +1,6 @@
 # SexyMap
 
-## [v8.0.8](https://github.com/funkydude/SexyMap/tree/v8.0.8) (2018-08-15)
-[Full Changelog](https://github.com/funkydude/SexyMap/compare/v8.0.7...v8.0.8)
+## [v8.2.2](https://github.com/funkydude/SexyMap/tree/v8.2.2) (2019-08-01)
+[Full Changelog](https://github.com/funkydude/SexyMap/compare/v8.2.1...v8.2.2)
 
-- Another fix to keep the missions button small.  
+- Tweaks  

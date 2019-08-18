@@ -19,7 +19,6 @@ DBM_COPY_URL_DIALOG					= "Copy URL"
 --Post Patch 7.1
 DBM_CORE_NO_RANGE					= "Range Radar can not be used in instances. Legacy text range frame used instead"
 DBM_CORE_NO_ARROW					= "Arrow can not be used in instances"
-DBM_CORE_ARROW_SUMMONED				= "DBM Arrow has been activated. If you did not do this, you have a 3rd party addon configured to activated it for you"
 DBM_CORE_NO_HUD						= "HUDMap can not be used in instances"
 
 DBM_CORE_DYNAMIC_DIFFICULTY_CLUMP	= "DBM has disabled dynamic range frame on this fight do to insufficient information about number of players needed to affect clump check for a group of your size."
@@ -88,7 +87,7 @@ DBM_CORE_MPROFILE_DELETE_S_ERROR	= "Source is corrupted. Settings not deleted or
 DBM_CORE_NOTE_SHARE_SUCCESS			= "%s has shared their note for %s"
 DBM_CORE_NOTE_SHARE_FAIL			= "%s attempted to share note text with you for %s. However, mod associated with this ability is not uninstalled or is not loaded. If you need this note, make sure you load the mod they are sharing notes for and ask them to share again"
 
-DBM_CORE_NOTEHEADER					= "Enter your note text here for %s. Enclosing a players name with >< class colors it. For alerts with multiple notes, separate notes with '/'"
+DBM_CORE_NOTEHEADER					= "Enter your note text here for %s. Enclosing a players name with >< class colors it. For alerts with multiple counts, separate notes with '/'"
 DBM_CORE_NOTEFOOTER					= "Press 'Okay' to accept changes or 'Cancel' to decline changes"
 DBM_CORE_NOTESHAREDHEADER			= "%s has shared below note text for %s. If you accept it, it will overwrite your existing note"
 DBM_CORE_NOTESHARED					= "Your note has been sent to the group"
@@ -100,6 +99,7 @@ DBM_CORE_NOTESHAREERRORALREADYOPEN	= "Cannot open a shared note link while note 
 DBM_CORE_ALLMOD_DEFAULT_LOADED		= "Default options for all mods in this instance have been loaded."
 DBM_CORE_ALLMOD_STATS_RESETED		= "All mod stats have been reset."
 DBM_CORE_MOD_DEFAULT_LOADED			= "Default options for this fight have been loaded."
+DBM_CORE_SOUNDKIT_MIGRATION			= "One or more of your warning/special warning sounds were reset to defaults do to incompatability with patch 8.2 and later. DBM now only supports sound files residing your addons folder, or SoundKit IDs for playing media"
 
 DBM_CORE_WORLDBOSS_ENGAGED			= "%s was possibly engaged on your realm at %s percent health. (Sent by %s)"
 DBM_CORE_WORLDBOSS_DEFEATED			= "%s was possibly defeated on your realm (Sent by %s)."
@@ -164,8 +164,8 @@ DBM_CORE_VOICE_DISABLED				= "You currently have at least one DBM voice pack ins
 DBM_CORE_VOICE_COUNT_MISSING		= "Countdown voice %d is set to a voice/count pack that could not be found. It has be reset to default setting: %s."
 DBM_BIG_WIGS						= "BigWigs"
 
-DBM_CORE_UPDATEREMINDER_HEADER			= "Your version of Deadly Boss Mods is out-of-date.\n Version %s (r%d) is available for download through Curse/Twitch, WoWI, or from deadlybossmods.com"
-DBM_CORE_UPDATEREMINDER_HEADER_ALPHA	= "Your ALPHA version of Deadly Boss Mods is out-of-date.\n You are at least %d test versions behind. It is recommended that DBM users that choose ALPHA versions run the latest ALPHA. Otherwise, they should run latest RELEASE version. Out of date ALPHAs have a stricter version check because they are development versions of DBM."
+DBM_CORE_UPDATEREMINDER_HEADER			= "Your version of Deadly Boss Mods is out-of-date.\n Version %s (%s) is available for download through Curse/Twitch, WoWI, or from deadlybossmods.com"
+DBM_CORE_UPDATEREMINDER_HEADER_ALPHA	= "Your ALPHA version of Deadly Boss Mods is out-of-date.\n You are at least %s test versions behind. It is recommended that DBM users that choose ALPHA versions run the latest ALPHA. Otherwise, they should run latest RELEASE version. Out of date ALPHAs have a stricter version check because they are development versions of DBM."
 DBM_CORE_UPDATEREMINDER_FOOTER			= "Press " .. (IsMacClient() and "Cmd-C" or "Ctrl-C")  ..  " to copy the download link to your clipboard."
 DBM_CORE_UPDATEREMINDER_FOOTER_GENERIC	= "Press " .. (IsMacClient() and "Cmd-C" or "Ctrl-C")  ..  " to copy the link to your clipboard."
 --DBM_CORE_UPDATEREMINDER_DISABLE		= "WARNING: Due to your Deadly Boss Mods being too out of date it has been force disabled and cannot be used until updated. This is to ensure old and incompatible code doesn't cause poor play experience for yourself or fellow raid members."
@@ -180,6 +180,7 @@ DBM_CORE_DPMCORE						= "WARNING: Deadly PvP mods is discontinued and not compat
 DBM_CORE_DBMLDB							= "WARNING: DBM-LDB is now built into DBM-Core. While it won't do any harm, it's recommended to remove 'DBM-LDB' from your addons folder"
 DBM_CORE_UPDATE_REQUIRES_RELAUNCH		= "WARNING: This DBM update will not work correctly if you don't fully restart your game client. This update contains new files or .toc file changes that cannot be loaded via ReloadUI. You may encounter broken functionality or errors if you continue without a client restart."
 DBM_CORE_OUT_OF_DATE_NAG				= "Your version of Deadly Boss Mods is out-of-date. It is recommended you update for this fight so you are not missing an important alert or timer or a yell rest of raid is expecting to see from you."
+DBM_CORE_RETAIL_ONLY					= "WARNING: This version of DBM is only meant to be used with latest retail version World of Warcraft. Uninstall this version and install correct version of DBM for Classic WoW."
 
 DBM_CORE_MOVABLE_BAR				= "Drag me!"
 
@@ -251,11 +252,9 @@ DBM_CORE_TIMER_USAGE	= {
 	"DBM timer commands:",
 	"-----------------",
 	"/dbm timer <sec> <text>: Starts a <sec> second timer with your <text>.",
-	"/dbm ctimer <sec> <text>: Starts a timer that also has countdown text.",
 	"/dbm ltimer <sec> <text>: Starts a timer that also automatically loops until canceled.",
-	"/dbm cltimer <sec> <text>: Starts a timer that also has countdown text and loops until canceled.",
 	"('Broadcast' in front of any timer also shares it with raid if leader/promoted)",
-	"/dbm timer endloop: Stops any looping ltimer or cltimer."
+	"/dbm timer endloop: Stops any looping ltimer."
 }
 
 DBM_ERROR_NO_PERMISSION				= "You don't have the required permission to do this."
@@ -289,7 +288,9 @@ DBM_BOSS							= "Boss"
 DBM_CORE_ROOM_EDGE					= "Room Edge"
 DBM_CORE_FAR_AWAY					= "Far Away"
 DBM_CORE_BREAK_LOS					= "Break LOS"
+DBM_CORE_RESTORE_LOS				= "Restore/Maintain LOS"
 DBM_CORE_SAFE						= "Safe"
+DBM_CORE_NOTSAFE					= "Not Safe"
 DBM_CORE_SHIELD						= "Shield"
 DBM_INCOMING						= "%s Incoming"
 --Common Locals end
@@ -331,7 +332,8 @@ DBM_CORE_AUTO_ANNOUNCE_TEXTS = {
 	stage		= "Stage %s",
 	prestage	= "Stage %s soon",
 	count		= "%s (%%s)",
-	stack		= "%s on >%%s< (%%d)"
+	stack		= "%s on >%%s< (%%d)",
+	moveto		= "%s - move to >%%s<"
 }
 
 local prewarnOption = "Show pre-warning for $spell:%s"
@@ -354,7 +356,8 @@ DBM_CORE_AUTO_ANNOUNCE_OPTIONS = {
 	stagechange	= "Announce stage changes",
 	prestage	= "Show a prewarning for Stage %s",
 	count		= "Show warning for $spell:%s (with count)",
-	stack		= "Announce $spell:%s stacks"
+	stack		= "Announce $spell:%s stacks",
+	moveto		= "Show warning to move to someone or some place for $spell:%s"
 }
 
 DBM_CORE_AUTO_SPEC_WARN_TEXTS = {
@@ -501,13 +504,6 @@ DBM_CORE_AUTO_ICONS_OPTION_TEXT2		= "Set icons on $spell:%s"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT			= "Show DBM Arrow to move toward target affected by $spell:%s"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT2		= "Show DBM Arrow to move away from target affected by $spell:%s"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT3		= "Show DBM Arrow to move toward specific location for $spell:%s"
-DBM_CORE_AUTO_VOICE_OPTION_TEXT			= "Play spoken alerts for $spell:%s"
-DBM_CORE_AUTO_VOICE2_OPTION_TEXT		= "Play spoken alerts for stage changes"
-DBM_CORE_AUTO_VOICE3_OPTION_TEXT		= "Play spoken alerts for incoming adds"
-DBM_CORE_AUTO_VOICE4_OPTION_TEXT		= "Play spoken alerts for bad stuff on ground"
-DBM_CORE_AUTO_COUNTDOWN_OPTION_TEXT		= "Play countdown sound for $spell:%s cooldown"
-DBM_CORE_AUTO_COUNTDOWN_OPTION_TEXT2	= "Play countdown sound for when $spell:%s fades"
-DBM_CORE_AUTO_COUNTOUT_OPTION_TEXT		= "Play countout sound for $spell:%s duration"
 DBM_CORE_AUTO_YELL_OPTION_TEXT = {
 	shortyell		= "Yell when you are affected by $spell:%s",
 	yell			= "Yell (with player name) when you are affected by $spell:%s",
@@ -528,8 +524,8 @@ DBM_CORE_AUTO_YELL_ANNOUNCE_TEXT = {
 	position 		= "%s %%s on {rt%%d}"..UnitName("player").."{rt%%d}",
 	combo			= "%s and %%s"--Spell name (from option, plus spellname given in arg)
 }
-DBM_CORE_AUTO_YELL_CUSTOM_POSITION		= "{rt%d}%s{rt%d}"--Doesn't need translating. Has no strings
-DBM_CORE_AUTO_YELL_CUSTOM_POSITION2		= "{rt%d}{rt%d}%s{rt%d}{rt%d}"--Doesn't need translating. Has no strings
+DBM_CORE_AUTO_YELL_CUSTOM_POSITION		= "{rt%d}%s"--Doesn't need translating. Has no strings
+DBM_CORE_AUTO_YELL_CUSTOM_POSITION2		= "{rt%d}%s{rt%d}"--Doesn't need translating. Has no strings
 DBM_CORE_AUTO_YELL_CUSTOM_FADE			= "%s faded"
 DBM_CORE_AUTO_HUD_OPTION_TEXT			= "Show HudMap for $spell:%s (Retired)"
 DBM_CORE_AUTO_HUD_OPTION_TEXT_MULTI		= "Show HudMap for various mechanics (Retired)"
@@ -611,16 +607,17 @@ DBM_CORE_LAG_FOOTER					= "No Response: %s"
 
 --Role Icons
 DBM_CORE_TANK_ICON			= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:6:21:7:27|t"
-DBM_CORE_HEALER_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:70:86:7:27|t"
 DBM_CORE_DAMAGE_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:39:55:7:27|t"
+DBM_CORE_HEALER_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:70:86:7:27|t"
 
 DBM_CORE_TANK_ICON_SMALL	= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:12:12:0:0:255:66:6:21:7:27|t"
-DBM_CORE_HEALER_ICON_SMALL	= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:12:12:0:0:255:66:70:86:7:27|t"
 DBM_CORE_DAMAGE_ICON_SMALL	= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:12:12:0:0:255:66:39:55:7:27|t"
+DBM_CORE_HEALER_ICON_SMALL	= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:12:12:0:0:255:66:70:86:7:27|t"
 --Importance Icons
 DBM_CORE_HEROIC_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:22:22:0:0:255:66:102:118:7:27|t"
 DBM_CORE_DEADLY_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:22:22:0:0:255:66:133:153:7:27|t"
 DBM_CORE_IMPORTANT_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:168:182:7:27|t"
+DBM_CORE_MYTHIC_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:22:22:0:0:255:66:133:153:40:58|t"
 
 DBM_CORE_HEROIC_ICON_SMALL	= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:14:14:0:0:255:66:102:118:7:27|t"
 DBM_CORE_DEADLY_ICON_SMALL	= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:14:14:0:0:255:66:133:153:7:27|t"
@@ -628,9 +625,9 @@ DBM_CORE_IMPORTANT_ICON_SMALL= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:1
 --Type Icons
 DBM_CORE_INTERRUPT_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:198:214:7:27|t"
 DBM_CORE_MAGIC_ICON			= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:229:247:7:27|t"
+DBM_CORE_CURSE_ICON			= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:6:21:40:58|t"
 DBM_CORE_POISON_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:39:55:40:58|t"
 DBM_CORE_DISEASE_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:70:86:40:58|t"
-DBM_CORE_CURSE_ICON			= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:6:21:40:58|t"
 DBM_CORE_ENRAGE_ICON		= "|TInterface\\EncounterJournal\\UI-EJ-Icons.blp:20:20:0:0:255:66:102:118:40:58|t"
 
 --LDB

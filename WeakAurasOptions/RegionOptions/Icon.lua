@@ -75,7 +75,7 @@ local function createOptions(id, data)
     cooldownSwipe = {
       type = "toggle",
       width = WeakAuras.normalWidth,
-      name = WeakAuras.newFeatureString .. L["Cooldown Swipe"],
+      name = L["Cooldown Swipe"],
       order = 6.3,
       disabled = function() return not WeakAuras.CanHaveDuration(data) end,
       hidden = function() return not data.cooldown end,
@@ -83,50 +83,18 @@ local function createOptions(id, data)
     cooldownEdge = {
       type = "toggle",
       width = WeakAuras.normalWidth,
-      name = WeakAuras.newFeatureString .. L["Cooldown Edge"],
+      name = L["Cooldown Edge"],
       order = 6.4,
       disabled = function() return not WeakAuras.CanHaveDuration(data) end,
       hidden = function() return not data.cooldown end,
     },
-    cooldownTextEnabled = {
+    cooldownTextDisabled = {
       type = "toggle",
       width = WeakAuras.normalWidth,
-      name = L["Show Cooldown Text"],
+      name = L["Hide Cooldown Text"],
       order = 6.5,
       disabled = function() return not WeakAuras.CanHaveDuration(data); end,
-      hidden = function() return not (data.cooldown and not IsAddOnLoaded("OmniCC") and GetCVar("countdownForCooldowns") == "1") end,
-    },
-    glowHeader = {
-      type = "header",
-      order = 19,
-      name = WeakAuras.newFeatureString .. L["Glow Settings"],
-    },
-    glow = {
-      type = "toggle",
-      width = WeakAuras.normalWidth,
-      name = L["Show Glow Effect"],
-      order = 20,
-    },
-    glowType = {
-      type = "select",
-      width = WeakAuras.normalWidth,
-      name = L["Glow Type"],
-      order = 21,
-      values = WeakAuras.glow_types,
-    },
-    useGlowColor = {
-      type = "toggle",
-      width = WeakAuras.normalWidth,
-      name = L["Glow Color"],
-      desc = L["If unchecked, then a default color will be used (usually yellow)"],
-      order = 23,
-    },
-    glowColor = {
-      type = "color",
-      width = WeakAuras.normalWidth,
-      name = L["Glow Color"],
-      order = 24,
-      disabled = function() return not data.useGlowColor end,
+      hidden = function() return not data.cooldown end,
     },
     textHeader1 = {
       type = "header",
@@ -283,16 +251,16 @@ local function createOptions(id, data)
       order = 43,
       name = L["General Text Settings"],
       hidden = function()
-        return not ((data.text1Enabled and WeakAuras.ContainsPlaceHolders(data.text1, "cpt"))
-          or (data.text2Enabled and WeakAuras.ContainsPlaceHolders(data.text2, "cpt")))
+        return not ((data.text1Enabled and (WeakAuras.ContainsPlaceHolders(data.text1, "pt") or WeakAuras.ContainsCustomPlaceHolder(data.text1)))
+          or (data.text2Enabled and (WeakAuras.ContainsPlaceHolders(data.text2, "pt") or WeakAuras.ContainsCustomPlaceHolder(data.text2))))
       end,
     },
     customTextUpdate = {
       type = "select",
       width = WeakAuras.doubleWidth,
       hidden = function()
-        return not ((data.text1Enabled and WeakAuras.ContainsPlaceHolders(data.text1, "c"))
-          or (data.text2Enabled and WeakAuras.ContainsPlaceHolders(data.text2, "c")))
+        return not ((data.text1Enabled and WeakAuras.ContainsCustomPlaceHolder(data.text1))
+          or (data.text2Enabled and WeakAuras.ContainsCustomPlaceHolder(data.text2)))
       end,
       name = L["Update Custom Text On..."],
       values = WeakAuras.text_check_types,
@@ -311,7 +279,7 @@ local function createOptions(id, data)
           or (data.text2Enabled and WeakAuras.ContainsPlaceHolders(data.text2, "pt")))
       end,
       disabled = function()
-        return not (WeakAuras.ContainsPlaceHolders(data.text1, "p") or WeakAuras.ContainsPlaceHolders(data.text2, "p"));
+        return not (data.text1Enabled and WeakAuras.ContainsPlaceHolders(data.text1, "p") or data.text2Enabled and WeakAuras.ContainsPlaceHolders(data.text2, "p"));
       end
     },
     totalPrecision = {
@@ -326,7 +294,7 @@ local function createOptions(id, data)
           or (data.text2Enabled and WeakAuras.ContainsPlaceHolders(data.text2, "pt")))
       end,
       disabled = function()
-        return not (WeakAuras.ContainsPlaceHolders(data.text1, "t") or WeakAuras.ContainsPlaceHolders(data.text2, "t"));
+        return not (data.text1Enabled and WeakAuras.ContainsPlaceHolders(data.text1, "t") or data.text2Enabled and WeakAuras.ContainsPlaceHolders(data.text2, "t"));
       end
     },
     otherHeader = {
@@ -395,6 +363,10 @@ local function createOptions(id, data)
   end
 
   WeakAuras.AddCodeOption(options, data, L["Custom Function"], "customText", 43.2,  hideCustomTextEditor, {"customText"}, false);
+
+  for k, v in pairs(WeakAuras.GlowOptions(id, data, 10)) do
+    options[k] = v
+  end
 
   return {
     icon = options,

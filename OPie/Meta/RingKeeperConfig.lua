@@ -318,6 +318,11 @@ ringContainer = CreateFrame("Frame", nil, panel) do
 			ico.check = ico:CreateTexture(nil, "OVERLAY")
 			ico.check:SetSize(8,8) ico.check:SetPoint("BOTTOMRIGHT", -1, 1)
 			ico.check:SetTexture("Interface/FriendsFrame/StatusIcon-Online")
+			ico.auto = ico:CreateTexture(nil, "OVERLAY", nil, 4)
+			ico.auto:SetAllPoints()
+			ico.auto:SetTexture("Interface/Buttons/UI-AutoCastableOverlay")
+			ico.auto:SetTexCoord(14/64, 49/64, 14/64, 49/64)
+			
 			ringContainer.slices[i+1] = ico
 		end
 	end
@@ -402,15 +407,30 @@ ringDetail = CreateFrame("Frame", nil, ringContainer) do
 	ringDetail.embedRing:SetPoint("TOPLEFT", ringDetail.hiddenRing, "BOTTOMLEFT", 0, 2)
 	ringDetail.embedRing.Text:SetText(L"Embed into other rings by default")
 	ringDetail.embedRing:SetScript("OnClick", function(self) api.setRingProperty("embed", self:GetChecked() and true or nil) end)
+	ringDetail.firstOnOpen = CreateFrame("CheckButton", nil, ringDetail, "InterfaceOptionsCheckButtonTemplate") do
+		local f = ringDetail.firstOnOpen
+		f:SetPoint("TOPLEFT", ringDetail.embedRing, "BOTTOMLEFT", 0, 2)
+		f:SetMotionScriptsWhileDisabled(1)
+		f.Text:SetText(L"Use first slice when opened")
+		f:SetScript("OnClick", function(self)
+			self.quarantineMark:Hide()
+			api.setRingProperty("onOpen", self:GetChecked() and 1 or nil)
+		end)
+		f.quarantineMark = f:CreateTexture(nil, "ARTWORK")
+		f.quarantineMark:SetAllPoints()
+		f.quarantineMark:SetTexture(f:GetCheckedTexture():GetTexture())
+		f.quarantineMark:SetDesaturated(true)
+		f.quarantineMark:SetVertexColor(1, 0.95, 0.85, 0.65)
+	end
 
 	ringDetail.optionsLabel = ringDetail:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	ringDetail.optionsLabel:SetPoint("TOPLEFT", ringDetail, "TOPLEFT", 10, -125)
 	ringDetail.optionsLabel:SetText(L"Options:")
 	ringDetail.shareLabel = ringDetail:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-	ringDetail.shareLabel:SetPoint("TOPLEFT", ringDetail, "TOPLEFT", 10, -198)
+	ringDetail.shareLabel:SetPoint("TOPLEFT", ringDetail, "TOPLEFT", 10, -220)
 	ringDetail.shareLabel:SetText(L"Snapshot:")
 	ringDetail.shareLabel2 = ringDetail:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallLeft")
-	ringDetail.shareLabel2:SetPoint("TOPLEFT", ringDetail, "TOPLEFT", 270, -198)
+	ringDetail.shareLabel2:SetPoint("TOPLEFT", ringDetail, "TOPLEFT", 270, -220)
 	ringDetail.shareLabel2:SetWidth(275)
 	ringDetail.export = CreateButton(ringDetail)
 	ringDetail.export:SetPoint("TOP", ringDetail.shareLabel2, "BOTTOM", 0, -2)
@@ -686,7 +706,7 @@ sliceDetail = CreateFrame("Frame", nil, ringContainer) do
 	sliceDetail.fastClick = CreateFrame("CheckButton", nil, sliceDetail, "InterfaceOptionsCheckButtonTemplate") do
 		local e = sliceDetail.fastClick
 		local function update(self)
-			return api.setSliceProperty(self.prop, self:GetChecked() and true or nil)
+			return api.setSliceProperty("fastClick", self:GetChecked() and true or nil)
 		end
 		e:SetHitRectInsets(0, -200, 4, 4) e:SetMotionScriptsWhileDisabled(1) e:SetScript("OnClick", update)
 		e:SetPoint("TOPLEFT", 266, -oy)
@@ -1097,6 +1117,9 @@ local function sortNames(a,b)
 	local oa, ob, na, nb, ta, tb = ringOrderMap[a] or 5, ringOrderMap[b] or 5, ringNameMap[a] or "", ringNameMap[b] or "", ringTypeMap[a] or "", ringTypeMap[b] or ""
 	return oa < ob or (oa == ob and ta < tb) or (oa == ob and ta == tb and na < nb) or false
 end
+local function ringDropDown_EntryFormat(k)
+	return (typePrefix[ringTypeMap[k]] or "") .. (ringNameMap[k] or "?"), currentRingName == k
+end
 function ringDropDown:initialize(level, nameList)
 	local playerName, playerServer = UnitFullName("player")
 	local playerFullName = playerName .. "-" .. playerServer
@@ -1112,24 +1135,32 @@ function ringDropDown:initialize(level, nameList)
 		table.sort(ringNames, sortNames)
 		table.sort(ringNames.hidden, sortNames)
 		table.sort(ringNames.other, sortNames)
+	elseif nameList == "overflow-main" then
+		conf.ui.scrollingDropdown:Display(2, ringNames, ringDropDown_EntryFormat, api.selectRing, 16)
+		return
+	elseif nameList then
+		conf.ui.scrollingDropdown:Display(2, nameList, ringDropDown_EntryFormat, api.selectRing)
+		return
 	end
-	local t = nameList or ringNames
-	for i=1,#t do
-		local prefix = (typePrefix[ringTypeMap[t[i]]] or "")
-		info.arg1, info.checked, info.text = t[i], currentRingName == t[i], prefix .. (ringNameMap[t[i]] or "?")
+	local stopAt = #ringNames > 20 and 16 or #ringNames
+	for i=1,stopAt do
+		local k = ringNames[i]
+		info.arg1, info.text, info.checked = k, ringDropDown_EntryFormat(k)
 		UIDropDownMenu_AddButton(info, level)
 	end
-	if level == 1 then
-		info.hasArrow, info.notCheckable, info.fontObject, info.text, info.func, info.checked = 1, 1, GameFontNormalSmall
-		info.padding=32
-		if t.hidden and #t.hidden > 0 then
-			info.menuList, info.text = ringNames.hidden, L"Hidden rings"
-			UIDropDownMenu_AddButton(info, level)
-		end
-		if t.other and #t.other > 0 then
-			info.menuList, info.text = ringNames.other, L"Inactive rings"
-			UIDropDownMenu_AddButton(info, level)
-		end
+	info.hasArrow, info.notCheckable, info.padding, info.fontObject = 1, 1, 32, GameFontNormalSmall
+	info.text, info.func, info.checked = nil
+	if stopAt < #ringNames then
+		info.menuList, info.text = "overflow-main", L"More active rings"
+		UIDropDownMenu_AddButton(info, level)
+	end
+	if ringNames.hidden and #ringNames.hidden > 0 then
+		info.menuList, info.text = ringNames.hidden, L"Hidden rings"
+		UIDropDownMenu_AddButton(info, level)
+	end
+	if ringNames.other and #ringNames.other > 0 then
+		info.menuList, info.text = ringNames.other, L"Inactive rings"
+		UIDropDownMenu_AddButton(info, level)
 	end
 end
 function api.createRing(name, data)
@@ -1167,13 +1198,14 @@ end
 function api.updateRingLine()
 	ringContainer.prev:SetEnabled(sliceBaseIndex > 1)
 	ringContainer.next:Disable()
-	local lastWidget
+	local onOpen, lastWidget = currentRing.onOpen
 	for i=sliceBaseIndex,#currentRing do
 		local e = ringContainer.slices[i-sliceBaseIndex+1]
 		if not e then ringContainer.next:Enable() break end
 		local _, _, sicon, icoext = getSliceInfo(currentRing[i])
 		pcall(setIcon, e.tex, currentRing[i].icon or sicon, icoext, currentRing[i])
 		e.check:SetShown(RK:IsRingSliceActive(currentRingName, i))
+		e.auto:SetShown(onOpen == i)
 		e:SetChecked(currentSliceIndex == i)
 		e:Show()
 		lastWidget = e
@@ -1290,6 +1322,9 @@ function api.setRingProperty(name, value)
 			break
 		end end
 		table.insert(dest, currentRingName)
+	elseif name == "onOpen" then
+		currentRing.quarantineOnOpen = nil
+		api.updateRingLine()
 	end
 	api.saveRing(currentRingName, currentRing)
 end
@@ -1411,14 +1446,14 @@ end
 function api.deleteSlice(id)
 	if id == nil then id = currentSliceIndex end
 	if id and currentRing and currentRing[id] then
+		if id == currentSliceIndex then
+			sliceDetail:Hide()
+			currentSliceIndex = nil
+			ringDetail:Show()
+		end
 		table.remove(currentRing, id)
 		if sliceBaseIndex == id and sliceBaseIndex > 1 then
 			sliceBaseIndex = sliceBaseIndex - 1
-		end
-		if id == currentSliceIndex then
-			currentSliceIndex = nil
-			sliceDetail:Hide()
-			ringDetail:Show()
 		end
 		api.saveRing(currentRingName, currentRing)
 		api.updateRingLine()
@@ -1478,6 +1513,8 @@ function api.refreshDisplay()
 		ringDetail.opportunistCA.Text:SetVertexColor(noCA and 0.6 or 1,noCA and 0.6 or 1,noCA and 0.6 or 1)
 		ringDetail.bindingQuarantine:SetShown(not not currentRing.quarantineBind)
 		ringDetail.bindingQuarantine:SetChecked(nil)
+		ringDetail.firstOnOpen:SetChecked(currentRing.onOpen == 1)
+		ringDetail.firstOnOpen.quarantineMark:SetShown(currentRing.quarantineOnOpen == 1)
 	end
 end
 function api.exportRing()

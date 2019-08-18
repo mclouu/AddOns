@@ -705,10 +705,12 @@ function module:OnValueChanged(info, b)
 end
 
 function module:UpdateMenuButtons()
-    if self.db.profile.showBnet then
-		QuickJoinToastButton:Show()
-    else
-		QuickJoinToastButton:Hide()
+    if QuickJoinToastButton then
+      if self.db.profile.showBnet then
+	QuickJoinToastButton:Show()
+      else
+	QuickJoinToastButton:Hide()
+      end
     end
 
     if self.db.profile.showMenu then
@@ -722,6 +724,7 @@ end
 
 
 function module:UpdateVoiceButtons()
+   if ChatFrameToggleVoiceDeafenButton and ChatFrameToggleVoiceMuteButton then
 	if self.db.profile.showvoice then
         ChatFrameToggleVoiceDeafenButton:SetScript("OnShow", nil)
         ChatFrameToggleVoiceMuteButton:SetScript("OnShow", nil)
@@ -737,6 +740,7 @@ function module:UpdateVoiceButtons()
         ChatFrameToggleVoiceMuteButton:SetScript("OnShow", hide)
 		ChatFrameToggleVoiceMuteButton:Hide()
 	end
+  end
 end
 
 function module:UpdateChannelButton()

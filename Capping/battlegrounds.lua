@@ -6,12 +6,16 @@ do
 end
 local L = mod.L
 
-local ceil = math.ceil
+local ceil, floor = math.ceil, math.floor
 local strmatch, pairs, format, tonumber = strmatch, pairs, format, tonumber
 local GetIconAndTextWidgetVisualizationInfo = C_UIWidgetManager.GetIconAndTextWidgetVisualizationInfo
+local GetDoubleStatusBarWidgetVisualizationInfo = C_UIWidgetManager.GetDoubleStatusBarWidgetVisualizationInfo
 local GetAreaPOIForMap = C_AreaPoiInfo.GetAreaPOIForMap
 local GetAreaPOIInfo = C_AreaPoiInfo.GetAreaPOIInfo
-local Timer, SendAddonMessage = C_Timer.After, C_ChatInfo.SendAddonMessage
+local Timer, SendAddonMessage, NewTicker = C_Timer.After, C_ChatInfo.SendAddonMessage, C_Timer.NewTicker
+local GetAtlasInfo = C_Texture.GetAtlasInfo
+local GetScoreInfo = C_PvP.GetScoreInfo
+local RequestBattlefieldScoreData = RequestBattlefieldScoreData
 
 local SetupAssault, GetIconData, UpdateAssault
 do -- POI handling
@@ -91,6 +95,7 @@ do -- POI handling
 		[152] = "colorAlliance",
 		[154] = "colorHorde",
 	}
+	local atlasColors = nil
 	local GetPOITextureCoords = GetPOITextureCoords
 	local capTime = 0
 	local curMapID = 0
@@ -100,7 +105,8 @@ do -- POI handling
 		return path
 	end
 	local landmarkCache = {}
-	SetupAssault = function(bgcaptime, uiMapID)
+	SetupAssault = function(bgcaptime, uiMapID, colors)
+		atlasColors = colors
 		capTime = bgcaptime -- cap time
 		curMapID = uiMapID -- current map
 		landmarkCache = {}
@@ -108,16 +114,33 @@ do -- POI handling
 		for i = 1, #pois do
 			local tbl = GetAreaPOIInfo(uiMapID, pois[i])
 			local icon = tbl.textureIndex
-			landmarkCache[tbl.name] = icon
-			if icon == 2 or icon == 3 or icon == 151 or icon == 153 or icon == 18 or icon == 20 then
-				-- Horde mine, Alliance mine, Alliance Refinery, Horde Refinery, Alliance Quarry, Horde Quarry
-				local _, _, _, id = UnitPosition("player")
-				if id == 30 or id == 628 then -- Alterac Valley, IoC
-					local bar = mod:StartBar(tbl.name, 3600, GetIconData(icon), (icon == 3 or icon == 151 or icon == 18) and "colorAlliance" or "colorHorde", true) -- Paused bar for mine status
-					bar:Pause()
-					bar:SetTimeVisibility(false)
-					bar:Set("capping:customchat", function() end)
+			local atlasName = tbl.atlasName
+			if icon then
+				landmarkCache[tbl.name] = icon
+				if icon == 2 or icon == 3 or icon == 151 or icon == 153 or icon == 18 or icon == 20 then
+					-- Horde mine, Alliance mine, Alliance Refinery, Horde Refinery, Alliance Quarry, Horde Quarry
+					local _, _, _, id = UnitPosition("player")
+					if id == 30 or id == 628 then -- Alterac Valley, IoC
+						local bar = mod:StartBar(tbl.name, 3600, GetIconData(icon), (icon == 3 or icon == 151 or icon == 18) and "colorAlliance" or "colorHorde", true) -- Paused bar for mine status
+						bar:Pause()
+						bar:SetTimeVisibility(false)
+						bar:Set("capping:customchat", function() end)
+					end
 				end
+			elseif atlasName then
+				--local atlasTbl = GetAtlasInfo(atlasName)
+				landmarkCache[tbl.name] = atlasName
+				-- This can stay commented out until the day IoC/AV is converted to atlasNames
+				--if atlasName == 2 or atlasName == 3 or atlasName == 151 or atlasName == 153 or atlasName == 18 or atlasName == 20 then
+				--	-- Horde mine, Alliance mine, Alliance Refinery, Horde Refinery, Alliance Quarry, Horde Quarry
+				--	local _, _, _, id = UnitPosition("player")
+				--	if id == 30 or id == 628 then -- Alterac Valley, IoC
+				--		local bar = mod:StartBar(tbl.name, 3600, GetIconData(icon), (icon == 3 or icon == 151 or icon == 18) and "colorAlliance" or "colorHorde", true) -- Paused bar for mine status
+				--		bar:Pause()
+				--		bar:SetTimeVisibility(false)
+				--		bar:Set("capping:customchat", function() end)
+				--	end
+				--end
 			end
 		end
 		mod:RegisterTempEvent("AREA_POIS_UPDATED")
@@ -128,42 +151,82 @@ do -- POI handling
 		local pois = GetAreaPOIForMap(curMapID)
 		for i = 1, #pois do
 			local tbl = GetAreaPOIInfo(curMapID, pois[i])
-			local name, icon, areaPoiID = tbl.name, tbl.textureIndex, tbl.areaPoiID
-			if landmarkCache[name] ~= icon then
-				landmarkCache[name] = icon
-				if iconDataConflict[icon] then
-					local bar = self:StartBar(name, capTime, GetIconData(icon), iconDataConflict[icon])
-					bar:Set("capping:poiid", areaPoiID)
-					if icon == 137 or icon == 139 then -- Workshop in IoC
-						self:StopBar((GetSpellInfo(56661))) -- Build Siege Engine
-					end
-				else
-					self:StopBar(name)
-					if icon == 136 or icon == 138 then -- Workshop in IoC
-						self:StartBar(GetSpellInfo(56661), 181, 252187, icon == 136 and "colorAlliance" or "colorHorde") -- Build Siege Engine, 252187 = ability_vehicle_siegeengineram
-					elseif icon == 2 or icon == 3 or icon == 151 or icon == 153 or icon == 18 or icon == 20 then
-						-- Horde mine, Alliance mine, Alliance Refinery, Horde Refinery, Alliance Quarry, Horde Quarry
-						local _, _, _, id = UnitPosition("player")
-						if id == 30 or id == 628 then -- Alterac Valley, IoC
-							local bar = self:StartBar(name, 3600, GetIconData(icon), (icon == 3 or icon == 151 or icon == 18) and "colorAlliance" or "colorHorde", true) -- Paused bar for mine status
-							bar:Pause()
-							bar:SetTimeVisibility(false)
-							bar:Set("capping:customchat", function() end)
+			local name, icon, atlasName, areaPoiID = tbl.name, tbl.textureIndex, tbl.atlasName, tbl.areaPoiID
+			if icon then
+				if landmarkCache[name] ~= icon then
+					landmarkCache[name] = icon
+					if iconDataConflict[icon] then
+						local bar = self:StartBar(name, capTime, GetIconData(icon), iconDataConflict[icon])
+						bar:Set("capping:poiid", areaPoiID)
+						if icon == 137 or icon == 139 then -- Workshop in IoC
+							self:StopBar((GetSpellInfo(56661))) -- Build Siege Engine
 						end
+					else
+						self:StopBar(name)
+						if icon == 136 or icon == 138 then -- Workshop in IoC
+							self:StartBar(GetSpellInfo(56661), 181, 252187, icon == 136 and "colorAlliance" or "colorHorde") -- Build Siege Engine, 252187 = ability_vehicle_siegeengineram
+						elseif icon == 2 or icon == 3 or icon == 151 or icon == 153 or icon == 18 or icon == 20 then
+							-- Horde mine, Alliance mine, Alliance Refinery, Horde Refinery, Alliance Quarry, Horde Quarry
+							local _, _, _, id = UnitPosition("player")
+							if id == 30 or id == 628 then -- Alterac Valley, IoC
+								local bar = self:StartBar(name, 3600, GetIconData(icon), (icon == 3 or icon == 151 or icon == 18) and "colorAlliance" or "colorHorde", true) -- Paused bar for mine status
+								bar:Pause()
+								bar:SetTimeVisibility(false)
+								bar:Set("capping:customchat", function() end)
+							end
+						end
+					end
+				end
+			elseif atlasName then
+				local atlasTbl = GetAtlasInfo(atlasName)
+				if landmarkCache[name] ~= atlasName then
+					--print(name, atlasName)
+					landmarkCache[name] = atlasName
+					if atlasColors[atlasName] then
+						local bar = self:StartBar(
+							name,
+							capTime,
+							{ -- Begin Icon Texture
+								atlasTbl.file,
+								atlasTbl.leftTexCoord,
+								atlasTbl.rightTexCoord,
+								atlasTbl.topTexCoord,
+								atlasTbl.bottomTexCoord,
+							}, -- End Icon Texture
+							atlasColors[atlasName] -- Color
+						)
+						bar:Set("capping:poiid", areaPoiID)
+						--if atlasName == WORKSHOPHORDE or atlasName == WORKSHOPALLIANCE then -- Workshop in IoC
+						--	self:StopBar((GetSpellInfo(56661))) -- Build Siege Engine
+						--end
+					else
+						self:StopBar(name)
+						--if icon == 136 or icon == 138 then -- Workshop in IoC
+						--	self:StartBar(GetSpellInfo(56661), 181, 252187, icon == 136 and "colorAlliance" or "colorHorde") -- Build Siege Engine, 252187 = ability_vehicle_siegeengineram
+						--elseif icon == 2 or icon == 3 or icon == 151 or icon == 153 or icon == 18 or icon == 20 then
+						--	-- Horde mine, Alliance mine, Alliance Refinery, Horde Refinery, Alliance Quarry, Horde Quarry
+						--	local _, _, _, id = UnitPosition("player")
+						--	if id == 30 or id == 628 then -- Alterac Valley, IoC
+						--		local bar = self:StartBar(name, 3600, GetIconData(icon), (icon == 3 or icon == 151 or icon == 18) and "colorAlliance" or "colorHorde", true) -- Paused bar for mine status
+						--		bar:Pause()
+						--		bar:SetTimeVisibility(false)
+						--		bar:Set("capping:customchat", function() end)
+						--	end
+						--end
 					end
 				end
 			end
 		end
 	end
 
-	UpdateAssault = function(uiMapID, inProgressDataTbl)
+	UpdateAssault = function(uiMapID, inProgressDataTbl, maxBarTime)
 		local pois = GetAreaPOIForMap(uiMapID)
 		for i = 1, #pois do
 			local tbl = GetAreaPOIInfo(uiMapID, pois[i])
 			local name, icon, areaPoiID = tbl.name, tbl.textureIndex, tbl.areaPoiID
 			local timer = inProgressDataTbl[areaPoiID]
 			if timer and iconDataConflict[icon] then
-				mod:StartBar(name, timer, GetIconData(icon), iconDataConflict[icon])
+				mod:StartBar(name, timer, GetIconData(icon), iconDataConflict[icon], nil, maxBarTime)
 			end
 		end
 	end
@@ -172,83 +235,101 @@ end
 -- initialize or update a final score estimation bar (AB and EotS uses this)
 local NewEstimator
 do
-	local allianceWidget, hordeWidget, prevTime, updateBases, hordeWinning = 0, 0, 0, false, false
-	local update = function() updateBases = true end
-	local MaxScore, prevText = 1500, ""
-	local ppsTable
-	function mod:ScorePredictor()
-		local t = GetTime()
-		-- Conditions:
-		-- 1) Amount of owned bases changed
-		-- 2) Two updates happened in a short space of time and we want the data from the 2nd update (latest score info)
-		-- This happens when both teams have bases, the first update (alliance) will be incomplete, the second update (horde) will give us a complete outlook of final scores
-		if updateBases or (t - prevTime) < 0.8 then
-			prevTime = t
+	local prevText = ""
+	local prevTime, prevAScore, prevHScore, prevAIncrease, prevHIncrease = 0, 0, 0, 0, 0
+	local timeBetweenEachTick, prevTick, prevTimeToWin = 0, 0, 0
+	local maxscore, ascore, hscore, aIncrease, hIncrease = 0, 0, 0, 0, 0
+	local aRemain, hRemain, aTicksToWin, hTicksToWin = 0, 0, 0, 0
 
-			local ascore, abases = 0, 0
-			do
-				local dataTbl = GetIconAndTextWidgetVisualizationInfo(allianceWidget)
-				if not dataTbl then return end
-				local base, score = strmatch(dataTbl.text, "^[^%d]+(%d)[^%d]+(%d+)[^%d]+%d+$") -- Bases: %d  Resources: %d/%d
-				local ABases, AScore = tonumber(base), tonumber(score)
-				if ABases and AScore then
-					abases = ABases
-					ascore = AScore
-				end
+	local function UpdatePredictor()
+		if aIncrease ~= prevAIncrease or hIncrease ~= prevHIncrease or timeBetweenEachTick ~= prevTick then
+			if aIncrease > 60 or hIncrease > 60 or aIncrease < 0 or hIncrease < 0 then -- Scores can reduce in DG
+				mod:StopBar(prevText) -- >60 increase means captured a flag/cart in EotS/DG
+				prevAIncrease, prevHIncrease = -1, -1
+				return
 			end
+			prevAIncrease, prevHIncrease, prevTick = aIncrease, hIncrease, timeBetweenEachTick
 
-			local hscore, hbases = 0, 0
-			do
-				local dataTbl = GetIconAndTextWidgetVisualizationInfo(hordeWidget)
-				if not dataTbl then return end
-				local base, score = strmatch(dataTbl.text, "^[^%d]+(%d)[^%d]+(%d+)[^%d]+%d+$") -- Bases: %d  Resources: %d/%d
-				local HBases, HScore = tonumber(base), tonumber(score)
-
-				if HBases and HScore then
-					hbases = HBases
-					hscore = HScore
-				end
-			end
-
-			local apps, hpps = ppsTable[abases], ppsTable[hbases]
-			-- timeTilFinal = ((remainingScore) / scorePerSec) - (timeSinceLastUpdate)
-			local ATime = apps and ((MaxScore - ascore) / apps) or 1000000
-			local HTime = hpps and ((MaxScore - hscore) / hpps) or 1000000
-
-			if HTime < ATime then -- Horde is winning
-				updateBases = false
-				local score = apps and (ascore + ceil(apps * HTime)) or ascore
-				local txt = format(L.finalScore, score, MaxScore)
-				if txt ~= prevText or not hordeWinning then
-					hordeWinning = true
-					self:StopBar(prevText)
-					self:StartBar(txt, HTime, 132485, "colorHorde") -- 132485 = Interface/Icons/INV_BannerPVP_01
+			if hTicksToWin < aTicksToWin then -- Horde is winning
+				local timeToWin = hTicksToWin * timeBetweenEachTick
+				local finalAScore = ascore + (hTicksToWin * aIncrease)
+				local txt = format(L.finalScore, finalAScore, maxscore)
+				if txt ~= prevText or timeToWin ~= prevTimeToWin then
+					prevTimeToWin = timeToWin
+					mod:StopBar(prevText)
+					mod:StartBar(txt, timeToWin-0.5, 132485, "colorHorde") -- 132485 = Interface/Icons/INV_BannerPVP_01
 					prevText = txt
 				end
-			elseif ATime < HTime then -- Alliance is winning
-				updateBases = false
-				local score = hpps and (hscore + ceil(hpps * ATime)) or hscore
-				local txt = format(L.finalScore, MaxScore, score)
-				if txt ~= prevText or hordeWinning then
-					hordeWinning = false
-					self:StopBar(prevText)
-					self:StartBar(txt, ATime, 132486, "colorAlliance") -- 132486 = Interface/Icons/INV_BannerPVP_02
+			elseif aTicksToWin < hTicksToWin then -- Alliance is winning
+				local timeToWin = aTicksToWin * timeBetweenEachTick
+				local finalHScore = hscore + (aTicksToWin * hIncrease)
+				local txt = format(L.finalScore, maxscore, finalHScore)
+				if txt ~= prevText or timeToWin ~= prevTimeToWin then
+					prevTimeToWin = timeToWin
+					mod:StopBar(prevText)
+					mod:StartBar(txt, timeToWin-0.5, 132486, "colorAlliance") -- 132486 = Interface/Icons/INV_BannerPVP_02
 					prevText = txt
 				end
 			end
 		end
 	end
-	NewEstimator = function(pointsPerSecond, aW, hW) -- resets estimator and sets new battleground
-		allianceWidget, hordeWidget = aW, hW
-		ppsTable = pointsPerSecond
-		updateBases = false
-		prevText = ""
-		Timer(2, update) -- Delay the first update so we don't get bad data
-		mod:RegisterTempEvent("UPDATE_UI_WIDGET", "ScorePredictor")
-	end
 
-	function mod:UpdateBases()
-		Timer(1, update) -- Delay the first update so we don't get bad data
+	function mod:ScorePredictor(widgetInfo)
+		if widgetInfo and widgetInfo.widgetID == 1671 then -- The 1671 widget is used for all BGs with score predictors
+			local dataTbl = GetDoubleStatusBarWidgetVisualizationInfo(widgetInfo.widgetID)
+			if not dataTbl or not dataTbl.leftBarMax then return end
+			if prevTime == 0 then
+				prevTime = GetTime()
+				prevAScore, prevHScore = dataTbl.leftBarValue, dataTbl.rightBarValue
+				return
+			end
+
+			local t = GetTime()
+			local elapsed = t - prevTime
+			prevTime = t
+			if elapsed > 0.5 then
+				-- If there's only 1 update, it could be either alliance or horde, so we update both stats in this one
+				maxscore = dataTbl.leftBarMax -- Total
+				ascore = dataTbl.leftBarValue -- Alliance Bar
+				hscore = dataTbl.rightBarValue -- Horde Bar
+				aIncrease = ascore - prevAScore
+				hIncrease = hscore - prevHScore
+				aRemain = maxscore - ascore
+				hRemain = maxscore - hscore
+				-- Always round ticks upwards. 1.2 ticks will always be 2 ticks to end.
+				-- If ticks are 0 (no bases) then set to a random huge number (10,000)
+				aTicksToWin = ceil(aIncrease == 0 and 10000 or aRemain / aIncrease)
+				hTicksToWin = ceil(hIncrease == 0 and 10000 or hRemain / hIncrease)
+				-- Round to the closest time
+				timeBetweenEachTick = elapsed % 1 >= 0.5 and ceil(elapsed) or floor(elapsed)
+
+				prevAScore, prevHScore = ascore, hscore
+				Timer(0.5, UpdatePredictor)
+			else
+				-- If elapsed < 0.5 then the event fired twice because both alliance and horde have bases.
+				-- 1st update = alliance, 2nd update = horde
+				-- If only one faction has bases, the event only fires once.
+				-- Unfortunately we need to wait for the 2nd event to fire (the horde update) to know the true horde stats.
+				-- In this one where we have 2 updates, we overwrite the horde stats from the 1st update.
+				hscore = dataTbl.rightBarValue -- Horde Bar
+				hIncrease = hscore - prevHScore
+				hRemain = maxscore - hscore
+				-- Always round ticks upwards. 1.2 ticks will always be 2 ticks to end.
+				-- If ticks are 0 (no bases) then set to a random huge number (10,000)
+				hTicksToWin = ceil(hIncrease == 0 and 10000 or hRemain / hIncrease)
+
+				prevHScore = hscore
+			end
+		end
+	end
+	NewEstimator = function() -- resets estimator and sets new battleground
+		prevText = ""
+		prevTime, prevAScore, prevHScore, prevAIncrease, prevHIncrease = 0, 0, 0, 0, 0
+		timeBetweenEachTick, prevTick, prevTimeToWin = 0, 0, 0
+		maxscore, ascore, hscore, aIncrease, hIncrease = 0, 0, 0, 0, 0
+		aRemain, hRemain, aTicksToWin, hTicksToWin = 0, 0, 0, 0
+
+		mod:RegisterTempEvent("UPDATE_UI_WIDGET", "ScorePredictor")
 	end
 end
 
@@ -283,7 +364,7 @@ do
 		"raid31target", "raid32target", "raid33target", "raid34target", "raid35target",
 		"raid36target", "raid37target", "raid38target", "raid39target", "raid40target"
 	}
-	local collection, reset, blocked, prev, started = {}, {}, {}, 0, false
+	local collection, reset, blocked, started = {}, {}, {}, false
 	local count1, count2, count3 = #unitTable1, #unitTable2, #unitTable3
 	local UnitGUID, strsplit = UnitGUID, strsplit
 
@@ -362,7 +443,7 @@ do
 		end
 	end
 
-	function mod:HealthUpdate(prefix, msg, channel, sender)
+	function mod:HealthUpdate(prefix, msg, channel)
 		if prefix == "Capping" and channel == "INSTANCE_CHAT" then
 			local strid, strhp = strsplit(":", msg)
 			local hp = tonumber(strhp)
@@ -379,7 +460,7 @@ do
 					bar:Pause()
 					bar.candyBarBar:SetValue(hp)
 					bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
-					bar:Set("capping:customchat", function()
+					bar:Set("capping:customchat", function(bar)
 						if tbl[1] ~= tbl[2] then
 							return tbl[2] .."/".. tbl[1] .." - ".. bar.candyBarDuration:GetText()
 						else
@@ -397,69 +478,78 @@ end
 
 do
 	------------------------------------------------ Arathi Basin -----------------------------------------------------
-	local pointsPerSecond = {1, 1.5, 2, 3.5, 30} -- Updates every 2 seconds
+	--local pointsPerSecond = {1, 1.5, 2, 3.5, 30} -- Updates every 2 seconds
 
-	local function ArathiBasin(self)
+	local function ArathiBasin()
 		SetupAssault(60, 93)
-		NewEstimator(pointsPerSecond, 495, 496) -- BG table, alliance score widget, horde score widget
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_HORDE", "UpdateBases")
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE", "UpdateBases")
+		NewEstimator()
 	end
-	mod:AddBG(529, ArathiBasin)
+	mod:AddBG(2107, ArathiBasin)
 
-	local function ArathiBasinSnowyPvPBrawl(self)
+	local function ArathiBasinSnowyPvPBrawl()
 		SetupAssault(60, 837)
-		NewEstimator(pointsPerSecond, 914, 915) -- BG table, alliance score widget, horde score widget
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_HORDE", "UpdateBases")
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE", "UpdateBases")
+		NewEstimator()
 	end
 	mod:AddBG(1681, ArathiBasinSnowyPvPBrawl)
+
+	local function ArathiBasinBrawlVsAI()
+		SetupAssault(60, 1383)
+		NewEstimator()
+	end
+	mod:AddBG(2177, ArathiBasinBrawlVsAI)
 end
 
 do
 	------------------------------------------------ Deepwind Gorge -----------------------------------------------------
-	local pointsPerSecond = {1.6, 3.2, 6.4} -- Updates every 5 seconds
+	--local pointsPerSecond = {1.6, 3.2, 6.4} -- Updates every 5 seconds
+	local colors = {
+		["dg_capPts-leftIcon2-state1"] = "colorAlliance",
+		["dg_capPts-leftIcon3-state1"] = "colorAlliance",
+		["dg_capPts-leftIcon4-state1"] = "colorAlliance",
+		["dg_capPts-rightIcon2-state1"] = "colorHorde",
+		["dg_capPts-rightIcon3-state1"] = "colorHorde",
+		["dg_capPts-rightIcon4-state1"] = "colorHorde",
+	}
 
-	local function DeepwindGorge(self)
-		SetupAssault(61, 519)
-		NewEstimator(pointsPerSecond, 734, 735) -- BG table, alliance score widget, horde score widget
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_HORDE", "UpdateBases")
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE", "UpdateBases")
+	local function DeepwindGorge()
+		SetupAssault(61, 519, colors)
+		NewEstimator()
 	end
 	mod:AddBG(1105, DeepwindGorge)
 end
 
 do
 	------------------------------------------------ Gilneas -----------------------------------------------------
-	local pointsPerSecond = {1, 3, 30} -- Updates every 1 second
+	--local pointsPerSecond = {1, 3, 30} -- Updates every 1 second
 
-	local function TheBattleForGilneas(self)
+	local function TheBattleForGilneas()
 		SetupAssault(60, 275) -- Base cap time, uiMapID
-		NewEstimator(pointsPerSecond, 699, 700) -- BG table, alliance score widget, horde score widget
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_HORDE", "UpdateBases")
-		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE", "UpdateBases")
+		NewEstimator()
 	end
 	mod:AddBG(761, TheBattleForGilneas) -- Instance ID
 end
 
 do
 	------------------------------------------------ Alterac Valley ---------------------------------------------------
-	local hereFromTheStart, hasData = true, true
+	local hereFromTheStart, hasData, hasPrinted = true, true, false
 	local stopTimer = nil
 	local function allow() hereFromTheStart = false end
 	local function stop() hereFromTheStart = true hasData = true stopTimer = nil end
 	local function AVSyncRequest()
-		local t = GetTime()
-		if mod.prevTimer and t - mod.prevTimer < 2 then -- mod.prevTimer set when START_TIMER fires (Capping.lua)
-			hereFromTheStart = true
-			hasData = true
-		else
-			hereFromTheStart = true
-			hasData = false
-			Timer(0.5, allow)
-			stopTimer = C_Timer.NewTicker(3, stop, 1)
-			C_ChatInfo.SendAddonMessage("Capping", "tr", "INSTANCE_CHAT")
+		for i = 1, 80 do
+			local scoreTbl = GetScoreInfo(i)
+			if scoreTbl and scoreTbl.damageDone and scoreTbl.damageDone ~= 0 then
+				hereFromTheStart = true
+				hasData = false
+				Timer(0.5, allow)
+				stopTimer = NewTicker(3, stop, 1)
+				C_ChatInfo.SendAddonMessage("Capping", "tr", "INSTANCE_CHAT")
+				return
+			end
 		end
+
+		hereFromTheStart = true
+		hasData = true
 	end
 
 	local timer = nil
@@ -470,7 +560,7 @@ do
 			for bar in next, CappingFrame.bars do
 				local poiId = bar:Get("capping:poiid")
 				if poiId then
-					str = format("%s%d-%d~", str, poiId, math.floor(bar.remaining))
+					str = format("%s%d-%d~", str, poiId, floor(bar.remaining))
 				end
 			end
 
@@ -495,7 +585,7 @@ do
 			end
 
 			if next(inProgressDataTbl) then
-				UpdateAssault(91, inProgressDataTbl)
+				UpdateAssault(91, inProgressDataTbl, 242)
 			end
 		end
 
@@ -506,10 +596,10 @@ do
 				if msg == "tr" and sender ~= me then -- timer request
 					if hasData then -- Joined a late game, don't send data
 						if timer then timer:Cancel() end
-						timer = C_Timer.NewTicker(1, SendAVTimers, 1)
+						timer = NewTicker(1, SendAVTimers, 1)
 					elseif stopTimer then
 						stopTimer:Cancel()
-						stopTimer = C_Timer.NewTicker(3, stop, 1)
+						stopTimer = NewTicker(3, stop, 1)
 					end
 				elseif not hereFromTheStart and sender ~= me and msg:find("~", nil, true) then
 					hereFromTheStart = true
@@ -533,23 +623,27 @@ do
 					elseif GetItemCount(17422) >= 20 then -- Armor Scraps 17422
 						SelectGossipAvailableQuest(1)
 					end
-				elseif mobId == 13617 or mobId == 13616 then -- Stormpike Stable Master, Frostwolf Stable Master
-					if GetGossipOptions() then
-						SelectGossipOption(1)
-					end
 				elseif mobId == 13236 then -- Primalist Thurloga
 					local num = GetItemCount(17306) -- Stormpike Soldier's Blood 17306
-					if num >= 5 then
-						SelectGossipAvailableQuest(2)
-					elseif num > 0 then
-						SelectGossipAvailableQuest(1)
+					if num > 0 then
+						if GetNumGossipActiveQuests() == 1 then
+							SelectGossipActiveQuest(1)
+						elseif num >= 5 then
+							SelectGossipAvailableQuest(2)
+						else
+							SelectGossipAvailableQuest(1)
+						end
 					end
-				elseif mobId == 13442 then -- Arch Druid Renferal
+				elseif mobId == 13442 then -- Archdruid Renferal
 					local num = GetItemCount(17423) -- Storm Crystal 17423
-					if num >= 5 then
-						SelectGossipAvailableQuest(2)
-					elseif num > 0 then
-						SelectGossipAvailableQuest(1)
+					if num > 0 then
+						if GetNumGossipActiveQuests() == 1 then
+							SelectGossipActiveQuest(1)
+						elseif num >= 5 then
+							SelectGossipAvailableQuest(2)
+						else
+							SelectGossipAvailableQuest(1)
+						end
 					end
 				elseif mobId == 13577 then -- Stormpike Ram Rider Commander
 					if GetItemCount(17643) > 0 then -- Frost Wolf Hide 17643
@@ -566,6 +660,10 @@ do
 			self:AVTurnIn()
 			if IsQuestCompletable() then
 				CompleteQuest()
+				if not hasPrinted then
+					hasPrinted = true
+					print(L.handIn)
+				end
 			end
 		end
 		function mod:AVTurnInComplete()
@@ -576,19 +674,24 @@ do
 		SetupHealthCheck("11946", L.hordeBoss, "Horde Boss", 236452, "colorAlliance") -- Interface/Icons/Achievement_Character_Orc_Male
 		SetupHealthCheck("11948", L.allianceBoss, "Alliance Boss", 236444, "colorHorde") -- Interface/Icons/Achievement_Character_Dwarf_Male
 		SetupHealthCheck("11947", L.galvangar, "Galvangar", 236452, "colorAlliance") -- Interface/Icons/Achievement_Character_Orc_Male
-		SetupHealthCheck("11949", L.balinda, "Balinda Stonehearth", 236447, "colorHorde") -- Interface/Icons/Achievement_Character_Human_Female
+		SetupHealthCheck("11949", L.balinda, "Balinda", 236447, "colorHorde") -- Interface/Icons/Achievement_Character_Human_Female
+		SetupHealthCheck("13419", L.ivus, "Ivus", 874581, "colorAlliance") -- Interface/Icons/inv_pet_ancientprotector_winter
+		SetupHealthCheck("13256", L.lokholar, "Lokholar", 1373132, "colorHorde") -- Interface/Icons/Inv_infernalmounice.blp
 		self:RegisterTempEvent("CHAT_MSG_ADDON", "AVSync")
 		self:RegisterTempEvent("GOSSIP_SHOW", "AVTurnIn")
 		self:RegisterTempEvent("QUEST_PROGRESS", "AVTurnInProgress")
 		self:RegisterTempEvent("QUEST_COMPLETE", "AVTurnInComplete")
+		RequestBattlefieldScoreData()
+		Timer(1, RequestBattlefieldScoreData)
 		Timer(2, AVSyncRequest)
+		hasPrinted = false
 	end
 	mod:AddBG(30, AlteracValley)
 end
 
 do
 	------------------------------------------------ Eye of the Storm -------------------------------------------------
-	local pointsPerSecond = {1, 1.5, 2, 6} -- Updates every 2 seconds
+	--local pointsPerSecond = {1, 1.5, 2, 6} -- Updates every 2 seconds
 
 	local function EyeOfTheStorm(self)
 		if not mod.FlagUpdate then
@@ -597,7 +700,6 @@ do
 				if (found and found == "L'Alliance") or strmatch(msg, L.capturedTheTrigger) then -- frFR
 					self:StartBar(L.flagRespawns, 21, GetIconData(45), "colorOther") -- 45 = White flag
 				end
-				self:UpdateBases()
 			end
 			-- EotS PvP Brawl: Gravity Lapse
 			local ticker1, ticker2 = nil, nil
@@ -615,8 +717,8 @@ do
 					local name = GetSpellInfo(44224) -- Gravity Lapse
 					local icon = GetSpellTexture(44224)
 					self:StartBar(name, 55, icon, "colorOther")
-					ticker1 = C_Timer.NewTicker(55, StartNextGravTimer, 1) -- Compensate for being dead (you don't get the message)
-					ticker2 = C_Timer.NewTicker(50, PrintExtraMessage, 1)
+					ticker1 = NewTicker(55, StartNextGravTimer, 1) -- Compensate for being dead (you don't get the message)
+					ticker2 = NewTicker(50, PrintExtraMessage, 1)
 				end
 			end
 			function mod:CheckForGravity(msg)
@@ -638,14 +740,23 @@ do
 			end
 		end
 
-		-- setup for final score estimation (2 for EotS)
-		NewEstimator(pointsPerSecond, 523, 524) -- BG table, alliance score widget, horde score widget
+		NewEstimator()
 		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_HORDE", "FlagUpdate")
 		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE", "FlagUpdate")
 		self:RegisterTempEvent("RAID_BOSS_WHISPER", "CheckForGravity")
 	end
 	mod:AddBG(566, EyeOfTheStorm)
 
+	local colors = {
+		["eots_capPts-leftIcon2-state1"] = "colorAlliance",
+		["eots_capPts-leftIcon3-state1"] = "colorAlliance",
+		["eots_capPts-leftIcon4-state1"] = "colorAlliance",
+		["eots_capPts-leftIcon5-state1"] = "colorAlliance",
+		["eots_capPts-rightIcon2-state1"] = "colorHorde",
+		["eots_capPts-rightIcon3-state1"] = "colorHorde",
+		["eots_capPts-rightIcon4-state1"] = "colorHorde",
+		["eots_capPts-rightIcon5-state1"] = "colorHorde",
+	}
 	local function EyeOfTheStormRated(self)
 		if not mod.FlagUpdateRated then
 			function mod:FlagUpdateRated(msg)
@@ -653,13 +764,11 @@ do
 				if (found and found == "L'Alliance") or strmatch(msg, L.capturedTheTrigger) then -- frFR
 					self:StartBar(L.flagRespawns, 21, GetIconData(45), "colorOther") -- 45 = White flag
 				end
-				self:UpdateBases()
 			end
 		end
 
-		-- setup for final score estimation (2 for EotS)
-		NewEstimator(pointsPerSecond, 704, 705) -- BG table, alliance score widget, horde score widget
-		SetupAssault(60, 397) -- In RBG the four points have flags that need to be assaulted, like AB
+		NewEstimator()
+		SetupAssault(60, 397, colors) -- In RBG the four points have flags that need to be assaulted, like AB
 		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_HORDE", "FlagUpdateRated")
 		self:RegisterTempEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE", "FlagUpdateRated")
 	end
@@ -668,10 +777,19 @@ end
 
 do
 	------------------------------------------------ Isle of Conquest --------------------------------------
-	local baseGateHealth = 1497600
+	local baseGateHealth = 1946880
 	local lowestAllianceHp, lowestHordeHp = baseGateHealth, baseGateHealth
 	local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
 	local hordeGates, allianceGates = {}, {}
+	local hordeGateBar, allianceGateBar = nil, nil
+	local englishNames = {
+		["195494"] = "Horde Gate (Front)/",
+		["195495"] = "Horde Gate (West)/",
+		["195496"] = "Horde Gate (East)/",
+		["195698"] = "Alliance Gate (Front)/",
+		["195699"] = "Alliance Gate (West)/",
+		["195700"] = "Alliance Gate (East)/",
+	}
 
 	function mod:CheckGateHealth()
 		local _, event, _, _, _, _, _, destGUID, _, _, _, _, _, _, amount = CombatLogGetCurrentEventInfo()
@@ -682,14 +800,17 @@ do
 				hordeGates[strid] = newHp
 				if newHp < lowestHordeHp then
 					lowestHordeHp = newHp
-					local bar = mod:GetBar(L.hordeGate)
+					local bar = hordeGateBar
 					if bar then
 						local hp = newHp / baseGateHealth * 100
-						if hp < 1 then
+						if hp < 0.5 then
 							bar:Stop()
 						else
 							bar.candyBarBar:SetValue(hp)
 							bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+							local gate = strid == "195494" and L.front or strid == "195495" and L.west or L.east
+							bar.candyBarLabel:SetFormattedText(L.gatePosition, L.hordeGate, gate)
+							bar:Set("capping:englishprint", englishNames[strid])
 						end
 					end
 				end
@@ -698,14 +819,17 @@ do
 				allianceGates[strid] = newHp
 				if newHp < lowestAllianceHp then
 					lowestAllianceHp = newHp
-					local bar = mod:GetBar(L.allianceGate)
+					local bar = allianceGateBar
 					if bar then
 						local hp = newHp / baseGateHealth * 100
-						if hp < 1 then
+						if hp < 0.5 then
 							bar:Stop()
 						else
 							bar.candyBarBar:SetValue(hp)
 							bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+							local gate = strid == "195698" and L.front or strid == "195699" and L.west or L.east
+							bar.candyBarLabel:SetFormattedText(L.gatePosition, L.allianceGate, gate)
+							bar:Set("capping:englishprint", englishNames[strid])
 						end
 					end
 				end
@@ -724,24 +848,27 @@ do
 		aBar:Pause()
 		aBar.candyBarBar:SetValue(100)
 		aBar.candyBarDuration:SetText("100%")
-		aBar:Set("capping:customchat", function()
+		aBar:Set("capping:englishprint", "Alliance Gate/")
+		aBar:Set("capping:customchat", function(bar)
 			if L.allianceGate ~= "Alliance Gate" then
-				return "Alliance Gate/".. L.allianceGate .." - ".. aBar.candyBarDuration:GetText()
+				return bar:Get("capping:englishprint") .. bar.candyBarLabel:GetText() .." - ".. bar.candyBarDuration:GetText()
 			else
-				return L.allianceGate .." - ".. aBar.candyBarDuration:GetText()
+				return bar.candyBarLabel:GetText() .." - ".. bar.candyBarDuration:GetText()
 			end
 		end)
 		local hBar = mod:StartBar(L.hordeGate, 100, 2054277, "colorAlliance", true) -- Interface/Icons/spell_tailor_defenceup01
 		hBar:Pause()
 		hBar.candyBarBar:SetValue(100)
 		hBar.candyBarDuration:SetText("100%")
-		hBar:Set("capping:customchat", function()
+		hBar:Set("capping:englishprint", "Horde Gate/")
+		hBar:Set("capping:customchat", function(bar)
 			if L.hordeGate ~= "Horde Gate" then
-				return "Horde Gate/".. L.hordeGate .." - ".. hBar.candyBarDuration:GetText()
+				return bar:Get("capping:englishprint") .. bar.candyBarLabel:GetText() .." - ".. bar.candyBarDuration:GetText()
 			else
-				return L.hordeGate .." - ".. hBar.candyBarDuration:GetText()
+				return bar.candyBarLabel:GetText() .." - ".. bar.candyBarDuration:GetText()
 			end
 		end)
+		allianceGateBar, hordeGateBar = aBar, hBar
 	end
 
 	local hereFromTheStart, hasData = true, true
@@ -749,18 +876,21 @@ do
 	local function allow() hereFromTheStart = false end
 	local function stop() hereFromTheStart = true stopTimer = nil end
 	local function IoCSyncRequest()
-		local t = GetTime()
-		if mod.prevTimer and t - mod.prevTimer < 2 then -- mod.prevTimer set when START_TIMER fires (Capping.lua)
-			hereFromTheStart = true
-			hasData = true
-			initGateBars()
-		else
-			hereFromTheStart = true
-			hasData = false
-			Timer(0.5, allow)
-			stopTimer = C_Timer.NewTicker(3, stop, 1)
-			SendAddonMessage("Capping", "gr", "INSTANCE_CHAT")
+		for i = 1, 80 do
+			local scoreTbl = GetScoreInfo(i)
+			if scoreTbl and scoreTbl.damageDone and scoreTbl.damageDone ~= 0 then
+				hereFromTheStart = true
+				hasData = false
+				Timer(0.5, allow)
+				stopTimer = NewTicker(3, stop, 1)
+				SendAddonMessage("Capping", "gr", "INSTANCE_CHAT")
+				return
+			end
 		end
+
+		hereFromTheStart = true
+		hasData = true
+		initGateBars()
 	end
 
 	local timer = nil
@@ -784,10 +914,10 @@ do
 				if msg == "gr" and sender ~= me then -- gate request
 					if hasData then -- Joined a late game, don't send data
 						if timer then timer:Cancel() end
-						timer = C_Timer.NewTicker(1, SendIoCGates, 1)
+						timer = NewTicker(1, SendIoCGates, 1)
 					elseif stopTimer then
 						stopTimer:Cancel()
-						stopTimer = C_Timer.NewTicker(3, stop, 1)
+						stopTimer = NewTicker(3, stop, 1)
 					end
 				elseif msg == "rb" or msg == "rbh" then -- Re-Build / Re-Build Halfway
 					local pois = GetAreaPOIForMap(169)
@@ -819,7 +949,7 @@ do
 						allianceGates["195699"] = aGate2
 						allianceGates["195700"] = aGate3
 
-						local bar = mod:GetBar(L.hordeGate)
+						local bar = hordeGateBar
 						if bar then
 							local hp = lowestHordeHp / baseGateHealth * 100
 							if hp < 1 then
@@ -827,9 +957,14 @@ do
 							else
 								bar.candyBarBar:SetValue(hp)
 								bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+								if lowestHordeHp ~= baseGateHealth then
+									local gate = lowestHordeHp == hGate1 and h1 or lowestHordeHp == hGate2 and h2 or h3
+									bar.candyBarLabel:SetFormattedText(L.gatePosition, L.hordeGate, gate == h1 and L.front or gate == h2 and L.west or L.east)
+									bar:Set("capping:englishprint", englishNames[gate])
+								end
 							end
 						end
-						local bar = mod:GetBar(L.allianceGate)
+						local bar = allianceGateBar
 						if bar then
 							local hp = lowestAllianceHp / baseGateHealth * 100
 							if hp < 1 then
@@ -837,6 +972,11 @@ do
 							else
 								bar.candyBarBar:SetValue(hp)
 								bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+								if lowestAllianceHp ~= baseGateHealth then
+									local gate = lowestAllianceHp == aGate1 and a1 or lowestAllianceHp == aGate2 and a2 or a3
+									bar.candyBarLabel:SetFormattedText(L.gatePosition, L.allianceGate, gate == a1 and L.front or gate == a2 and L.west or L.east)
+									bar:Set("capping:englishprint", englishNames[gate])
+								end
 							end
 						end
 					end
@@ -870,6 +1010,8 @@ do
 		SetupHealthCheck("34924", L.allianceBoss, "Alliance Boss", 236448, "colorHorde") -- Halford Wyrmbane -- Interface/Icons/Achievement_Character_Human_Male
 		mod:RegisterTempEvent("CHAT_MSG_ADDON", "IoCSync")
 		mod:RegisterTempEvent("CHAT_MSG_MONSTER_YELL", "RestartSiegeBar")
+		RequestBattlefieldScoreData()
+		Timer(1, RequestBattlefieldScoreData)
 		Timer(2, IoCSyncRequest)
 	end
 	mod:AddBG(628, IsleOfConquest)
@@ -916,27 +1058,328 @@ do
 		Timer(130, func)
 		Timer(240, func)
 	end
-	mod:AddBG(489, WarsongGulch)
+	mod:AddBG(2106, WarsongGulch)
 	mod:AddBG(726, WarsongGulch) -- Twin Peaks
 end
 
+--do
+--	------------------------------------------------ Wintergrasp ------------------------------------------
+--	local wallid, walls = nil, nil
+--	local function Wintergrasp(self)
+--		if not self.WinterAssault then
+--			wallid = { -- wall section locations
+--				[2222] = "NW ", [2223] = "NW ", [2224] = "NW ", [2225] = "NW ",
+--				[2226] = "SW ", [2227] = "SW ", [2228] = "S ",
+--				[2230] = "S ", [2231] = "SE ", [2232] = "SE ",
+--				[2233] = "NE ", [2234] = "NE ", [2235] = "NE ", [2236] = "NE ",
+--				[2237] = "Inner W ", [2238] = "Inner W ", [2239] = "Inner W ",
+--				[2240] = "Inner S ", [2241] = "Inner S ", [2242] = "Inner S ",
+--				[2243] = "Inner E ", [2244] = "Inner E ", [2245] = "Inner E ",
+--				[2229] = "", [2246] = "", -- front gate and fortress door
+--			}
+--
+--			-- POI icon texture id
+--			local intact = { [77] = true, [80] = true, [86] = true, [89] = true, [95] = true, [98] = true, }
+--			local damaged, destroyed, all = { }, { }, { }
+--			for k in pairs(intact) do
+--				damaged[k + 1] = true
+--				destroyed[k + 2] = true
+--				all[k], all[k + 1], all[k + 2] = true, true, true
+--			end
+--			function mod:WinterAssault() -- scans POI landmarks for changes in wall textures
+--				local pois = GetAreaPOIForMap(123) -- Wintergrasp
+--				for i = 1, #pois do
+--					local POI = pois[i]
+--					local tbl = GetAreaPOIInfo(123, POI)
+--					local ti = walls[POI]
+--					local textureIndex = tbl.textureIndex
+--					if tbl and ((ti and ti ~= textureIndex) or (not ti and wallid[POI])) then
+--						if intact[ti] and damaged[textureIndex] then -- intact before, damaged now
+--							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", format("%s%s %s!", wallid[POI], tbl.name, ACTION_ENVIRONMENTAL_DAMAGE))
+--						elseif damaged[ti] and destroyed[textureIndex] then -- damaged before, destroyed now
+--							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", format("%s%s %s!", wallid[POI], tbl.name, ACTION_UNIT_DESTROYED))
+--						end
+--						walls[POI] = all[textureIndex] and textureIndex or ti
+--					end
+--				end
+--			end
+--		end
+--		walls = { }
+--		local pois = GetAreaPOIForMap(123) -- Wintergrasp
+--		for i = 1, #pois do
+--			local POI = pois[i]
+--			local tbl = GetAreaPOIInfo(123, POI)
+--			if wallid[POI] and tbl.textureIndex then
+--				walls[POI] = tbl.textureIndex
+--			end
+--		end
+--		self:RegisterTempEvent("AREA_POIS_UPDATED", "WinterAssault")
+--	end
+--	mod:AddBG(-123, Wintergrasp) -- map id
+--end
+
 do
-	------------------------------------------------ Wintergrasp ------------------------------------------
+	------------------------------------------------ Wintergrasp Instance ------------------------------------------
+	local baseTowerHealth, mainEntranceHealth, wallHealth, defenseTowerHealth = 130000, 91000, 301000, 81000
+	local westHp, midHp, eastHp = baseTowerHealth, baseTowerHealth, baseTowerHealth
+	local CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
+	local towers, onDemandTrackers = {}, {}
+	local defensiveTowers = {
+		["307877"] = L.northEastKeep,
+		["307936"] = L.southEastKeep,
+		["307878"] = L.northWestKeep,
+		["307894"] = L.southWestKeep,
+	}
+	local wallNames = {
+		["308077"] = L.northWest, -- 1
+		["307922"] = L.northWest, -- 2
+		["307937"] = L.northWest, -- 3
+		["307907"] = L.northWest, -- 4
+		["308035"] = L.southWest, -- 1
+		["307897"] = L.southWest, -- 2
+		["307898"] = L.south, -- 1
+		["307893"] = L.southGate,
+		["307899"] = L.south, -- 2
+		["307879"] = L.southEast, -- 1
+		["307896"] = L.southEast, -- 2
+		["307927"] = L.northEast, -- 1
+		["307919"] = L.northEast, -- 2
+		["307867"] = L.northEast, -- 3
+		["308083"] = L.northEast, -- 4
+		["307963"] = L.innerWest, -- 1
+		["308078"] = L.innerWest, -- 2
+		["307908"] = L.innerWest, -- 3
+		["307941"] = L.innerSouth, -- 1
+		["307925"] = L.innerSouth, -- 2
+		["307916"] = L.innerSouth, -- 3
+		--[""] = L.innerEast, -- 1
+		--[""] = L.innerEast, -- 2
+		--[""] = L.innerEast, -- 3
+	}
+	local towerNames = {
+		["308062"] = L.westTower, -- Shadowsight Tower (West)
+		["308013"] = L.southTower, -- Winter's Edge Tower (Mid)
+		["307935"] = L.eastTower, -- Flamewatch Tower (East)
+	}
+	local towerNamesEnglish = {
+		["308062"] = "West Tower", -- Shadowsight Tower (West)
+		["308013"] = "South Tower", -- Winter's Edge Tower (Mid)
+		["307935"] = "East Tower", -- Flamewatch Tower (East)
+	}
+
+	local function startNewBar(name, english, icon)
+		local tbl = GetAreaPOIInfo(1334, 6027) -- Main entrance POI
+		local color = "colorAlliance"
+		if tbl and tbl.textureIndex == 77 then -- If main entrance is horde texture
+			color = "colorHorde"
+		end
+		local bar = mod:StartBar(name, 100, icon, color, true) -- Interface/Icons/inv_essenceofwintergrasp
+		bar:Pause()
+		bar.candyBarBar:SetValue(100)
+		bar.candyBarDuration:SetText("100%")
+		bar:Set("capping:customchat", function(bar)
+			if name ~= english then
+				return english .."/".. name .." - ".. bar.candyBarDuration:GetText()
+			else
+				return name .." - ".. bar.candyBarDuration:GetText()
+			end
+		end)
+		return bar
+	end
+
+	function mod:CheckTowerHealth()
+		local _, event, _, _, _, _, _, destGUID, _, _, _, _, _, _, amount = CombatLogGetCurrentEventInfo()
+		if event == "SPELL_BUILDING_DAMAGE" then
+			local _, _, _, _, _, strid = strsplit("-", destGUID)
+			if towers[strid] then
+				local newHp = towers[strid] - amount
+				towers[strid] = newHp
+				local bar = mod:GetBar(towerNames[strid])
+				if bar then
+					local hp = newHp / baseTowerHealth * 100
+					if hp < 0.5 then
+						bar:Stop()
+					else
+						bar.candyBarBar:SetValue(hp)
+						bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+					end
+				end
+			elseif wallNames[strid] then
+				if not onDemandTrackers[strid] then
+					onDemandTrackers[strid] = wallHealth
+				end
+				local newHp = onDemandTrackers[strid] - amount
+				onDemandTrackers[strid] = newHp
+				local hp = newHp / wallHealth * 100
+				if hp < 80 then
+					local bar = mod:GetBar(wallNames[strid])
+					if not bar then
+						bar = startNewBar(wallNames[strid], wallNames[strid], 134456)
+					end
+					if hp < 0.5 then
+						bar:Stop()
+					else
+						local value = bar.candyBarBar:GetValue()
+						if hp < value then
+							bar.candyBarBar:SetValue(hp)
+							bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+						end
+					end
+				end
+			elseif defensiveTowers[strid] then
+				if not onDemandTrackers[strid] then
+					onDemandTrackers[strid] = defenseTowerHealth
+				end
+				local newHp = onDemandTrackers[strid] - amount
+				onDemandTrackers[strid] = newHp
+				local hp = newHp / defenseTowerHealth * 100
+				if hp < 90 then
+					local bar = mod:GetBar(defensiveTowers[strid])
+					if not bar then
+						bar = startNewBar(defensiveTowers[strid], defensiveTowers[strid], 237021) -- Interface/Icons/inv_essenceofwintergrasp
+					end
+					if hp < 1.5 then
+						bar:Stop()
+					else
+						bar.candyBarBar:SetValue(hp)
+						bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+					end
+				end
+			elseif strid == "307964" then -- Main Entrance
+				local bar = mod:GetBar(L.mainEntrance)
+				if not bar then
+					bar = startNewBar(L.mainEntrance, "Main entrance", 134957)
+					onDemandTrackers[strid] = mainEntranceHealth
+				end
+				local newHp = onDemandTrackers[strid] - amount
+				onDemandTrackers[strid] = newHp
+				local hp = newHp / mainEntranceHealth * 100
+				if hp < 0.5 then
+					bar:Stop()
+				else
+					bar.candyBarBar:SetValue(hp)
+					bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+				end
+			end
+		end
+	end
+
+	local function initTowerBars()
+		mod:RegisterTempEvent("COMBAT_LOG_EVENT_UNFILTERED", "CheckTowerHealth")
+		local color = "colorHorde"
+		local tbl = GetAreaPOIInfo(1334, 6027) -- Main entrance POI
+		if tbl and tbl.textureIndex == 77 then -- If main entrance is horde texture then towers are alliance
+			color = "colorAlliance"
+		end
+		for towerId, towerName in next, towerNames do
+			local bar = mod:StartBar(towerName, 100, 236351, color, true)
+			bar:Pause()
+			bar.candyBarBar:SetValue(100)
+			bar.candyBarDuration:SetText("100%")
+			bar:Set("capping:customchat", function(bar)
+				if towerName ~= towerNamesEnglish[towerId] then
+					return towerNamesEnglish[towerId] .. "/".. towerName .." - ".. bar.candyBarDuration:GetText()
+				else
+					return towerName .." - ".. bar.candyBarDuration:GetText()
+				end
+			end)
+		end
+	end
+
+	local hereFromTheStart, hasData = true, true
+	local stopTimer = nil
+	local function allow() hereFromTheStart = false end
+	local function stop() hereFromTheStart = true stopTimer = nil end
+	local function WGSyncRequest()
+		for i = 1, 80 do
+			local scoreTbl = GetScoreInfo(i)
+			if scoreTbl and scoreTbl.damageDone and scoreTbl.damageDone ~= 0 then
+				hereFromTheStart = true
+				hasData = false
+				Timer(0.5, allow)
+				stopTimer = NewTicker(3, stop, 1)
+				SendAddonMessage("Capping", "twr", "INSTANCE_CHAT")
+				return
+			end
+		end
+
+		hereFromTheStart = true
+		hasData = true
+		initTowerBars()
+	end
+
+	local timer = nil
+	local function SendWGTowers()
+		timer = nil
+		if IsInGroup(2) then -- We've not just ragequit
+			local msg = format(
+				"308062:%d:308013:%d:307935:%d",
+				towers["308062"], towers["308013"], towers["307935"] -- West, Mid, East
+			)
+			SendAddonMessage("Capping", msg, "INSTANCE_CHAT")
+		end
+	end
+
+	do
+		local me = UnitName("player").. "-" ..GetRealmName()
+		function mod:WGSync(prefix, msg, channel, sender)
+			if prefix == "Capping" and channel == "INSTANCE_CHAT" then
+				if msg == "twr" and sender ~= me then -- gate request
+					if hasData then -- Joined a late game, don't send data
+						if timer then timer:Cancel() end
+						timer = NewTicker(1, SendWGTowers, 1)
+					elseif stopTimer then
+						stopTimer:Cancel()
+						stopTimer = NewTicker(3, stop, 1)
+					end
+				elseif not hereFromTheStart and sender ~= me then
+					local west, westRawHp, mid, midRawHp, east, eastRawHp = strsplit(":", msg)
+					local westHp, midHp, eastHp = tonumber(westRawHp), tonumber(midRawHp), tonumber(eastRawHp)
+					if westHp and midHp and eastHp and -- Safety dance
+					west == "308062" and mid == "308013" and east == "307935" then
+						hereFromTheStart = true
+						hasData = true
+						initTowerBars()
+						towers = {
+							["308062"] = westHp, -- Shadowsight Tower (West)
+							["308013"] = midHp, -- Winter's Edge Tower (Mid)
+							["307935"] = eastHp, -- Flamewatch Tower (East)
+						}
+
+						for towerId, towerHp in next, towers do
+							local bar = mod:GetBar(towerNames[towerId])
+							if bar then
+								local hp = towerHp / baseTowerHealth * 100
+								if hp < 1 then
+									bar:Stop()
+								else
+									bar.candyBarBar:SetValue(hp)
+									bar.candyBarDuration:SetFormattedText("%.1f%%", hp)
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
 	local wallid, walls = nil, nil
 	local function Wintergrasp(self)
-		if not self.WinterAssault then
+		if not self.WinterAssaultBrawl then
 			wallid = { -- wall section locations
-				[2222] = "NW ", [2223] = "NW ", [2224] = "NW ", [2225] = "NW ",
-				[2226] = "SW ", [2227] = "SW ", [2228] = "S ",
-				[2230] = "S ", [2231] = "SE ", [2232] = "SE ",
-				[2233] = "NE ", [2234] = "NE ", [2235] = "NE ", [2236] = "NE ",
-				[2237] = "Inner W ", [2238] = "Inner W ", [2239] = "Inner W ",
-				[2240] = "Inner S ", [2241] = "Inner S ", [2242] = "Inner S ",
-				[2243] = "Inner E ", [2244] = "Inner E ", [2245] = "Inner E ",
-				[2229] = "", [2246] = "", -- front gate and fortress door
+				[6048] = L.northWest, [6049] = L.northWest, [6050] = L.northWest, [6051] = L.northWest,
+				[6047] = L.southWest, [6046] = L.southWest,
+				[6045] = L.south, [6043] = L.south,
+				[6042] = L.southEast, [6041] = L.southEast,
+				[6040] = L.northEast, [6039] = L.northEast, [6038] = L.northEast, [6037] = L.northEast,
+				[6034] = L.innerWest, [6035] = L.innerWest, [6036] = L.innerWest,
+				[6033] = L.innerSouth, [6032] = L.innerSouth, [6031] = L.innerSouth,
+				[6030] = L.innerEast, [6029] = L.innerEast, [6028] = L.innerEast,
+				[6056] = L.southGate, [6027] = L.mainEntrance, -- front gate and fortress door
 			}
 
-			-- POI icon texture id
+			-- POI icon texture id: gateH, gateA, horizWallH, horizWallA, vertWallH, vertWallA
 			local intact = { [77] = true, [80] = true, [86] = true, [89] = true, [95] = true, [98] = true, }
 			local damaged, destroyed, all = { }, { }, { }
 			for k in pairs(intact) do
@@ -944,18 +1387,22 @@ do
 				destroyed[k + 2] = true
 				all[k], all[k + 1], all[k + 2] = true, true, true
 			end
-			function mod:WinterAssault() -- scans POI landmarks for changes in wall textures
-				local pois = GetAreaPOIForMap(123) -- Wintergrasp
+			function mod:WinterAssaultBrawl() -- scans POI landmarks for changes in wall textures
+				local pois = GetAreaPOIForMap(1334) -- Wintergrasp
 				for i = 1, #pois do
 					local POI = pois[i]
-					local tbl = GetAreaPOIInfo(123, POI)
+					local tbl = GetAreaPOIInfo(1334, POI)
 					local ti = walls[POI]
 					local textureIndex = tbl.textureIndex
 					if tbl and ((ti and ti ~= textureIndex) or (not ti and wallid[POI])) then
 						if intact[ti] and damaged[textureIndex] then -- intact before, damaged now
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", format("%s%s %s!", wallid[POI], tbl.name, ACTION_ENVIRONMENTAL_DAMAGE))
+							local msg = format(L.damaged, wallid[POI])
+							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", msg)
+							print(msg)
 						elseif damaged[ti] and destroyed[textureIndex] then -- damaged before, destroyed now
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", format("%s%s %s!", wallid[POI], tbl.name, ACTION_UNIT_DESTROYED))
+							local msg = format(L.destroyed, wallid[POI])
+							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", msg)
+							print(msg)
 						end
 						walls[POI] = all[textureIndex] and textureIndex or ti
 					end
@@ -963,22 +1410,50 @@ do
 			end
 		end
 		walls = { }
-		local pois = GetAreaPOIForMap(123) -- Wintergrasp
+		local pois = GetAreaPOIForMap(1334) -- Wintergrasp
 		for i = 1, #pois do
 			local POI = pois[i]
-			local tbl = GetAreaPOIInfo(123, POI)
+			local tbl = GetAreaPOIInfo(1334, POI)
 			if wallid[POI] and tbl.textureIndex then
 				walls[POI] = tbl.textureIndex
 			end
 		end
-		self:RegisterTempEvent("AREA_POIS_UPDATED", "WinterAssault")
+		westHp, midHp, eastHp = baseTowerHealth, baseTowerHealth, baseTowerHealth
+		towers = {
+			["308062"] = baseTowerHealth, -- Shadowsight Tower (West)
+			["308013"] = baseTowerHealth, -- Winter's Edge Tower (Mid)
+			["307935"] = baseTowerHealth, -- Flamewatch Tower (East)
+		}
+		mod:RegisterTempEvent("CHAT_MSG_ADDON", "WGSync")
+		RequestBattlefieldScoreData()
+		Timer(1, RequestBattlefieldScoreData)
+		Timer(2, WGSyncRequest)
+		self:RegisterTempEvent("AREA_POIS_UPDATED", "WinterAssaultBrawl")
 	end
-	mod:AddBG(-123, Wintergrasp) -- map id
+	mod:AddBG(2118, Wintergrasp) -- map id
 end
 
---do
---	------------------------------------------------ Ashran ------------------------------------------
---	local function Ashran(self)
+do
+	------------------------------------------------ Ashran ------------------------------------------
+	local hasPrinted = false
+	local function Ashran(self)
+		function mod:AshranTurnIn()
+			local target = UnitGUID("npc")
+			if target then
+				local _, _, _, _, _, id = strsplit("-", target)
+				local mobId = tonumber(id)
+				if mobId == 81870 or mobId == 83830 then -- Anenga (Alliance) / Kalgan (Horde)
+					local _, num = GetCurrencyInfo(944) -- Artifact Fragment
+					if num > 0 and GetNumGossipOptions() == 3 then -- Have the currency and boss isn't already summoned
+						SelectGossipOption(1)
+						if not hasPrinted then
+							hasPrinted = true
+							print(L.handIn)
+						end
+					end
+				end
+			end
+		end
 --		if not self.AshranControl then
 --			function mod:AshranControl(msg)
 --				--print(msg, ...)
@@ -1024,9 +1499,11 @@ end
 --		self:RegisterTempEvent("CHAT_MSG_MONSTER_YELL", "AshranControl")
 --		self:RegisterTempEvent("CHAT_MSG_MONSTER_EMOTE", "AshranEvents")
 --		self:RegisterTempEvent("WORLD_STATE_UI_TIMER_UPDATE", "AshranTimeLeft")
---	end
---	mod:AddBG(X, Ashran) -- map id
---end
+		self:RegisterTempEvent("GOSSIP_SHOW", "AshranTurnIn")
+		hasPrinted = false
+	end
+	mod:AddBG(1191, Ashran) -- map id
+end
 
 do
 	------------------------------------------------ Arena ------------------------------------------
@@ -1073,5 +1550,6 @@ do
 	mod:AddBG(1672, Arena) -- Blade's Edge Arena
 	mod:AddBG(1825, Arena) -- Hook Point
 	mod:AddBG(1911, Arena) -- Mugambala
+	mod:AddBG(2167, Arena) -- The Robodrome
 end
 

@@ -423,6 +423,8 @@ local function VUHDO_customDebuffsAddDefaultSettings(aBuffName)
 			["isStacks"] = VUHDO_CONFIG["CUSTOM_DEBUFF"]["isStacks"],
 			["isMine"] = true,
 			["isOthers"] = true,
+			["isBarGlow"] = false,
+			["isIconGlow"] = false,
 		}
 	end
 
@@ -431,6 +433,20 @@ local function VUHDO_customDebuffsAddDefaultSettings(aBuffName)
 	elseif (VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["color"] == nil) then
 		VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["color"]
 			= VUHDO_makeFullColor(0.6, 0.3, 0, 1,   0.8, 0.5, 0, 1);
+	end
+	
+	if (not VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["isBarGlow"]) then
+		VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["barGlowColor"] = nil;
+	elseif (VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["barGlowColor"] == nil) then
+		VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["barGlowColor"]
+			= VUHDO_makeFullColor(0.95, 0.95, 0.32, 1,   1, 1, 0, 1);
+	end
+
+	if (not VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["isIconGlow"]) then
+		VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["iconGlowColor"] = nil;
+	elseif (VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["iconGlowColor"] == nil) then
+		VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"][aBuffName]["iconGlowColor"]
+			= VUHDO_makeFullColor(0.95, 0.95, 0.32, 1,   1, 1, 0, 1);
 	end
 end
 
@@ -582,6 +598,7 @@ local VUHDO_DEFAULT_CONFIG = {
 		["isColor"] = false,
 		["isStacks"] = false,
 		["isName"] = false,
+		["blacklistModi"] = "ALT-CTRL-SHIFT",
 		["selected"] = "",
 		["point"] = "TOPRIGHT",
 		["xAdjust"] = -2,
@@ -744,6 +761,8 @@ local VUHDO_DEFAULT_CU_DE_STORED_SETTINGS = {
 	["isFullDuration"] = false,
 	["isMine"] = true,
 	["isOthers"] = true,
+	["isBarGlow"] = false,
+	["isIconGlow"] = false,
 
 --	["color"] = {
 --		["R"] = 0.6,
@@ -771,17 +790,17 @@ local VUHDO_DEFAULT_SPELL_TRACE_STORED_SETTINGS = {
 
 
 VUHDO_DEFAULT_POWER_TYPE_COLORS = {
-	[VUHDO_UNIT_POWER_MANA]        = VUHDO_makeFullColor(0,     0,     1,    1,  0,     0,     1,    1),
-	[VUHDO_UNIT_POWER_RAGE]        = VUHDO_makeFullColor(1,     0,     0,    1,  1,     0,     0,    1),
-	[VUHDO_UNIT_POWER_FOCUS]       = VUHDO_makeFullColor(1,     0.5,   0.25, 1,  1,     0.5,   0.25, 1),
-	[VUHDO_UNIT_POWER_ENERGY]      = VUHDO_makeFullColor(1,     1,     0,    1,  1,     1,     0,    1),
-	[VUHDO_UNIT_POWER_HAPPINESS]   = VUHDO_makeFullColor(0,     1,     1,    1,  0,     1,     1,    1),
-	[VUHDO_UNIT_POWER_RUNES]       = VUHDO_makeFullColor(0.5,   0.5,   0.5,  1,  0.5,   0.5,   0.5,  1),
-	[VUHDO_UNIT_POWER_LUNAR_POWER] = VUHDO_makeFullColor(0.87,  0.95,  1,    1,  0.87,  0.95,  1,    1),
-	[VUHDO_UNIT_POWER_MAELSTROM]   = VUHDO_makeFullColor(0.09,  0.56,  1,    1,  0.09,  0.56,  1,    1),
-	[VUHDO_UNIT_POWER_INSANITY]    = VUHDO_makeFullColor(0.15,  0.97,  1,    1,  0.15,  0.97,  1,    1),
-	[VUHDO_UNIT_POWER_FURY]        = VUHDO_makeFullColor(0.54,  0.09,  0.69, 1,  0.54,  0.09,  0.69, 1),
-	[VUHDO_UNIT_POWER_PAIN]        = VUHDO_makeFullColor(0.54,  0.09,  0.69, 1,  0.54,  0.09,  0.69, 1),
+	[VUHDO_UNIT_POWER_MANA]         = VUHDO_makeFullColor(0,     0,     1,    1,  0,     0,     1,    1),
+	[VUHDO_UNIT_POWER_RAGE]         = VUHDO_makeFullColor(1,     0,     0,    1,  1,     0,     0,    1),
+	[VUHDO_UNIT_POWER_FOCUS]        = VUHDO_makeFullColor(1,     0.5,   0.25, 1,  1,     0.5,   0.25, 1),
+	[VUHDO_UNIT_POWER_ENERGY]       = VUHDO_makeFullColor(1,     1,     0,    1,  1,     1,     0,    1),
+	[VUHDO_UNIT_POWER_COMBO_POINTS] = VUHDO_makeFullColor(0,     1,     1,    1,  0,     1,     1,    1),
+	[VUHDO_UNIT_POWER_RUNIC_POWER]  = VUHDO_makeFullColor(0.5,   0.5,   0.5,  1,  0.5,   0.5,   0.5,  1),
+	[VUHDO_UNIT_POWER_LUNAR_POWER]  = VUHDO_makeFullColor(0.87,  0.95,  1,    1,  0.87,  0.95,  1,    1),
+	[VUHDO_UNIT_POWER_MAELSTROM]    = VUHDO_makeFullColor(0.09,  0.56,  1,    1,  0.09,  0.56,  1,    1),
+	[VUHDO_UNIT_POWER_INSANITY]     = VUHDO_makeFullColor(0.15,  0.97,  1,    1,  0.15,  0.97,  1,    1),
+	[VUHDO_UNIT_POWER_FURY]         = VUHDO_makeFullColor(0.54,  0.09,  0.69, 1,  0.54,  0.09,  0.69, 1),
+	[VUHDO_UNIT_POWER_PAIN]         = VUHDO_makeFullColor(0.54,  0.09,  0.69, 1,  0.54,  0.09,  0.69, 1),
 };
 
 
@@ -1850,6 +1869,86 @@ function VUHDO_loadDefaultConfig()
 		288038  -- Marked Target
 	);
 
+	-- 8.1.5 - Battle for Azeroth - Crucible of Storms
+	VUHDO_addCustomSpellIds(43, 
+		-- [[ Crucible of Storms ]]
+		-- Restless Cabal
+		293300, -- Storm Essence
+		282540, -- Agent of Demise
+		282432, -- Crushing Doubt
+		287762, -- Crushing Doubt
+		131097, -- Crushing Doubt
+		131098, -- Crushing Doubt
+		282437, -- Crushing Doubt
+		282386, -- Aphotic Blast
+		283524, -- Aphotic Blast
+		293488, -- Oceanic Essence
+		-- Uu'nat
+		285345, -- Maddening Eyes of N'zoth
+		285652, -- Insatiable Torment
+		295609, -- Insatiable Torment
+		286770, -- Embrace of the Void
+		284733, -- Embrace of the Void
+		283053, -- Embrace of the Void
+		282738, -- Embrace of the Void
+		285367  -- Piercing Gaze of N'zoth
+	);
+
+	--- 8.1.5 - Battle for Azeroth - Crucible of Storms part 2
+	VUHDO_addCustomSpellIds(44,
+		-- [[ Crucible of Storms ]]
+		-- Uu'nat
+		284722, -- Umbral Shell
+		286771  -- Umbral Shell
+	);
+
+	--- 8.2.0 - Battle for Azeroth - Rise of Azshara
+	VUHDO_addCustomSpellIds(45,
+		-- [[ Eternal Palace ]]
+		-- Abyssal Commander
+--		294715, -- Toxic Brand
+--		294711, -- Frost Mark
+		295421, -- Overflowing Venom
+		295348, -- Overflowing Chill
+		300882, -- Inversion Sickness
+		300957, -- Inversion Sickness
+		-- Blackwater Behemoth
+		292127, -- Darkest Depths
+--		292133, -- Bioluminescence
+		292307, -- Gaze from Below
+		292167, -- Toxic Spine
+		301494, -- Piercing Barb
+		298595, -- Glowing Stinger
+		-- Radiance of Aszhara
+		296737, -- Arcane Bomb
+		296746, -- Arcane Bomb
+		-- Lady Ashvane
+		296693, -- Waterlogged
+		297333, -- Briny Bubble
+		-- Orgozoa
+		298306, -- Incubation Fluid
+		295779, -- Aqua Lance
+		-- The Queen's Court
+		297586, -- Suffering
+		299914, -- Frenetic Charge
+		296851, -- Fanatical Verdict
+		300545, -- Mighty Rupture
+		-- Za'qul
+		292971, -- Hysteria
+		292963, -- Dread
+		293509, -- Manifest Nightmares
+		298192, -- Dark Beyond
+		-- Queen Azshara
+--		298569, -- Drained Soul
+--		301078, -- Charged Spear 
+--		299094, -- Beckon
+		303828, -- Crushing Depths
+		303825, -- Crushing Depths
+		303657, -- Arcane Burst
+		300492, -- Static Shock
+		297907  -- Cursed Heart
+	);
+
 	local debuffRemovalList = {};
 
 	for tIndex, tName in pairs(VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED"]) do
@@ -2034,6 +2133,8 @@ local VUHDO_DEFAULT_PANEL_SETUP = {
 		["DEBUFF" .. VUHDO_DEBUFF_TYPE_CURSE] = VUHDO_makeFullColor(0.7, 0, 0.7, 1,   1, 0, 1, 1),
 		["DEBUFF" .. VUHDO_DEBUFF_TYPE_MAGIC] = VUHDO_makeFullColor(0.4, 0.4, 0.8, 1,   0.329, 0.957, 1, 1),
 		["DEBUFF" .. VUHDO_DEBUFF_TYPE_CUSTOM] = VUHDO_makeFullColor(0.6, 0.3, 0, 1,   0.8, 0.5, 0, 1),
+		["DEBUFF_BAR_GLOW"] = VUHDO_makeFullColor(0.95, 0.95, 0.32, 1,   1, 1, 0, 1),
+		["DEBUFF_ICON_GLOW"] = VUHDO_makeFullColor(0.95, 0.95, 0.32, 1,   1, 1, 0, 1),
 		["CHARMED"] = VUHDO_makeFullColor(0.51, 0.082, 0.263, 1,   1, 0.31, 0.31, 1),
 
 		["BAR_FRAMES"] = {

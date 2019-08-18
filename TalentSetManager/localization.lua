@@ -474,8 +474,7 @@ elseif locale == "zhCN" then
 L["autoequip_equipment_msg"] = "使用装备方案 %s"
 L["autoequip_equipment_opt"] = "切换专精后自动穿上相关装备"
 L["autoequip_no_linked_equip_found"] = "未发现相关装备"
---[[Translation missing --]]
-L["autoequip_specs_description"] = "Main talent group:"
+L["autoequip_specs_description"] = "主天赋群组："
 --[[Translation missing --]]
 L["confirm_delete_set"] = "Are you sure you want to delete the talent set %s?"
 --[[Translation missing --]]

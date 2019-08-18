@@ -24,8 +24,7 @@ local UnitGUID = UnitGUID
 local UnitEffectiveLevel = UnitEffectiveLevel
 local GetCreatureDifficultyColor = GetCreatureDifficultyColor
 local UnitSelectionColor = UnitSelectionColor
-local UnitHealth = UnitHealth
-local UnitHealthMax = UnitHealthMax
+local UnitHealth, UnitHealthMax = UnitHealth, UnitHealthMax
 local UnitThreatSituation = UnitThreatSituation
 local UnitAffectingCombat = UnitAffectingCombat
 local GetRaidTargetIndex = GetRaidTargetIndex
@@ -39,6 +38,7 @@ local GetPlayerInfoByGUID, RAID_CLASS_COLORS = GetPlayerInfoByGUID, RAID_CLASS_C
 -- ThreatPlates APIs
 local TidyPlatesThreat = TidyPlatesThreat
 local Widgets = Addon.Widgets
+local Animations = Addon.Animations
 
 -- Constants
 -- Raid Icon Reference
@@ -221,6 +221,7 @@ do
 		visual.spellicon = castbar.Overlay:CreateTexture(nil, "ARTWORK", 7)
 		visual.spelltext = castbar.Overlay:CreateFontString(nil, "OVERLAY")
 		visual.spelltext:SetFont("Fonts\\FRIZQT__.TTF", 11)
+    visual.spelltext:SetWordWrap(false)
 
     visual.Highlight = Addon:Element_Mouseover_Create(extended)
 
@@ -247,11 +248,6 @@ end
 do
 	-- CheckNameplateStyle
 	local function CheckNameplateStyle()
---    local headline_mode_before = (stylename == "NameOnly" or stylename == "NameOnly-Unique")
---    if unit.isTarget then
---      print ("Change of nameplate mode:", unit.name, stylename, headline_mode_before)
---    end
-
     stylename = Addon:SetStyle(unit)
     extended.style = activetheme[stylename]
 
@@ -261,11 +257,6 @@ do
       UpdateStyle()
 			extended.stylename = stylename
 			unit.style = stylename
-
---      local headline_mode_after = (stylename == "NameOnly" or stylename == "NameOnly-Unique")
---      if headline_mode_before ~= headline_mode_after then
---        print ("Change of nameplate mode:", unit.name, headline_mode_before, "=>", headline_mode_after)
---      end
 
       Addon:CreateExtensions(extended, unit.unitid, stylename)
       -- TOOD: optimimze that - call OnUnitAdded only when the plate is initialized the first time for a unit, not if only the style changes
@@ -294,8 +285,8 @@ do
     end
 
     -- Update Delegates
-    UpdatePlate_Transparency(extended, unit)
     UpdateIndicator_CustomScaleText()
+    UpdatePlate_Transparency(extended, unit)
 
     -- Cache the old unit information
     UpdateUnitCache()
@@ -529,8 +520,9 @@ local function UpdatePlate_SetAlphaWithFading(tp_frame, unit)
   local target_alpha = Addon:GetAlpha(unit)
 
   if target_alpha ~= tp_frame.CurrentAlpha then
-    Addon.Animations:StopFadeIn(tp_frame)
-    Addon.Animations:FadeIn(tp_frame, target_alpha, PLATE_FADE_IN_TIME)
+    --Animations:StopFadeIn(tp_frame)
+    --Animations:FadeIn(tp_frame, target_alpha, PLATE_FADE_IN_TIME)
+    Animations:FadePlate(tp_frame, target_alpha, PLATE_FADE_IN_TIME)
     tp_frame.CurrentAlpha = target_alpha
   end
 end
@@ -566,12 +558,14 @@ local function UpdatePlate_SetAlphaWithFadingOcclusionOnUpdate(tp_frame, unit)
   end
 
   if target_alpha and target_alpha ~= tp_frame.CurrentAlpha then
-    Addon.Animations:StopFadeIn(tp_frame)
+    --Animations:StopFadeIn(tp_frame)
+    Animations:StopFade(tp_frame)
 
     if tp_frame.IsOccluded then
       tp_frame:SetAlpha(target_alpha)
     else
-      Addon.Animations:FadeIn(tp_frame, target_alpha, PLATE_FADE_IN_TIME)
+      --Animations:FadeIn(tp_frame, target_alpha, PLATE_FADE_IN_TIME)
+      Animations:FadePlate(tp_frame, target_alpha, PLATE_FADE_IN_TIME)
     end
 
     tp_frame.CurrentAlpha = target_alpha
@@ -605,7 +599,7 @@ do
 	function UpdateIndicator_HealthBar()
 		visual.healthbar:SetMinMaxValues(0, unit.healthmax)
 		visual.healthbar:SetValue(unit.health)
-	end
+  end
 
 	function UpdateIndicator_Name()
 		visual.name:SetText(unit.name)
@@ -704,11 +698,15 @@ do
 		end
 	end
 
-  function UpdateIndicator_CustomText()
-    if style.customtext.show then
+  function UpdateIndicator_CustomText(tp_frame)
+    local style = tp_frame.style.customtext
+    local unit = tp_frame.unit
+    local customtext = tp_frame.visual.customtext
+
+    if style.show then
       local text, r, g, b, a = Addon:SetCustomText(unit)
-      visual.customtext:SetText( text or "")
-      visual.customtext:SetTextColor(r or 1, g or 1, b or 1, a or 1)
+      customtext:SetText( text or "")
+      customtext:SetTextColor(r or 1, g or 1, b or 1, a or 1)
     end
   end
 
@@ -755,10 +753,10 @@ do
     --visual.spellicon:SetDrawLayer("ARTWORK", 7)
 
     castbar:SetAllColors(Addon:SetCastbarColor(unit))
-    visual.castbar:SetShownInterruptOverlay(unit.spellIsShielded)
+    castbar:SetFormat(unit.spellIsShielded)
 
-    UpdatePlate_Transparency(extended, unit)
     UpdateIndicator_CustomScaleText()
+    UpdatePlate_Transparency(extended, unit)
 
 		castbar:Show()
 	end
@@ -773,8 +771,8 @@ do
     unit.isCasting = false
 
 		--UpdateIndicator_CustomScaleText()
-    UpdatePlate_Transparency(extended, unit)
     UpdateIndicator_CustomScale(extended, unit)
+    UpdatePlate_Transparency(extended, unit)
 	end
 
 	function OnUpdateCastMidway(plate, unitid)
@@ -950,8 +948,6 @@ do
 
     -- Plate can be nil here, if unitid is party1, partypet4 or something like that
     if plate and plate.TPFrame.Active then
-      --print ("UNIT_NAME_UPDATE:", plate:GetName(), "for", select(1, UnitName(unitid)), "[" .. plate.TPFrame.unit.name .. "]")
-
       UpdateReferences(plate)
       unit.name, _ = UnitName(unitid)
 
@@ -959,13 +955,11 @@ do
       local plate_style = Addon:UnitStyle_NameDependent(unit)
       if plate_style ~= extended.stylename then
         -- Totem or Custom Nameplate
-        --print ("Unit Style changed:", plate_style, "=>", extended.stylename)
         ProcessUnitChanges()
       else
         -- just update the name
-        --print ("Unit Style: just update name", extended.stylename)
         UpdateIndicator_Name()
-        UpdateIndicator_CustomText() -- if it's an NPC, subtitle is saved by name, change that to guid/unitid
+        UpdateIndicator_CustomText(extended) -- if it's an NPC, subtitle is saved by name, change that to guid/unitid
       end
     end
   end
@@ -1029,8 +1023,18 @@ do
 
     if plate and plate.TPFrame.Active then
       OnHealthUpdate(plate)
+      Addon:UpdateExtensions(plate.TPFrame, unitid, plate.TPFrame.stylename)
     end
 	end
+
+  function CoreEvents:UNIT_MAXHEALTH(unitid)
+    local plate = GetNamePlateForUnit(unitid)
+
+    if plate and plate.TPFrame.Active then
+      OnHealthUpdate(plate)
+      Addon:UpdateExtensions(plate.TPFrame, unitid, plate.TPFrame.stylename)
+    end
+  end
 
   function  CoreEvents:UNIT_THREAT_LIST_UPDATE(unitid)
     if unitid == "player" or unitid == "target" then return end
@@ -1075,7 +1079,6 @@ do
 		end
 	end
 
-
   function CoreEvents:UNIT_SPELLCAST_STOP(unitid)
     if UnitIsUnit("player", unitid) or not ShowCastBars then return end
 
@@ -1118,16 +1121,17 @@ do
         local castbar = visual.castbar
         if castbar:IsShown() then
           sourceName = gsub(sourceName, "%-[^|]+", "") -- UnitName(sourceName) only works in groups
-
           local _, class_id = GetPlayerInfoByGUID(sourceGUID)
           if class_id then
             --local color_str = (RAID_CLASS_COLORS[classId] and RAID_CLASS_COLORS[classId].colorStr) or ""
             sourceName = "|c" .. RAID_CLASS_COLORS[class_id].colorStr .. sourceName .. "|r"
           end
-
           visual.spelltext:SetText(INTERRUPTED .. " [" .. sourceName .. "]")
+
           local _, max_val = castbar:GetMinMaxValues()
           castbar:SetValue(max_val)
+          castbar.Spark:Hide()
+
           local color = TidyPlatesThreat.db.profile.castbarColorInterrupted
           castbar:SetStatusBarColor(color.r, color.g, color.b, color.a)
           castbar.FlashTime = CASTBAR_INTERRUPT_HOLD_TIME
@@ -1153,17 +1157,26 @@ do
 		local plate = GetNamePlateForUnit(unitid)
 
 		if plate and plate.TPFrame.Active then
-			Addon:UpdateExtensions(plate.TPFrame, unitid, plate.TPFrame.stylename)
-		end
-	end
+      local tp_frame = plate.TPFrame
+      local unit = tp_frame.unit
+      local unitid  = unit.unitid
 
-	function CoreEvents:UNIT_MAXHEALTH(unitid)
-		local plate = GetNamePlateForUnit(unitid)
+      -- As this does not use OnUpdate with OnHealthUpdate, we have to update this values here
+      unit.health = UnitHealth(unit.unitid) or 0
+      unit.healthmax = UnitHealthMax(unit.unitid) or 1
 
-		if plate and plate.TPFrame.Active then
-			Addon:UpdateExtensions(plate.TPFrame, unitid, plate.TPFrame.stylename)
+			Addon:UpdateExtensions(tp_frame, unitid, tp_frame.stylename)
+      UpdateIndicator_CustomText(tp_frame)
 		end
-	end
+  end
+
+  function CoreEvents:UNIT_HEAL_ABSORB_AMOUNT_CHANGED(unitid)
+    local plate = GetNamePlateForUnit(unitid)
+
+    if plate and plate.TPFrame.Active then
+      Addon:UpdateExtensions(plate.TPFrame, unitid, plate.TPFrame.stylename)
+    end
+  end
 
   -- Update all elements that depend on the unit's reaction towards the player
   function CoreEvents:UNIT_FACTION(unitid)
@@ -1330,7 +1343,7 @@ do
 
     -- Healthbar
 		SetAnchorGroupObject(visual.healthbar, style.healthbar, extended)
-		visual.healthbar:SetStatusBarTexture(style.healthbar.texture or EMPTY_TEXTURE)
+		visual.healthbar:SetHealthBarTexture(style.healthbar)
 		visual.healthbar:SetStatusBarBackdrop(style.healthbar.backdrop, style.healthborder.texture, style.healthborder.edgesize, style.healthborder.offset)
 		visual.healthborder:SetShown(style.healthborder.show)
     visual.healthbar:SetEliteBorder(style.eliteborder.texture)

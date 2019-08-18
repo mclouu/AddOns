@@ -47,7 +47,7 @@ DBM_CORE_VERSIONCHECK_ENTRY_NO_DBM	= "%s: DBM non installato"
 DBM_CORE_VERSIONCHECK_FOOTER		= "%d giocatori hanno Deadly Boss Mods"
 DBM_CORE_YOUR_VERSION_OUTDATED      = "La tua versione di Deadly Boss Mods e' obsoleta. Visita www.deadlybossmods.com per scaricare l'ultima versione."
 
-DBM_CORE_UPDATEREMINDER_HEADER		= "La tua versione di Deadly Boss Mods e' obsoleta.\n La Versione %s (r%d) e' disponibile per il download:"
+DBM_CORE_UPDATEREMINDER_HEADER		= "La tua versione di Deadly Boss Mods e' obsoleta.\n La Versione %s (%s) e' disponibile per il download:"
 DBM_CORE_UPDATEREMINDER_FOOTER		= "Premi Ctrl-C per copiare il link."
 DBM_CORE_UPDATEREMINDER_NOTAGAIN	= "Visualizza un pop-up quando e' disponibile una nuova versione."
 
@@ -210,9 +210,6 @@ DBM_CORE_AUTO_SPEC_WARN_TEXTS.switchcount	= "%s - Cambia Bersaglio (%%s)"
 
 
 DBM_CORE_AUTO_ICONS_OPTION_TEXT			= "Imposta Icone sui bersagli di $spell:%s"
-DBM_CORE_AUTO_SOUND_OPTION_TEXT			= "Fai il suono \"muoviti\" per $spell:%s"
-DBM_CORE_AUTO_COUNTDOWN_OPTION_TEXT		= "Esegui il conto alla rovescia per $spell:%s"
-DBM_CORE_AUTO_COUNTOUT_OPTION_TEXT		= "Esegui il conteggio per la durata di $spell:%s"
 DBM_CORE_AUTO_YELL_OPTION_TEXT.yell		= "Urla quando sei afflitto da $spell:%s"
 DBM_CORE_AUTO_YELL_ANNOUNCE_TEXT.yell	= "%s su di " .. UnitName("player") .. "!"
 

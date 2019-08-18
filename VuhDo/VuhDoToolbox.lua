@@ -412,10 +412,13 @@ function VUHDO_getUnitZoneName(aUnit)
 	else
 		VuhDoScanTooltip:SetOwner(VuhDo, "ANCHOR_NONE");
 		VuhDoScanTooltip:ClearLines();
-		VuhDoScanTooltip:SetUnit(aUnit)
-		tZone = VuhDoScanTooltipTextLeft3:GetText();
+		VuhDoScanTooltip:SetUnit(aUnit);
+
+		if VuhDoScanTooltip:NumLines() > 2 then
+			tZone = VuhDoScanTooltipTextLeft3:GetText();
+		end
 	
-		if tZone == "PvP" then 
+		if tZone and tZone == "PvP" and VuhDoScanTooltip:NumLines() > 3 then 
 			tZone = VuhDoScanTooltipTextLeft4:GetText();
 		end
 	end
@@ -695,7 +698,7 @@ local tActionLowerName;
 local tIsMacroKnown;
 local tIsSpellKnown; 
 local tIsTalentKnown;
-function VUHDO_isActionValid(anActionName, anIsCustom)
+function VUHDO_isActionValid(anActionName, anIsCustom, anIsHostile)
 
 	if (anActionName or "") == "" then
 		return nil;
@@ -703,15 +706,25 @@ function VUHDO_isActionValid(anActionName, anIsCustom)
 
 	tActionLowerName = strlower(anActionName);
 
-	if VUHDO_SPELL_KEY_ASSIST == tActionLowerName
-	 or VUHDO_SPELL_KEY_FOCUS == tActionLowerName
-	 or VUHDO_SPELL_KEY_MENU == tActionLowerName
-	 or VUHDO_SPELL_KEY_TELL == tActionLowerName
-	 or VUHDO_SPELL_KEY_TARGET == tActionLowerName 
-	 or VUHDO_SPELL_KEY_EXTRAACTIONBUTTON == tActionLowerName 
-	 or VUHDO_SPELL_KEY_MOUSELOOK == tActionLowerName 
-	 or VUHDO_SPELL_KEY_DROPDOWN == tActionLowerName then
-		return VUHDO_I18N_COMMAND, 0.8, 1, 0.8, "CMD";
+	if anIsHostile then
+		if (VUHDO_SPELL_KEY_ASSIST == tActionLowerName 
+		 or VUHDO_SPELL_KEY_FOCUS == tActionLowerName
+		 or VUHDO_SPELL_KEY_TARGET == tActionLowerName 
+		 or VUHDO_SPELL_KEY_EXTRAACTIONBUTTON == tActionLowerName 
+		 or VUHDO_SPELL_KEY_MOUSELOOK == tActionLowerName) then
+			return VUHDO_I18N_COMMAND, 0.8, 1, 0.8, "CMD";
+		end
+	else
+		if VUHDO_SPELL_KEY_ASSIST == tActionLowerName 
+		 or VUHDO_SPELL_KEY_FOCUS == tActionLowerName 
+		 or VUHDO_SPELL_KEY_MENU == tActionLowerName 
+		 or VUHDO_SPELL_KEY_TELL == tActionLowerName 
+		 or VUHDO_SPELL_KEY_TARGET == tActionLowerName 
+		 or VUHDO_SPELL_KEY_EXTRAACTIONBUTTON == tActionLowerName 
+		 or VUHDO_SPELL_KEY_MOUSELOOK == tActionLowerName 
+		 or VUHDO_SPELL_KEY_DROPDOWN == tActionLowerName then 
+			return VUHDO_I18N_COMMAND, 0.8, 1, 0.8, "CMD";
+		end
 	end
 
 	tIsMacroKnown = GetMacroIndexByName(anActionName) ~= 0;
@@ -980,6 +993,48 @@ end
 function VUHDO_unitDebuff(aUnit, aSpell)
 
 	return VUHDO_unitAura(aUnit, aSpell, "HARMFUL");
+
+end
+
+
+
+function VUHDO_playSoundFile(aSound)
+
+	if (aSound and (aSound == "Interface\\Quiet.ogg" or aSound == "Interface\\Quiet.mp3")) then
+		-- sweep and reset any sound settings referencing the old 'none' LSM default	
+		for _, tDebuffInfo in pairs(VUHDO_CONFIG["CUSTOM_DEBUFF"]["STORED_SETTINGS"]) do
+			if (tDebuffInfo["SOUND"] and 
+				(tDebuffInfo["SOUND"] == "Interface\\Quiet.ogg" or 
+					tDebuffInfo["SOUND"] == "Interface\\Quiet.mp3")) then
+				tDebuffInfo["SOUND"] = nil;
+			end
+		end
+
+		-- reset custom debuff default sound if set to old 'none' LSM default
+		if (VUHDO_CONFIG["CUSTOM_DEBUFF"]["SOUND"] and 
+			(VUHDO_CONFIG["CUSTOM_DEBUFF"]["SOUND"] == "Interface\\Quiet.ogg" or 
+				VUHDO_CONFIG["CUSTOM_DEBUFF"]["SOUND"] == "Interface\\Quiet.mp3")) then
+			VUHDO_CONFIG["CUSTOM_DEBUFF"]["SOUND"] = nil;
+		end
+
+		-- reset standard debuff sound if set to old 'none' LSM default
+		if (VUHDO_CONFIG["SOUND_DEBUFF"] and 
+		      (VUHDO_CONFIG["SOUND_DEBUFF"] == "Interface\\Quiet.ogg" or 
+				VUHDO_CONFIG["SOUND_DEBUFF"] == "Interface\\Quiet.mp3")) then
+			VUHDO_CONFIG["SOUND_DEBUFF"] = nil;
+		end
+
+		-- return success because we've played nothing as requested (eg. Quiet.ogg)
+		return true;
+	end
+
+	local tSuccess, tError = pcall(PlaySoundFile, aSound);
+
+	if not tSuccess then
+		VUHDO_Msg(format(VUHDO_I18N_PLAY_SOUND_FILE_ERR, aSound, tError));
+	end
+
+	return tSuccess;
 
 end
 

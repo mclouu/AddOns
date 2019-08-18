@@ -44,7 +44,15 @@ local default = {
   useglowColor = false,
   glowColor = {1, 1, 1, 1},
   glowType = "buttonOverlay",
-  cooldownTextEnabled = true,
+  glowLines = 8,
+  glowFrequency = 0.25,
+  glowLength = 10,
+  glowThickness = 1,
+  glowScale = 1,
+  glowBorder = false,
+  glowXOffset = 0,
+  glowYOffset = 0,
+  cooldownTextDisabled = false,
   cooldownSwipe = true,
   cooldownEdge = false,
 };
@@ -78,33 +86,102 @@ local properties = {
     default = 32
   },
   glow = {
-    display = WeakAuras.newFeatureString .. L["Set Glow Visibility"],
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Visibility"] },
     setter = "SetGlow",
     type = "bool"
   },
   glowType = {
-    display = WeakAuras.newFeatureString .. L["Glow Type"],
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Type"] },
     setter = "SetGlowType",
     type = "list",
     values = WeakAuras.glow_types,
   },
   useGlowColor = {
-    display = WeakAuras.newFeatureString .. L["Use Custom Glow Color"],
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Use Custom Color"] },
     setter = "SetUseGlowColor",
     type = "bool"
   },
   glowColor = {
-    display = WeakAuras.newFeatureString .. L["Glow Color"],
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Color"]},
     setter = "SetGlowColor",
     type = "color"
   },
+  glowLines = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Lines & Particles"]},
+    setter = "SetGlowLines",
+    type = "number",
+    min = 1,
+    softMax = 30,
+    bigStep = 1,
+    default = 4
+  },
+  glowFrequency = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Frequency"]},
+    setter = "SetGlowFrequency",
+    type = "number",
+    softMin = -2,
+    softMax = 2,
+    bigStep = 0.1,
+    default = 0.25
+  },
+  glowLength = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Length"]},
+    setter = "SetGlowLength",
+    type = "number",
+    min = 1,
+    softMax = 20,
+    bigStep = 1,
+    default = 10
+  },
+  glowThickness = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Thickness"]},
+    setter = "SetGlowThickness",
+    type = "number",
+    min = 1,
+    softMax = 20,
+    bigStep = 1,
+    default = 1
+  },
+  glowScale = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Scale"]},
+    setter = "SetGlowScale",
+    type = "number",
+    min = 0.05,
+    softMax = 10,
+    bigStep = 0.05,
+    default = 1,
+    isPercent = true
+  },
+  glowBorder = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Border"]},
+    setter = "SetGlowBorder",
+    type = "bool"
+  },
+  glowXOffset = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["X-Offset"]},
+    setter = "SetGlowXOffset",
+    type = "number",
+    softMin = -100,
+    softMax = 100,
+    bigStep = 1,
+    default = 0
+  },
+  glowYOffset = {
+    display = { WeakAuras.newFeatureString .. L["Glow"], L["Y-Offset"]},
+    setter = "SetGlowYOffset",
+    type = "number",
+    softMin = -100,
+    softMax = 100,
+    bigStep = 1,
+    default = 0
+  },
   text1Color = {
-    display = L["1. Text Color"],
+    display = { L["1. Text"] , L["Color"] },
     setter = "SetText1Color",
     type = "color"
   },
   text1FontSize = {
-    display = L["1. Text Size"],
+    display = { L["1. Text"], L["Size"] },
     setter = "SetText1Height",
     type = "number",
     min = 6,
@@ -113,12 +190,12 @@ local properties = {
     default = 12
   },
   text2Color = {
-    display = L["2. Text Color"],
+    display = { L["2. Text"], L["Color"]},
     setter = "SetText2Color",
     type = "color"
   },
   text2FontSize = {
-    display = L["2. Text Size"],
+    display = { L["2. Text"], L["Size"]},
     setter = "SetText2Height",
     type = "number",
     min = 6,
@@ -137,12 +214,12 @@ local properties = {
     type = "bool"
   },
   cooldownSwipe = {
-    display = WeakAuras.newFeatureString .. L["Cooldown Swipe"],
+    display = {WeakAuras.newFeatureString .. L["Cooldown"], L["Swipe"]},
     setter = "SetCooldownSwipe",
     type = "bool",
   },
   cooldownEdge = {
-    display = WeakAuras.newFeatureString .. L["Cooldown Edge"],
+    display = {WeakAuras.newFeatureString .. L["Cooldown"], L["Edge"]},
     setter = "SetCooldownEdge",
     type = "bool",
   },
@@ -364,17 +441,22 @@ local function modify(parent, region, data)
 
   local tooltipType = WeakAuras.CanHaveTooltip(data);
   if(tooltipType and data.useTooltip) then
-    region:EnableMouse(true);
-    region:SetScript("OnEnter", function()
-      WeakAuras.ShowMouseoverTooltip(region, region);
-    end);
-    region:SetScript("OnLeave", WeakAuras.HideTooltip);
-  else
-    region:EnableMouse(false);
+    if not region.tooltipFrame then
+      region.tooltipFrame = CreateFrame("frame", nil, region);
+      region.tooltipFrame:SetAllPoints(region);
+      region.tooltipFrame:SetScript("OnEnter", function()
+        WeakAuras.ShowMouseoverTooltip(region, region);
+      end);
+      region.tooltipFrame:SetScript("OnLeave", WeakAuras.HideTooltip);
+    end
+    region.tooltipFrame:EnableMouse(true);
+  elseif region.tooltipFrame then
+    region.tooltipFrame:EnableMouse(false);
   end
 
   cooldown:SetReverse(not data.inverse);
-  cooldown:SetHideCountdownNumbers(not data.cooldownTextEnabled or IsAddOnLoaded("OmniCC") or false);
+  cooldown:SetHideCountdownNumbers(data.cooldownTextDisabled);
+  cooldown.noCooldownCount = data.cooldownTextDisabled;
 
   function region:Color(r, g, b, a)
     region.color_r = r;
@@ -664,15 +746,94 @@ local function modify(parent, region, data)
     end
   end
 
+  function region:SetGlowLines(lines)
+    region.glowLines = lines
+    if region.glow then
+      if region.glowType == "ACShine" then -- workaround ACShine not updating numbers of dots
+        region:SetGlow(false)
+      end
+      region:SetGlow(true)
+    end
+  end
+  function region:SetGlowFrequency(frequency)
+    region.glowFrequency = frequency
+    if region.glow then
+      region:SetGlow(true)
+    end
+  end
+  function region:SetGlowLength(length)
+    region.glowLength = length
+    if region.glow then
+      region:SetGlow(true)
+    end
+  end
+  function region:SetGlowThickness(thickness)
+    region.glowThickness = thickness
+    if region.glow then
+      region:SetGlow(true)
+    end
+  end
+  function region:SetGlowScale(scale)
+    region.glowScale = scale
+    if region.glow then
+      region:SetGlow(true)
+    end
+  end
+  function region:SetGlowBorder(border)
+    region.glowBorder = border
+    if region.glow then
+      region:SetGlow(true)
+    end
+  end
+  function region:SetGlowXOffset(xoffset)
+    region.glowXOffset = xoffset
+    if region.glow then
+      region:SetGlow(true)
+    end
+  end
+  function region:SetGlowYOffset(yoffset)
+    region.glowYOffset = yoffset
+    if region.glow then
+      region:SetGlow(true)
+    end
+  end
+
   function region:SetGlow(showGlow)
-    region.glow = showGlow
     local color
+    local function glowStart(frame)
+      if region.glowType == "buttonOverlay" then
+        region.glowStart(frame, color, region.glowFrequency)
+      elseif region.glowType == "Pixel" then
+        region.glowStart(
+          frame,
+          color,
+          region.glowLines,
+          region.glowFrequency,
+          region.glowLength,
+          region.glowThickness,
+          region.glowXOffset,
+          region.glowYOffset,
+          region.glowBorder
+        )
+      elseif region.glowType == "ACShine" then
+        region.glowStart(
+          frame,
+          color,
+          region.glowLines,
+          region.glowFrequency,
+          region.glowScale,
+          region.glowXOffset,
+          region.glowYOffset
+        )
+      end
+    end
+    region.glow = showGlow
     if region.useGlowColor then
       color = region.glowColor
     end
     if MSQ then
       if (showGlow) then
-        region.glowStart(region.button, color);
+        glowStart(region.button);
       else
         region.glowStop(region.button);
       end
@@ -682,7 +843,7 @@ local function modify(parent, region, data)
         region.__WAGlowFrame:SetAllPoints();
         region.__WAGlowFrame:SetSize(region.width, region.height);
       end
-      region.glowStart(region.__WAGlowFrame, color);
+      glowStart(region.__WAGlowFrame);
     else
       if (region.__WAGlowFrame) then
         region.glowStop(region.__WAGlowFrame);
@@ -699,6 +860,14 @@ local function modify(parent, region, data)
 
   region.useGlowColor = data.useGlowColor
   region.glowColor = data.glowColor
+  region.glowLines = data.glowLines
+  region.glowFrequency = data.glowFrequency
+  region.glowLength = data.glowLength
+  region.glowThickness = data.glowThickness
+  region.glowScale = data.glowScale
+  region.glowBorder = data.glowBorder
+  region.glowXOffset = data.glowXOffset
+  region.glowYOffset = data.glowYOffset
   region:SetGlowType(data.glowType)
   region:SetGlow(data.glow)
 

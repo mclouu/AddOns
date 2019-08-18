@@ -5,7 +5,7 @@
 
 local ADDON, Addon = ...
 local Cache = LibStub('LibItemCache-2.0')
-local ItemSlot = Addon:NewClass('ItemSlot', 'Button')
+local ItemSlot = Addon:NewClass('ItemSlot', 'ItemButton')
 ItemSlot.unused = {}
 ItemSlot.nextID = 0
 
@@ -83,7 +83,7 @@ function ItemSlot:GetNextID()
 end
 
 function ItemSlot:Construct(id)
-    return CreateFrame('Button', ADDON..self.Name..id, nil, 'ContainerFrameItemButtonTemplate')
+    return CreateFrame('ItemButton', ADDON..self.Name..id, nil, 'ContainerFrameItemButtonTemplate')
 end
 
 function ItemSlot:GetBlizzard(id)
@@ -109,7 +109,8 @@ end
 function ItemSlot:Free()
 	self:Hide()
 	self:SetParent(nil)
-	self.frame, self.depositSlot = nil
+	self.frame = nil
+	self.depositSlot = nil
 	tinsert(self.unused, self)
 end
 
@@ -220,18 +221,23 @@ end
 --[[ Update ]]--
 
 function ItemSlot:Update()
-	local info = self:GetInfo()
-
-	self.info, self.hasItem, self.readable = info, info.id and true, info.readable
-	self:After(0.1, 'SecondaryUpdate')
+	self.info = self:GetInfo()
+	self.hasItem = self.info.id and true
+	self.readable = self.info.readable
+	self:After(0.1, 'UpdateSecondary')
 	self:UpdateSlotColor()
 	self:UpdateBorder()
 
-	SetItemButtonTexture(self, info.icon or self:GetEmptyItemIcon())
-	SetItemButtonCount(self, info.count)
+	SetItemButtonTexture(self, self.info.icon or self:GetEmptyItemIcon())
+	SetItemButtonCount(self, self.info.count)
 end
 
-function ItemSlot:SecondaryUpdate()
+function ItemSlot:UpdateLocked()
+	self.info = self:GetInfo()
+	self:SetLocked(self.info.locked)
+end
+
+function ItemSlot:UpdateSecondary()
 	self:UpdateFocus()
 	self:UpdateSearch()
 	self:UpdateCooldown()
@@ -301,10 +307,6 @@ function ItemSlot:UpdateUpgradeIcon()
 	end
 end
 
-function ItemSlot:UpdateLocked()
-	self:SetLocked(self.info.locked)
-end
-
 function ItemSlot:SetLocked(locked)
 	SetItemButtonDesaturated(self, locked)
 end
@@ -325,13 +327,8 @@ function ItemSlot:UpdateSearch()
 	local search = Addon.canSearch and Addon.search or ''
 	local matches = search == '' or ItemSearch:Matches(self.info.link, search)
 
-	if matches then
-		self:SetAlpha(1)
-		self:UpdateLocked()
-	else
-		self:SetLocked(true)
-		self:SetAlpha(0.3)
-	end
+	self:SetAlpha(matches and 1 or 0.3)
+	self:SetLocked(not matches or self.info.locked)
 end
 
 function ItemSlot:UpdateFocus()

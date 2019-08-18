@@ -18,7 +18,7 @@ local _GetChannelName = GetChannelName --> wow api locals
 local _UnitExists = UnitExists --> wow api locals
 local _UnitName = UnitName --> wow api locals
 local _UnitIsPlayer = UnitIsPlayer --> wow api locals
-local _UnitGroupRolesAssigned = UnitGroupRolesAssigned --> wow api locals
+local _UnitGroupRolesAssigned = DetailsFramework.UnitGroupRolesAssigned --> wow api locals
 
 local _detalhes = 		_G._detalhes
 local gump = 			_detalhes.gump
@@ -713,7 +713,7 @@ end
 	end
 
 	function _detalhes:CriarInstancia (_, id)
-		
+
 		if (id and _type (id) == "boolean") then
 			
 			if (#_detalhes.tabela_instancias >= _detalhes.instances_amount) then
@@ -1284,19 +1284,6 @@ end
 			
 		--> setup default wallpaper
 			new_instance.wallpaper.texture = "Interface\\AddOns\\Details\\images\\background"
-			--[[ 7.1.5 isn't sending the background on the 5� return value ~cleanup
-			local spec = GetSpecialization()
-			if (spec) then
-				local id, name, description, icon, _background, role = GetSpecializationInfo (spec)
-				if (_background) then
-					local bg = "Interface\\TALENTFRAME\\" .. _background
-					if (new_instance.wallpaper) then
-						new_instance.wallpaper.texture = bg
-						new_instance.wallpaper.texcoord = {0, 1, 0, 0.703125}
-					end
-				end
-			end
-			--]]
 		
 		--> finish
 			return new_instance
@@ -1315,19 +1302,7 @@ end
 			new_instance:ResetInstanceConfig()
 			--> setup default wallpaper
 			new_instance.wallpaper.texture = "Interface\\AddOns\\Details\\images\\background"
-			--[[ 7.1.5 isn't sending the background on the 5� return value ~cleanup
-			local spec = GetSpecialization()
-			if (spec) then
-				local id, name, description, icon, _background, role = GetSpecializationInfo (spec)
-				if (_background) then
-					local bg = "Interface\\TALENTFRAME\\" .. _background
-					if (new_instance.wallpaper) then
-						new_instance.wallpaper.texture = bg
-						new_instance.wallpaper.texcoord = {0, 1, 0, 0.703125}
-					end
-				end
-			end
-			--]]
+
 		--> internal stuff
 			new_instance.barras = {} --container que ir� armazenar todas as barras
 			new_instance.barraS = {nil, nil} --de x at� x s�o as barras que est�o sendo mostradas na tela
@@ -2636,6 +2611,9 @@ end
 function _detalhes:ChangeIcon (icon)
 	
 	local skin = _detalhes.skins [self.skin]
+	if (not skin) then
+		skin = _detalhes.skins [_detalhes.default_skin_to_use]
+	end
 	
 	if (not self.hide_icon) then
 		if (skin.icon_on_top) then
@@ -2702,6 +2680,15 @@ function _detalhes:ChangeIcon (icon)
 			self.baseframe.cabecalho.atributo_icon:ClearAllPoints()
 			if (self.menu_attribute_string) then
 				self.baseframe.cabecalho.atributo_icon:SetPoint ("right", self.menu_attribute_string.widget, "left", -4, -1)
+			end
+			
+			if (skin.attribute_icon_anchor) then
+				self.baseframe.cabecalho.atributo_icon:ClearAllPoints()
+				self.baseframe.cabecalho.atributo_icon:SetPoint ("topleft", self.baseframe.cabecalho.ball_point, "topleft", skin.attribute_icon_anchor[1], skin.attribute_icon_anchor[2])
+			end
+			
+			if (skin.attribute_icon_size) then
+				self.baseframe.cabecalho.atributo_icon:SetSize (unpack (skin.attribute_icon_size))
 			end
 
 		--	local icon_anchor = skin.icon_anchor_main
@@ -3533,3 +3520,5 @@ function _detalhes:envia_relatorio (linhas, custom)
 	end
 	
 end
+
+-- enda elsef

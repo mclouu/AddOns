@@ -145,6 +145,214 @@ do -- ext.config.ui
 		GameTooltip:AddLine(text or "", nil, nil, nil, true)
 		GameTooltip:Show()
 	end
+	do -- scrollingDropdown
+		local sdAPI, scrollingDropdown = {}, CreateFrame("Frame", nil, UIParent) do
+			local MIN_SCROLL_ENTRIES, MAX_VISIBLE_ENTRIES = 20, 16
+			local WHEEL_STEP, WHEEL_DURATION = 8, 0.25
+			local BUTTON_STEP, BUTTON_DURATION = 15, 0.15
+			local SNAP_DURATION = 0.10
+			local MAX_TARGET_DISTANCE, MIN_ANIM_FPS = 48, 45
+			local clipRoot = CreateFrame("Frame", nil, scrollingDropdown)
+			local relFrame = CreateFrame("Frame", nil, clipRoot)
+			local slider = CreateFrame("Slider", nil, scrollingDropdown, "UIPanelScrollBarTemplate")
+			local buttons = {}
+			local SetDataSource, ReleaseDataSource, Entry_OnClick do
+				local positionArchive = setmetatable({}, {__mode="k"})
+				local dataList, entryFormat, entrySelect, fullSync
+				local aTarget, aOrigin, aLength, aLeft
+				function Entry_OnClick(self)
+					local entrySelect, arg1 = entrySelect, dataList[self:GetID()]
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+					CloseDropDownMenus()
+					entrySelect(nil, arg1)
+				end
+				local function VLD_OnUpdate(self, elapsed)
+					aLeft = aLeft - elapsed
+					local isDone, position = aLeft <= 0, aTarget
+					if isDone then
+						positionArchive[dataList] = aTarget
+						aTarget, aOrigin, aLength, aLeft = nil
+						self:SetScript("OnUpdate", nil)
+					else
+						local p = 1-aLeft/aLength
+						p = p*p*(3-2*p)
+						position = aOrigin*(1-p) + aTarget*p
+					end
+					local oy, baseOffset = (position % 1)*16, math.floor(position)
+					relFrame:SetPoint("TOPLEFT", 0, oy)
+					relFrame:SetPoint("TOPRIGHT", 0, oy)
+					for i=1,#buttons do
+						local w, eid = buttons[i], i+baseOffset
+						local ek = dataList[eid]
+						w:SetShown(ek ~= nil)
+						if ek ~= nil then
+							if fullSync or w:GetID() ~= eid then
+								local text, selected = entryFormat(ek, dataList)
+								w:SetText(text)
+								w:SetChecked(selected)
+								w:SetID(eid)
+								w:GetFontString():GetLeft() -- TODO: (8.1.5) Without this, it sometimes gets lost.
+							end
+							w:SetEnabled(isDone)
+						end
+					end
+					slider:SetValue(position)
+					fullSync = false
+				end
+				local function ProcessScrollDelta(delta, time)
+					local cur, vmin, vmax = slider:GetValue(), slider:GetMinMaxValues()
+					local goal, time = cur+delta, GetFramerate() >= MIN_ANIM_FPS and time or 0
+					if aTarget and aOrigin and (aOrigin < aTarget) == (cur < goal) then
+						goal = delta < 0 and math.max(aTarget+delta, cur-MAX_TARGET_DISTANCE) or math.min(aTarget+delta, cur+MAX_TARGET_DISTANCE)
+					end
+					goal = math.min(vmax, math.max(vmin, math.floor(goal)))
+					if aTarget == goal or (not aTarget and cur == goal) then
+						return
+					end
+					aLength, aLeft = time, time
+					aOrigin, aTarget = cur, goal
+					scrollingDropdown:SetScript("OnUpdate", VLD_OnUpdate)
+					VLD_OnUpdate(scrollingDropdown, 0)
+				end
+				scrollingDropdown:SetScript("OnMouseWheel", function(_, delta)
+					return ProcessScrollDelta(-delta*WHEEL_STEP, WHEEL_DURATION)
+				end)
+				local function SB_OnClick(self)
+					return ProcessScrollDelta(self == slider.ScrollUpButton and -BUTTON_STEP or BUTTON_STEP, BUTTON_DURATION)
+				end
+				slider.ScrollUpButton:SetScript("OnClick", SB_OnClick)
+				slider.ScrollDownButton:SetScript("OnClick", SB_OnClick)
+				slider.ScrollUpButton:SetMotionScriptsWhileDisabled(true)
+				slider.ScrollDownButton:SetMotionScriptsWhileDisabled(true)
+				slider:HookScript("OnMouseUp", function(self)
+					local cv = self:GetValue()
+					if cv % 1 ~= 0 then
+						aLeft = GetFramerate() < MIN_ANIM_FPS and 0 or SNAP_DURATION
+						aLength, aOrigin, aTarget = aLeft, self:GetValue(), math.floor(cv+0.5)
+						scrollingDropdown:SetScript("OnUpdate", VLD_OnUpdate)
+					end
+				end)
+				slider:SetScript("OnValueChanged", function(_, value, userDrag)
+					if userDrag then
+						aLeft, aTarget = 0, value
+						VLD_OnUpdate(scrollingDropdown, 0)
+					end
+					local vmin, vmax = slider:GetMinMaxValues()
+					slider.ScrollUpButton:SetEnabled(value ~= vmin)
+					slider.ScrollDownButton:SetEnabled(value ~= vmax)
+				end)
+				function SetDataSource(list, format, func, skipFirst)
+					dataList, entryFormat, entrySelect, fullSync = list, format, func, true
+					local maxV, arch = #dataList-MAX_VISIBLE_ENTRIES, positionArchive[list]
+					slider:SetMinMaxValues(skipFirst, maxV)
+					aTarget, aLeft = skipFirst, 0
+					if arch and skipFirst <= arch and arch <= maxV then
+						aTarget = arch
+					end
+					VLD_OnUpdate(scrollingDropdown, 0)
+				end
+				function ReleaseDataSource()
+					dataList, entryFormat, entrySelect = nil
+				end
+				DropDownList1:HookScript("OnHide", function()
+					for k in pairs(positionArchive) do
+						positionArchive[k] = nil
+					end
+				end)
+			end
+			local function bindToCounter(frame)
+				if frame ~= scrollingDropdown then
+					frame.parent = scrollingDropdown
+				end
+				frame:SetScript("OnEnter", UIDropDownMenu_StopCounting)
+				frame:SetScript("OnLeave", UIDropDownMenu_StartCounting)
+			end
+
+			clipRoot:SetAllPoints()
+			clipRoot:SetClipsChildren(true)
+			slider:SetPoint("TOPRIGHT", -1, -12)
+			slider:SetPoint("BOTTOMRIGHT", -1, 10)
+			bindToCounter(slider)
+			bindToCounter(slider.ScrollUpButton)
+			bindToCounter(slider.ScrollDownButton)
+			bindToCounter(clipRoot)
+			bindToCounter(scrollingDropdown)
+			scrollingDropdown:SetHitRectInsets(-4, -24, -8, -8)
+			local bg = slider:CreateTexture(nil, "BACKGROUND")
+			bg:SetWidth(1)
+			bg:SetColorTexture(0.25, 0.25, 0.25)
+			bg:SetPoint("TOPLEFT", -2, 17)
+			bg:SetPoint("BOTTOMLEFT", -2, -16)
+			relFrame:SetPoint("TOPLEFT")
+			relFrame:SetPoint("TOPRIGHT")
+			relFrame:SetHeight(1)
+			for i=1,MAX_VISIBLE_ENTRIES+1 do
+				local b = CreateFrame("CheckButton", nil, clipRoot, nil, i)
+				b:SetSize(100, 16)
+				b:SetHighlightTexture([[Interface\QuestFrame\UI-QuestTitleHighlight]])
+				b:GetHighlightTexture():SetBlendMode("ADD")
+				b:GetHighlightTexture():SetAllPoints()
+				b:SetCheckedTexture([[Interface\Common\UI-DropDownRadioChecks]])
+				b:GetCheckedTexture():SetTexCoord(0, 0.5, 0.5, 1)
+				b:GetCheckedTexture():ClearAllPoints()
+				b:GetCheckedTexture():SetSize(16,16)
+				b:GetCheckedTexture():SetPoint("LEFT", 3, 0)
+				b:SetNormalTexture([[Interface\Common\UI-DropDownRadioChecks]])
+				b:GetNormalTexture():SetTexCoord(0.5, 1, 0.5, 1)
+				b:GetNormalTexture():ClearAllPoints()
+				b:GetNormalTexture():SetSize(16,16)
+				b:GetNormalTexture():SetPoint("LEFT", 3, 0)
+				b:SetNormalFontObject(GameFontHighlightSmallLeft)
+				b:SetDisabledFontObject(GameFontHighlightSmallLeft)
+				b:SetText("The Fifth Suprise")
+				b:GetFontString():ClearAllPoints()
+				b:GetFontString():SetPoint("LEFT", 22, 0)
+				b:SetPoint("TOPLEFT", relFrame, 0, 16-16*i)
+				b:SetPoint("TOPRIGHT", relFrame, -16, 16-16*i)
+				bindToCounter(b)
+				b:SetScript("OnClick", Entry_OnClick)
+				buttons[i] = b
+			end
+			scrollingDropdown:SetScript("OnHide", function(self)
+				self:Hide()
+				ReleaseDataSource()
+			end)
+			function sdAPI:Display(level, dataList, entryFormatter, entrySelect, skipFirst)
+				skipFirst = type(skipFirst) == "number" and skipFirst or 0
+				local count = #dataList-skipFirst
+				if count < MIN_SCROLL_ENTRIES then
+					local info = {func=entrySelect, minWidth=level == 1 and UIDROPDOWNMENU_OPEN_MENU:GetWidth()-40 or nil}
+					for i=skipFirst+1,#dataList do
+						local k = dataList[i]
+						info.arg1, info.text, info.checked = k, entryFormatter(k, dataList)
+						UIDropDownMenu_AddButton(info, level)
+					end
+					return
+				end
+				local minWidth = math.max(120, level == 1 and UIDROPDOWNMENU_OPEN_MENU:GetWidth()-40 or 0)
+				for i=skipFirst+1,#dataList do
+					local text = entryFormatter(dataList[i], dataList)
+					buttons[1]:SetText(text)
+					minWidth = math.max(minWidth, 60 + buttons[1]:GetFontString():GetStringWidth())
+				end
+				local info = {notClickable=true, notCheckable=true, minWidth=minWidth}
+				for i=1,MAX_VISIBLE_ENTRIES do
+					UIDropDownMenu_AddButton(info, level)
+				end
+				local baseName = "DropDownList" .. level
+				local host, b1, bX = _G[baseName], _G[baseName .. "Button1"], _G[baseName .. "Button" .. MAX_VISIBLE_ENTRIES]
+				scrollingDropdown.parent = host
+				scrollingDropdown:SetParent(host)
+				scrollingDropdown:SetPoint("TOPLEFT", b1)
+				scrollingDropdown:SetPoint("BOTTOMRIGHT", bX)
+				SetDataSource(dataList, entryFormatter, entrySelect, skipFirst)
+				scrollingDropdown:Show()
+				scrollingDropdown:SetFrameLevel(b1:GetFrameLevel()+2)
+				slider:SetFrameLevel(scrollingDropdown:GetFrameLevel()+3)
+			end
+		end
+		config.ui.scrollingDropdown = sdAPI
+	end
 end
 do -- ext.config.bind
 	local unbindMap, activeCaptureButton = {}
@@ -638,19 +846,20 @@ function OPC_AlterOption(widget, option, newval, ...)
 	end end
 end
 function OPC_OptionDomain:click(ringName)
-	OR_CurrentOptionsDomain = ringName
+	OR_CurrentOptionsDomain = ringName or nil
 	frame.refresh()
 end
+local function OPC_OptionDomain_Format(key, list)
+	return list[key], OR_CurrentOptionsDomain == (key or nil)
+end
 function OPC_OptionDomain:initialize()
-	local info = {func=OPC_OptionDomain.click, minWidth= self:GetWidth()-40}
-	info.arg1, info.text, info.checked =  nil, L"Defaults for all rings", OR_CurrentOptionsDomain == nil and 1 or nil
-	UIDropDownMenu_AddButton(info)
+	local list = {false, [false]=L"Defaults for all rings"}
 	local ct = T.OPC_RingScopePrefixes
 	for key, name, scope in OneRingLib:IterateRings(IsAltKeyDown()) do
 		local color = ct and ct[scope] or "|cffacd7e6"
-		info.text, info.arg1, info.checked = (L"Ring: %s"):format(color .. (name or key) .. "|r"), key, key == OR_CurrentOptionsDomain and 1 or nil
-		UIDropDownMenu_AddButton(info)
+		list[#list+1], list[key] = key, (L"Ring: %s"):format(color .. (name or key) .. "|r")
 	end
+	config.ui.scrollingDropdown:Display(1, list, OPC_OptionDomain_Format, OPC_OptionDomain.click)
 end
 local function OPC_Profile_NewCallback(self, text, apply, frame)
 	local name = text:match("^%s*(.-)%s*$")
@@ -695,7 +904,7 @@ function OPC_Profile:initialize()
 end
 function frame.refresh()
 	OPC_BlockInput = true
-	frame.desc:SetText(L"Customize OPie's appearance and behavior. Right clicking a checkbox restores it to its default state." .. "\n" .. L"Profiles activate automatically when you switch between your primary and secondary specializations.")
+	frame.desc:SetText(L"Customize OPie's appearance and behavior. Right clicking a checkbox restores it to its default state." .. "\n" .. L"Profiles activate automatically when you switch character specializations.")
 	for _, v in pairs(OPC_OptionSets) do
 		v.label:SetText(v[1])
 		for j=2,#v do

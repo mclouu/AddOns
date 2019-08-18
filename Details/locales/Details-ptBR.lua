@@ -1502,6 +1502,8 @@ L["STRING_SEGMENTS_LIST_OVERALL"] = "tudo"
 L["STRING_SEGMENTS_LIST_TIMEINCOMBAT"] = "Tempo em Combate"
 L["STRING_SEGMENTS_LIST_TOTALTIME"] = "Tempo Total"
 L["STRING_SEGMENTS_LIST_TRASH"] = "trash"
+--[[Translation missing --]]
+--[[ L["STRING_SEGMENTS_LIST_WASTED_TIME"] = ""--]] 
 L["STRING_SHIELD_HEAL"] = "Prevenido"
 L["STRING_SHIELD_OVERHEAL"] = "Desperdiçado"
 L["STRING_SHORTCUT_RIGHTCLICK"] = "Menu de Atalho (botão direito para fechar)"
@@ -1569,8 +1571,7 @@ L["STRING_UNLOCK"] = [=[Separe as janelas
 neste botão]=]
 L["STRING_UNLOCK_WINDOW"] = "destravar"
 L["STRING_UPTADING"] = "atualizando"
---[[Translation missing --]]
---[[ L["STRING_VERSION_AVAILABLE"] = ""--]] 
+L["STRING_VERSION_AVAILABLE"] = "uma nova versão está disponível. Baixe pelo aplicativo da Twitch ou pelo site da Curse."
 L["STRING_VERSION_UPDATE"] = "nova versão: clique para ver o que mudou"
 L["STRING_VOIDZONE_TOOLTIP"] = "Dano e tempo:"
 L["STRING_WAITPLUGIN"] = [=[esperando por

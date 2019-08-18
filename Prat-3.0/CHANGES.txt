@@ -1,7 +1,7 @@
-changeset:   1194:9cd72a076bce
-tag:         3.7.20
+changeset:   1202:dfa99dc0ad04
+tag:         3.7.24
 user:        sylvanaar <sylvanaar@mindspring.com>
-date:        Wed Dec 26 14:32:27 2018 -0800
-summary:     TOC 80100
+date:        Sat Aug 10 05:46:42 2019 -0700
+summary:     Fix errors on startup on Classic
 
 

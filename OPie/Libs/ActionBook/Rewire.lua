@@ -1,4 +1,4 @@
-local RW, MAJ, REV, _, T = {}, 1, 13, ...
+local RW, MAJ, REV, _, T = {}, 1, 14, ...
 if T.ActionBook then return end
 local AB, KR = nil, assert(T.Kindred:compatible(1,8), "A compatible version of Kindred is required.")
 
@@ -90,7 +90,7 @@ local core, coreEnv = CreateFrame("Frame", nil, nil, "SecureHandlerBaseTemplate"
 	coreEnv = GetManagedEnvironment(core)
 end
 core:SetAttribute("RunSlashCmd", [=[-- Rewire:Internal_RunSlashCmd
-	local slash, v, target = ...
+	local slash, v, target, exArg = ...
 	if not v then
 	elseif slash == "/cast" or slash == "/use" then
 		local oid = v and castEscapes[v:lower()]
@@ -100,6 +100,9 @@ core:SetAttribute("RunSlashCmd", [=[-- Rewire:Internal_RunSlashCmd
 		elseif sid then
 			return AB:RunAttribute("CastSpellByID", tonumber(sid), target)
 		elseif v then
+			if exArg == "opt-into-cr-fallback" and (tonumber(v) or v:match("^%s*[Ii][Tt][Ee][Mm]:%d")) then
+				slash = "/castrandom"
+			end
 			return (target and (slash .. " [@" .. target .. "] ") or (slash .. " ")) .. v
 		end
 	elseif slash == "/stopmacro" then
@@ -329,7 +332,7 @@ local setCommandHinter, getMacroHint, getCommandHint, getCommandHintRaw, metaFil
 		cDepth = 0
 		return ...
 	end
-	function getCommandHint(priLimit, slash, args, modState, otarget, priBias)
+	function getCommandHint(priLimit, slash, args, modState, otarget, msg, priBias)
 		slash = coreEnv.commandAlias[slash] or slash
 		local hf, pri, args2, target = hintFunc[slash], pri[slash]
 		if hf and pri > (priLimit or nInf) - (priBias or 0) then
@@ -348,7 +351,7 @@ local setCommandHinter, getMacroHint, getCommandHint, getCommandHintRaw, metaFil
 				end
 			end
 			cDepth = cDepth + 1
-			local res = store(securecall(hf, slash, args, args2, target, modState, priLimit))
+			local res = store(securecall(hf, slash, args, args2, target, modState, priLimit, msg))
 			cDepth = cDepth - 1
 			if res == "stop" then
 				return res, pri
@@ -394,7 +397,7 @@ local setCommandHinter, getMacroHint, getCommandHint, getCommandHintRaw, metaFil
 					bias = cmd == "#skip" and (v and -v or nInf) or (v or 1000)
 				end
 			else
-				local res, pri = getCommandHint(bestPri, cmd, args, modState, nil, bias)
+				local res, pri = getCommandHint(bestPri, cmd, args, modState, nil, nil, bias)
 				if res == "stop" then
 					break
 				elseif res and pri > bestPri then
@@ -612,8 +615,8 @@ end
 function RW:GetMacroAction(macrotext, modState, minPriority)
 	return getMacroHint(macrotext, modState, minPriority)
 end
-function RW:GetCommandAction(slash, args, target, modState)
-	return getCommandHint(nil, slash, args, modState, target)
+function RW:GetCommandAction(slash, args, target, modState, msg)
+	return getCommandHint(nil, slash, args, modState, target, msg)
 end
 function RW:SetCastEscapeAction(castArg, action)
 	assert(type(castArg) == "string" and (type(action) == "number" and action % 1 == 0 or action == nil), 'Syntax: Rewire:SetCastEscapeAction("castAction", abActionID or nil)')

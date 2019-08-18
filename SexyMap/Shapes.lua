@@ -143,6 +143,54 @@ for i = 181, 269, 5 do
 	shapePoints.topRight[i] = { cos(i), sin(i) }
 end
 
+shapePoints.top = {
+	[0]   = {1, 0},
+	[45]  = {1, 1},
+	[135] = {-1, 1},
+	[225] = {-1, -1},
+	[315] = {1, -1},
+	[360] = {1, 0},
+}
+for i = 180, 360, 5 do
+	shapePoints.top[i] = { cos(i), sin(i) }
+end
+
+shapePoints.bottom = {
+	[0]   = {1, 0},
+	[45]  = {1, 1},
+	[135] = {-1, 1},
+	[225] = {-1, -1},
+	[315] = {1, -1},
+	[360] = {1, 0},
+}
+for i = 0, 180, 5 do
+	shapePoints.bottom[i] = { cos(i), sin(i) }
+end
+
+shapePoints.left = {
+	[0]   = {1, 0},
+	[45]  = {1, 1},
+	[135] = {-1, 1},
+	[225] = {-1, -1},
+	[315] = {1, -1},
+	[360] = {1, 0},
+}
+for i = 270, 450, 5 do
+	shapePoints.left[i%360] = { cos(i), sin(i) }
+end
+
+shapePoints.right = {
+	[0]   = {1, 0},
+	[45]  = {1, 1},
+	[135] = {-1, 1},
+	[225] = {-1, -1},
+	[315] = {1, -1},
+	[360] = {1, 0},
+}
+for i = 90, 270, 5 do
+	shapePoints.right[i] = { cos(i), sin(i) }
+end
+
 
 local function byShape(shape, angle, radius)
 	local x,y = interpolate(shapePoints[shape], angle)
@@ -155,12 +203,13 @@ end
 ------------------------------------------------------------------------
 ]]--
 
+-- XXX patch 8.2 remove old texture paths
 local shapes = {
 	["Interface\\AddOns\\SexyMap\\shapes\\circle.tga"] = {
 		name = L["Circle"],
 		geometry = circle
 	},
-	["ENVIRONMENTS\\STARS\\Deathsky_Mask"] = {
+	[C_RaidLocks and 235309 or "ENVIRONMENTS\\STARS\\Deathsky_Mask"] = { -- "ENVIRONMENTS\\STARS\\Deathsky_Mask"
 		name = L["Faded Circle (Small)"],
 		geometry = circle
 	},
@@ -168,7 +217,7 @@ local shapes = {
 		name = L["Faded Circle (Large)"],
 		geometry = circle
 	},
-	["SPELLS\\T_VFX_BORDER"] = {
+	[C_RaidLocks and 167013 or "SPELLS\\T_VFX_BORDER"] = { -- "SPELLS\\T_VFX_BORDER"
 		name = L["Faded Square"],
 		geometry = "square",
 		shape = "SQUARE"
@@ -177,7 +226,7 @@ local shapes = {
 		name = L["Diamond"],
 		geometry = "diamond"
 	},
-	["Interface\\BUTTONS\\WHITE8X8"] = {
+	[C_RaidLocks and 130871 or "Interface\\BUTTONS\\WHITE8X8"] = { -- "Interface\\BUTTONS\\WHITE8X8"
 		name = L["Square"],
 		geometry = "square",
 		shape = "SQUARE"
@@ -221,6 +270,23 @@ local shapes = {
 		name = L["Rounded - Top Left"],
 		geometry = "topLeft",
 		shape = "CORNER-BOTTOMRIGHT"
+	},
+	["Interface\\AddOns\\SexyMap\\shapes\\top.tga"] = {
+		name = L["Rounded - Top"],
+		geometry = "top"
+	},
+	["Interface\\AddOns\\SexyMap\\shapes\\bottom.tga"] = {
+		name = L["Rounded - Bottom"],
+		geometry = "bottom"
+	},
+	["Interface\\AddOns\\SexyMap\\shapes\\left.tga"] = {
+		name = L["Rounded - Left"],
+		geometry = "left"
+	},
+	
+	["Interface\\AddOns\\SexyMap\\shapes\\right.tga"] = {
+		name = L["Rounded - Right"],
+		geometry = "right"
 	},
 }
 

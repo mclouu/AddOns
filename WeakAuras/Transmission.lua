@@ -7,8 +7,11 @@ This file adds the following API to the WeakAuras object:
 DisplayToString(id, forChat)
 Converts the display id to a plain text string
 
-DisplayToTableString(id)
+DataToString(id)
 Converts the display id to a formatted table
+
+SerializeTable(data)
+Converts the table data to a formatted table
 
 ShowDisplayTooltip(data, children, icon, icons, import, compressed, alterdesc)
 Shows a tooltip frame for an aura, which allows for importing if import is true
@@ -252,7 +255,6 @@ radioButtons = {
 
 local radioButtonLabels = {
   L["Create a Copy"],
-  -- L["Replace Aura"],
   L["Update Auras"]
 }
 
@@ -331,7 +333,7 @@ local function importPendingData()
   local indexMap = pendingData.indexMap
 
   -- cleanup the mess
-  HideUIPanel(ItemRefTooltip) -- this also wipes pendingData as a side effect
+  ItemRefTooltip:Hide()-- this also wipes pendingData via the hook on L521
   buttonAnchor:Hide()
   thumbnailAnchor.currentThumbnail:Hide()
   thumbnailAnchor.currentThumbnail = nil
@@ -727,14 +729,18 @@ local function recurseStringify(data, level, lines)
   end
 end
 
-function WeakAuras.DisplayToTableString(id)
+function WeakAuras.DataToString(id)
   local data = WeakAuras.GetData(id)
-  if(data) then
-    local lines = {"{"};
-    recurseStringify(data, 1, lines);
-    tinsert(lines, "}")
-    return table.concat(lines, "\n"):gsub("|", "||");
+  if data then
+    return WeakAuras.SerializeTable(data):gsub("|", "||")
   end
+end
+
+function WeakAuras.SerializeTable(data)
+  local lines = {"{"}
+  recurseStringify(data, 1, lines)
+  tinsert(lines, "}")
+  return table.concat(lines, "\n")
 end
 
 function WeakAuras.RefreshTooltipButtons()
@@ -829,7 +835,7 @@ local function SetCheckButtonStates(radioButtonAnchor, activeCategories)
 end
 
 function ShowTooltip(lines, linesFromTop, activeCategories)
-  ShowUIPanel(ItemRefTooltip);
+  ItemRefTooltip:Show();
   if not ItemRefTooltip:IsVisible() then
     ItemRefTooltip:SetOwner(UIParent, "ANCHOR_PRESERVE");
   end

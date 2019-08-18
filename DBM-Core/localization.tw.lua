@@ -1,4 +1,4 @@
-if GetLocale() ~= "zhTW" then return end
+﻿if GetLocale() ~= "zhTW" then return end
 
 DBM_HOW_TO_USE_MOD					= "歡迎使用DBM。在聊天頻道輸入 /dbm 打開設定開始設定。你可以載入特定區域後為任何首領設定你喜歡的特別設置。DBM會在設定你的職業天賦的預設值，但有些選項可能需要調整。"
 DBM_SILENT_REMINDER					= "提醒：DBM正處於無聲模式。"
@@ -20,7 +20,6 @@ DBM_COPY_URL_DIALOG					= "複製網址"
 --Post Patch 7.1
 DBM_CORE_NO_RANGE					= "距離雷達不能在副本中使用，使用傳統文字距離框架取代"
 DBM_CORE_NO_ARROW					= "箭頭不能在副本中使用"
-DBM_CORE_ARROW_SUMMONED				= "箭頭已被啟用。如果你沒有開啟此功能，可能有其他第三方插件為你啟用此功能。"
 DBM_CORE_NO_HUD						= "HUDMap 不能在副本中使用"
 
 DBM_CORE_DYNAMIC_DIFFICULTY_CLUMP	= "DBM已中禁用動態距離框架，你目前的團隊人數在這場戰鬥中的機制資訊不足。"
@@ -161,7 +160,7 @@ DBM_CORE_VOICE_MISSING				= "DBM找不到你所選取的語音包。你的語音
 DBM_CORE_VOICE_DISABLED				= "你的語音包已安裝但是尚未啟用。如果你想使用語音包，請確定語言包已在語音警告中被選取，或是刪除不使用的語音包去隱藏此訊息。"
 DBM_CORE_VOICE_COUNT_MISSING		= "所選取的語音/倒數語音包%d找不到倒數語音。設定已被重置回預設值。"
 
-DBM_CORE_UPDATEREMINDER_HEADER			= "你的Deadly Boss Mod已經過期。\n你可以在Curse/Twitch網站或是WOWI網站以及deadlybossmods.com下載到新版本%s(r%d)："
+DBM_CORE_UPDATEREMINDER_HEADER			= "你的Deadly Boss Mod已經過期。\n你可以在Curse/Twitch網站或是WOWI網站以及deadlybossmods.com下載到新版本%s(%s)："
 DBM_CORE_UPDATEREMINDER_HEADER_ALPHA	= "你的ALPHA版本Deadly Boss Mods已經過期。\n 你至少落後%d個測試版本。建議DBM使用者使用最新的ALPHA或最新的穩定版本。過期的alpha版本可能會有效能低落或未完成的功能。"
 DBM_CORE_UPDATEREMINDER_FOOTER			= "按下" .. (IsMacClient() and "Cmd-C" or "Ctrl-C")  ..  "：複製下載網址到剪貼簿。"
 DBM_CORE_UPDATEREMINDER_FOOTER_GENERIC	= "按下" .. (IsMacClient() and "Cmd-C" or "Ctrl-C")  ..  "：複製網址到剪貼簿。"
@@ -248,9 +247,7 @@ DBM_CORE_TIMER_USAGE	= {
 	"DBM計時器指令：",
 	"-----------------",
 	"/dbm timer <秒> <文字>: 啟用計時器。",
-	"/dbm ctimer <秒> <文字>: 啟用計時器包含倒數文字。",
 	"/dbm ltimer <秒> <文字>: 啟用會自動循環的計時器。",
-	"/dbm cltimer <秒> <文字>: 啟用會自動循環及倒數文字的計時器。",
 	"(在任何計時器指令前加入'Broadcast'可以把指令分享給團隊（需要團隊隊長或助理權限）)",
 	"/dbm timer endloop：停止任何無限循環的計時器。"
 }
@@ -481,13 +478,6 @@ DBM_CORE_AUTO_ICONS_OPTION_TEXT2		= "為$spell:%s設置標記"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT			= "為跑向中了$spell:%s的目標顯示DBM箭頭"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT2		= "為離開中了$spell:%s的目標顯示DBM箭頭"
 DBM_CORE_AUTO_ARROW_OPTION_TEXT3		= "為中了$spell:%s後移動到特定區域顯示DBM箭頭"
-DBM_CORE_AUTO_VOICE_OPTION_TEXT			= "為$spell:%s播放語音音效"
-DBM_CORE_AUTO_VOICE2_OPTION_TEXT		= "為階段轉換播放語音音效"
-DBM_CORE_AUTO_VOICE3_OPTION_TEXT		= "為到來的小怪播放語音音效"
-DBM_CORE_AUTO_VOICE4_OPTION_TEXT		= "為地上危險的技能播放語音音效"
-DBM_CORE_AUTO_COUNTDOWN_OPTION_TEXT		= "為$spell:%s的冷卻播放倒數計時音效"
-DBM_CORE_AUTO_COUNTDOWN_OPTION_TEXT2	= "為$spell:%s的減益播放倒數計時音效"
-DBM_CORE_AUTO_COUNTOUT_OPTION_TEXT		= "為$spell:%s的持續時間播放倒數計時音效"
 DBM_CORE_AUTO_YELL_OPTION_TEXT.shortyell	= "當你中了$spell:%s時大喊"
 DBM_CORE_AUTO_YELL_OPTION_TEXT.yell		= "當你中了$spell:%s時大喊(玩家名字)"
 DBM_CORE_AUTO_YELL_OPTION_TEXT.count	= "當你中了$spell:%s時大喊(次數)"

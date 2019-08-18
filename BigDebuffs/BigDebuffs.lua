@@ -35,6 +35,10 @@ local defaults = {
 				[233490] = true, -- Unstable Affliction
 				[34914] = true, -- Vampiric Touch
 			},
+			inRaid = {
+				hide = false,
+				size = 5
+			}
 		},
 		unitFrames = {
 			enabled = true,
@@ -203,6 +207,7 @@ BigDebuffs.Spells = {
 	[81261] = { type = "cc" }, -- Solar Beam
 	[102342] = { type = "buffs_defensive" }, -- Ironbark
 	[102359] = { type = "roots" }, -- Mass Entanglement
+	[279642] = { type = "buffs_offensive" }, -- Lively Spirit
 	[102543] = { type = "buffs_offensive" }, -- Incarnation: King of the Jungle
 	[102558] = { type = "buffs_offensive" }, -- Incarnation: Guardian of Ursoc
 	[102560] = { type = "buffs_offensive" }, -- Incarnation: Chosen of Elune
@@ -296,6 +301,7 @@ BigDebuffs.Spells = {
 	-- Monk
 
 	[115078] = { type = "cc" }, -- Paralysis
+	[115080] = { type = "buffs_offensive" }, -- Touch of Death
 	[115203] = { type = "buffs_defensive" }, -- Fortifying Brew (Brewmaster)
 		[201318] = { type = "buffs_defensive", parent = 115203 }, -- Fortifying Brew (Windwalker Honor Talent)
 		[243435] = { type = "buffs_defensive", parent = 115203 }, -- Fortifying Brew (Mistweaver)
@@ -435,7 +441,10 @@ BigDebuffs.Spells = {
 	[204366] = { type = "buffs_offensive" }, -- Thundercharge
 	[204945] = { type = "buffs_offensive" }, -- Doom Winds
 	[260878] = { type = "buffs_defensive" }, -- Spirit Wolf
-
+	[8178] = { type = "immunities_spells" }, -- Grounding
+		[255016] = { type = "immunities_spells", parent = 8178 }, -- Grounding
+		[204336] = { type = "immunities_spells", parent = 8178 }, -- Grounding
+		[34079] = { type = "immunities_spells", parent = 8178 }, -- Grounding
 
 	-- Warlock
 
@@ -507,6 +516,7 @@ BigDebuffs.Spells = {
 		[167152] = { type = "buffs_other", parent = 192001 }, -- Refreshment
 	[256948] = { type = "buffs_other" }, -- Spatial Rift
 	[255654] = { type = "cc" }, --Bull Rush
+	[294127] = { type = "cc" }, -- Gladiator's Maledict
 
 	-- Legacy (may be deprecated)
 
@@ -974,7 +984,7 @@ end
 local function UnitBuffByName(unit, name)
 	for i = 1, 40 do
 		local n = UnitBuff(unit, i)
-		if n == name then return end
+		if n == name then return true end
 	end
 end
 
@@ -992,7 +1002,7 @@ function BigDebuffs:COMBAT_LOG_EVENT_UNFILTERED()
 	-- Find unit
 	for i = 1, #unitsWithRaid do
 		local unit = unitsWithRaid[i]
-		if destGUID == UnitGUID(unit) and (event ~= "SPELL_CAST_SUCCESS" or select(8, UnitChannelInfo(unit)) == false) then
+		if destGUID == UnitGUID(unit) and (event ~= "SPELL_CAST_SUCCESS" or select(7, UnitChannelInfo(unit)) == false) then
 			local duration = spell.duration
 			local _, class = UnitClass(unit)
 
@@ -1097,6 +1107,7 @@ end
 local pending = {}
 
 hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
+	if not BigDebuffs.db.profile.raidFrames.enabled then return end
 	if frame:IsForbidden() then return end
 	local name = frame:GetName()
 	if not name or not name:match("^Compact") then return end
@@ -1263,6 +1274,7 @@ end
 function BigDebuffs:ShowBigDebuffs(frame)
 
 	if not self.db.profile.raidFrames.enabled or not frame.debuffFrames or not frame.BigDebuffs then return end
+	if not self:ShowInRaids() then return end
 
 	if not UnitIsPlayer(frame.displayedUnit) then
 		return
@@ -1595,6 +1607,16 @@ end
 
 function BigDebuffs:UNIT_PET()
 	self:UNIT_AURA("pet")
+end
+
+function BigDebuffs:ShowInRaids()
+	local grpSize = GetNumGroupMembers();
+	local inRaid = self.db.profile.raidFrames.inRaid;
+	if ( inRaid.hide and grpSize > inRaid.size ) then
+	    return false;
+	end
+
+	return true;
 end
 
 -- Show extra buffs

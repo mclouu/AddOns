@@ -19,8 +19,7 @@ local ignored_tiers = {}
 local max_talent_sets = 30
 local numColumns = 3
 
-local buff_IDs   = { tome = {227563,227565,227041,226234}, prep = {32727,44521,228128} }
---local buff_names = { tome = {}, prep = {} }
+local buff_IDs = { tome = {227563,227565,227041,226234,234415,256229,256231}, prep = {32727,44521,228128,248473} }
 local numTiers   = { talents = MAX_TALENT_TIERS,
                      talents_pvp = MAX_PVP_TALENT_TIERS }
 local funcs      = { talents     = { check = GetTalentInfo   , learn = LearnTalents    },
@@ -1201,9 +1200,11 @@ local function initializeFrame()
  mf:SetScript("OnHide", function() if TalentSetManagerHelpFrame then TalentSetManagerHelpFrame:Hide() end end)
  
  mf.ignore_tier_overlays = {}
+ mf.ito_frame = CreateFrame("Frame", nil, mf)
+ mf.ito_frame:SetFrameStrata("HIGH")
  
  for i = 1,7 do
-  mf.ignore_tier_overlays[i] = mf:CreateTexture(nil, "BORDER", -8)
+  mf.ignore_tier_overlays[i] = mf.ito_frame:CreateTexture(nil, "BORDER", -8)
   mf.ignore_tier_overlays[i]:SetTexture("spells\\grad2b")
   mf.ignore_tier_overlays[i]:SetVertexColor(unpack(TalentSetManager_Options.interface.ignored_tiers_bg))
  end
@@ -1299,14 +1300,6 @@ local function initialize()
 
  if addonTable.initialized then return end
 
- --[[
- for k,v in pairs(buff_IDs) do
-  for i,id in pairs(v) do
-   buff_names[k][i] = GetSpellInfo(id)
-  end
- end
- ]]
-
  -- moved the LDB initialization at start because of ElvUI (yes, always that)
  -- now we can refresh the label with the spec available
  addonTable.UpdateLDBButton()
@@ -1327,15 +1320,6 @@ local function eventhandler(self, event, ...)
   if not TalentSetManager_Options then TalentSetManager_Options = {} end
   if TalentSetManager_Options.visible == nil then TalentSetManager_Options.visible = true end
   if TalentSetManager_Options.ldb_last_selected == nil then TalentSetManager_Options.ldb_last_selected = "talents" end
-
-  --[[ deprecated
-  if not TalentSetManager_Saves then TalentSetManager_Saves = {} end
-  if not TalentSetManager_Saves.talents then TalentSetManager_Saves.talents = {} end
-  if not TalentSetManager_Saves.talents_pvp then TalentSetManager_Saves.talents_pvp = {} end
-  
-  -- character specific defaults
-  if not TalentSetManager_Saves.interface then TalentSetManager_Saves.interface = {} end
-  ]]
   
   local pName = GetUnitName("player")
   local pRealm = GetRealmName()
@@ -1430,15 +1414,6 @@ local function eventhandler(self, event, ...)
     end
    end
   end
---[[
-  for t = 1,numColumns do
-   for r = 1,numTiers.talents_pvp do
-    f = PlayerTalentFramePVPTalents.Talents["Tier"..r] and PlayerTalentFramePVPTalents.Talents["Tier"..r]["Talent"..t]
-    if f then
-     f:HookScript("OnClick", talentPvPButtonClicked)
-    end
-   end
-  end]]
  end
 end
 eventframe:SetScript("OnEvent", eventhandler)

@@ -45,7 +45,7 @@ or C == "zhTW" and {
 	"寵物技能", "團隊標記圖示", "團隊世界標記圖示", "團隊標記圖示", "總是顯示這個環的功能", "技能", "玩具", "玩具",
 }
 
-local K = {"Abilities", "Also use items with the same name", "Battle Pet", "Battle pets", "Custom Macro", "Equipment Set", "Equipment sets", "Extra Action Button", "Flying Mount", "Ground Mount", "Item", "Items", "Macro", "Macros", "Miscellaneous", "Mount", "Mounts", "New Macro", "Only show when equipped", "Pet Ability", "Pet abilities", "Raid Marker", "Raid World Marker", "Raid markers", "Show a placeholder when unavailable", "Spell", "Toy", "Toys", }
-for i=1,V and #K or 0 do
+local K = V and {"Abilities", "Also use items with the same name", "Battle Pet", "Battle pets", "Custom Macro", "Equipment Set", "Equipment sets", "Extra Action Button", "Flying Mount", "Ground Mount", "Item", "Items", "Macro", "Macros", "Miscellaneous", "Mount", "Mounts", "New Macro", "Only show when equipped", "Pet Ability", "Pet abilities", "Raid Marker", "Raid World Marker", "Raid markers", "Show a placeholder when unavailable", "Spell", "Toy", "Toys"}
+for i=1,K and #K or 0 do
 	L[K[i]] = V[i]
 end

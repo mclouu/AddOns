@@ -1,11 +1,10 @@
-lightweight tag 39b930bef550f2c20c61ebc46e20723f9cc1d157 v1.3.0
+lightweight tag 7a15f984ce940e5abb8c961819c06c439149e12e v1.3.2
 Author:	Saregon <n_rhygar@yahoo.it>
-Date:	Sun Jul 22 12:31:48 2018 +0200
+Date:	Sat Mar 16 22:43:01 2019 +0100
 
-commit 39b930bef550f2c20c61ebc46e20723f9cc1d157
+commit 7a15f984ce940e5abb8c961819c06c439149e12e
 Author: Saregon <n_rhygar@yahoo.it>
-Date:   Sun Jul 22 12:31:48 2018 +0200
+Date:   Sat Mar 16 22:43:01 2019 +0100
 
-    frame strata set to LOW to avoid covering the pvp talent frame
-    fix UnitBuff function
+    -
 

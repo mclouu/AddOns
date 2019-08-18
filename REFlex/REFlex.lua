@@ -53,9 +53,7 @@ if (COMMUNITY_UIDD_REFRESH_PATCH_VERSION or 0) < 1 then
 	end)
 end
 
---GLOBALS: UIDROPDOWNMENU_VALUE_PATCH_VERSION, UIDROPDOWNMENU_MAXLEVELS, UIDROPDOWNMENU_MAXBUTTONS, UIDROPDOWNMENU_OPEN_PATCH_VERSION, UIDROPDOWNMENU_OPEN_MENU, issecurevariable
 local tinsert = _G.table.insert
-local mfloor = _G.math.floor
 local strmatch = _G.string.match
 local pairs, select, print, tonumber, hooksecurefunc, strsplit, tostring, unpack = _G.pairs, _G.select, _G.print, _G.tonumber, _G.hooksecurefunc, _G.strsplit, _G.tostring, _G.unpack
 local PanelTemplates_GetSelectedTab, PanelTemplates_SetTab, PanelTemplates_SetNumTabs = _G.PanelTemplates_GetSelectedTab, _G.PanelTemplates_SetTab, _G.PanelTemplates_SetNumTabs
@@ -67,11 +65,11 @@ local IsInInstance = _G.IsInInstance
 local IsInGuild = _G.IsInGuild
 local IsActiveBattlefieldArena = _G.IsActiveBattlefieldArena
 local IsInBrawl = _G.C_PvP.IsInBrawl
-local IsWargame = _G.IsWargame
+local IsRatedArena = _G.C_PvP.IsRatedArena
+local IsRatedBattleground = _G.C_PvP.IsRatedBattleground
 local IsArenaSkirmish = _G.IsArenaSkirmish
-local IsRatedBattleground = _G.IsRatedBattleground
 local IsPlayerAtEffectiveMaxLevel = _G.IsPlayerAtEffectiveMaxLevel
-local GetBrawlInfo = _G.C_PvP.GetBrawlInfo
+local GetAvailableBrawlInfo = _G.C_PvP.GetAvailableBrawlInfo
 local GetBrawlRewards = _G.C_PvP.GetBrawlRewards
 local GetNumSpecializations = _G.GetNumSpecializations
 local GetSpecializationInfo = _G.GetSpecializationInfo
@@ -84,8 +82,8 @@ local GetBattlefieldArenaFaction = _G.GetBattlefieldArenaFaction
 local GetInstanceInfo = _G.GetInstanceInfo
 local GetRandomBGInfo = _G.C_PvP.GetRandomBGInfo
 local GetNumBattlefieldScores = _G.GetNumBattlefieldScores
-local GetNumBattlefieldStats = _G.GetNumBattlefieldStats
-local GetBattlefieldInstanceRunTime = _G.GetBattlefieldInstanceRunTime
+local GetNumBattlefieldStats = _G.GetNumBattlefieldStats -- Deprecated
+local GetActiveMatchDuration = _G.C_PvP.GetActiveMatchDuration
 local GetCurrentArenaSeason = _G.GetCurrentArenaSeason
 local GetCVar = _G.GetCVar
 local GetMouseFocus = _G.GetMouseFocus
@@ -105,7 +103,7 @@ local RegisterAddonMessagePrefix = _G.C_ChatInfo.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.C_ChatInfo.SendAddonMessage
 local ElvUI = _G.ElvUI
 
-RE.Version = 264
+RE.Version = 271
 RE.LastSquash = 1531828800
 RE.FoundNewVersion = false
 
@@ -129,6 +127,8 @@ RE.PlayerName = UnitName("PLAYER")
 RE.PlayerFaction = UnitFactionGroup("PLAYER") == "Horde" and 0 or 1
 RE.PlayerZone = GetCVar("portal")
 
+SLASH_REFLEX1 = "/reflex"
+
 local function ElvUISwag(sender)
 	if sender == "Livarax-BurningLegion" then
 		return [[|TInterface\PvPRankBadges\PvPRank09:0|t ]]
@@ -141,7 +141,7 @@ function RE:OnLoad(self)
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-	self:RegisterEvent("UPDATE_BATTLEFIELD_SCORE")
+	self:RegisterEvent("PVP_MATCH_COMPLETE")
 	self:RegisterEvent("CHAT_MSG_ADDON")
 	self:RegisterEvent("PVP_RATED_STATS_UPDATE")
 	self:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")
@@ -166,6 +166,7 @@ function RE:OnLoad(self)
 		RE.TableBG.frame["col"..i.."bg"]:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 0, -9)
 		RE.TableBG.frame["col"..i.."bg"]:SetPoint("TOPRIGHT", parent, "BOTTOMRIGHT", 0, -9)
 	end
+	RE.TableBG.frame:ClearAllPoints()
 	RE.TableBG.frame:SetPoint("TOP", _G.REFlexFrame_ScoreHolder, "BOTTOM", 0, -15)
 	RE.TableBG.frame:Hide()
 	RE.TableBG:RegisterEvents({
@@ -187,6 +188,7 @@ function RE:OnLoad(self)
 		end,
 	})
 	RE.TableArena = ST:CreateST(RE.ArenaStructure, 18, 25, nil, _G.REFlexFrame)
+	RE.TableArena.frame:ClearAllPoints()
 	RE.TableArena.frame:SetPoint("TOP", _G.REFlexFrame_ScoreHolder, "BOTTOM", 0, -15)
 	RE.TableArena.frame:Hide()
 	RE.TableArena:RegisterEvents({
@@ -260,6 +262,13 @@ function RE:OnEvent(_, event, ...)
 		RegisterAddonMessagePrefix("REFlex")
 		_G.BINDING_HEADER_REFLEXB = "REFlex"
 		_G.BINDING_NAME_REFLEXOPEN = L["Show main window"]
+		_G.SlashCmdList["REFLEX"] = function()
+			if not _G.REFlexFrame:IsVisible() then
+				_G.REFlexFrame:Show()
+			else
+				_G.REFlexFrame:Hide()
+			end
+		end
 
 		TOAST:Register("REFlexToast", function(toast, ...)
 			toast:SetFormattedTitle("|cFF74D06CRE|r|cFFFFFFFFFlex|r")
@@ -267,10 +276,10 @@ function RE:OnEvent(_, event, ...)
 			toast:SetIconTexture([[Interface\PvPRankBadges\PvPRank09]])
 			toast:MakePersistent()
 			if RE.PlayerFaction == 0 then
-				toast:SetSoundFile([[Sound\Doodad\BellTollHorde.ogg]])
+				toast:SetSoundFile(565853)
 				toast:SetPrimaryCallback(_G.HORDE_CHEER, RE.CloseToast)
 			else
-				toast:SetSoundFile([[Sound\Doodad\BellTollAlliance.ogg]])
+				toast:SetSoundFile(566564)
 				toast:SetPrimaryCallback(_G.ALLIANCE_CHEER, RE.CloseToast)
 			end
 		end)
@@ -297,7 +306,7 @@ function RE:OnEvent(_, event, ...)
 			icon = "Interface\\PvPRankBadges\\PvPRank09"
 		})
 		function RE.LDB:OnEnter()
-			local brawlInfo = GetBrawlInfo()
+			local brawlInfo = GetAvailableBrawlInfo()
 			local mod = 0
 			RE.Tooltip = QTIP:Acquire("REFlexTooltipLDB", 2, "LEFT", "LEFT")
 			RE.Tooltip:SmartAnchorTo(self)
@@ -310,7 +319,7 @@ function RE:OnEvent(_, event, ...)
 			RE.Tooltip:SetCell(1, 1, "|cFFFFD100".._G.DAILY.."|r", RE.Tooltip:GetHeaderFont(), "CENTER", 2)
 			RE.Tooltip:AddLine(_G.BATTLEGROUND , GetRandomBGInfo().hasRandomWinToday and "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t" or "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t")
 			RE.Tooltip:AddLine(_G.ARENA_CASUAL, HasArenaSkirmishWinToday() and "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t" or "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t")
-			if IsPlayerAtEffectiveMaxLevel() and brawlInfo and brawlInfo.active then
+			if IsPlayerAtEffectiveMaxLevel() and brawlInfo and brawlInfo.canQueue then
 				RE.Tooltip:AddLine(_G.LFG_CATEGORY_BATTLEFIELD, select(5, GetBrawlRewards(brawlInfo.brawlType)) and "|TInterface\\RaidFrame\\ReadyCheck-Ready:0|t" or "|TInterface\\RaidFrame\\ReadyCheck-NotReady:0|t")
 			else
 				mod = 1
@@ -408,7 +417,7 @@ function RE:OnEvent(_, event, ...)
 		RequestRatedInfo()
 		RequestPVPRewards()
 		RequestRandomBattlegroundInstanceInfo()
-		GetBrawlInfo()
+		GetAvailableBrawlInfo()
 	elseif event == "ADDON_LOADED" and ... == "Blizzard_Calendar" then
 		hooksecurefunc("CalendarDayButton_Click", RE.CalendarParser)
 		_G.CalendarFrame:HookScript("OnHide", RE.CalendarCleanup)
@@ -429,7 +438,7 @@ function RE:OnEvent(_, event, ...)
 			RequestRatedInfo()
 			RequestPVPRewards()
 			RequestRandomBattlegroundInstanceInfo()
-			GetBrawlInfo()
+			GetAvailableBrawlInfo()
 		end
 		if instanceType == "pvp" or instanceType == "arena" then
 			RE.Match = true
@@ -438,10 +447,10 @@ function RE:OnEvent(_, event, ...)
 				SendAddonMessage("REFlex", "Version;"..RE.Version, "GUILD")
 			end
 		end
-	elseif event == "UPDATE_BATTLEFIELD_SCORE" and not RE.DataSaved and GetBattlefieldWinner() ~= nil and _G.WorldStateScoreFrame:IsVisible() then
+	elseif event == "PVP_MATCH_COMPLETE" and not RE.DataSaved then
 		RE.DataSaved = true
-		_G.WorldStateScoreFrameLeaveButton:Disable()
-		TimerAfter(2, RE.PVPEnd)
+		_G.PVPMatchResults.buttonContainer.leaveButton:Disable()
+		TimerAfter(1, RE.PVPEnd)
 	elseif event == "PVP_RATED_STATS_UPDATE" then
 		RE.Season = GetCurrentArenaSeason()
 		for _, i in pairs({1, 2, 4}) do
@@ -576,7 +585,7 @@ function RE:OnEnterTooltip(cellFrame, databaseID)
 				RE.TooltipRGB1:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 			end
 			RE.TooltipRGB1:Show()
-			local team, damageSum, healingSum, kbSum = RE:GetRGBTeamDetails(databaseID, false)
+			team, damageSum, healingSum, kbSum = RE:GetRGBTeamDetails(databaseID, false)
 			RE.TooltipRGB2 = QTIP:Acquire("REFlexTooltipRGB2", 7, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 			RE.TooltipRGB2:AddLine()
 			for i=1, 7 do
@@ -678,7 +687,7 @@ function RE:UpdateGUI()
 		RequestRatedInfo()
 		RequestPVPRewards()
 		RequestRandomBattlegroundInstanceInfo()
-		GetBrawlInfo()
+		GetAvailableBrawlInfo()
 		for i=1, GetNumSpecializations() do
 			local Spec = select(2, GetSpecializationInfo(i))
 			RE.SpecDropDown:AddItem(Spec, Spec)
@@ -900,22 +909,16 @@ function RE:PVPEnd()
 	RE.MatchData.Season = GetCurrentArenaSeason()
 	RE.MatchData.PlayersNum = GetNumBattlefieldScores()
 	RE.MatchData.StatsNum = GetNumBattlefieldStats()
-	RE.MatchData.Duration = mfloor(GetBattlefieldInstanceRunTime() / 1000)
+	RE.MatchData.Duration = GetActiveMatchDuration()
 	RE.MatchData.Time = RE:GetUTCTimestamp()
 	RE.MatchData.isBrawl = IsInBrawl()
 	RE.MatchData.Version = RE.Version
 
-	if RE.MatchData.Map == 968 then
-		RE.MatchData.Map = 566
-	end
-	if RE.MatchData.Map == 1035 then
-		RE.MatchData.Map = 998
-	end
-	if RE.MatchData.Map == 1681 then
-		RE.MatchData.Map = 529
+	if RE.MapIDRemap[RE.MatchData.Map] then
+		RE.MatchData.Map = RE.MapIDRemap[RE.MatchData.Map]
 	end
 
-	if (IsRatedBattleground() and not IsWargame()) or (RE.MatchData.isArena and not IsArenaSkirmish()) then
+	if IsRatedBattleground() or IsRatedArena() and not IsArenaSkirmish() then
 		RE.MatchData.isRated = true
 	else
 		RE.MatchData.isRated = false
@@ -947,7 +950,7 @@ function RE:PVPEnd()
 	end
 
 	-- Hide corrupted records
-	if not RE.MatchData.PlayerNum or RE.MatchData.Map == 1170 or (RE.MatchData.isArena and RE.MatchData.isRated and RE.MatchData.isBrawl) then
+	if not RE.MatchData.PlayerNum or RE.MatchData.Map == 1170 or RE.MatchData.Map == 2177 or (RE.MatchData.isArena and RE.MatchData.isRated and RE.MatchData.isBrawl) then
 		RE.MatchData.Hidden = true
 	else
 		RE.MatchData.Hidden = false
@@ -966,5 +969,5 @@ function RE:PVPEnd()
 	else
 		print("\124cFF74D06C[REFlex]\124r "..L["API returned corrupted data. Match will not be recorded."])
 	end
-	_G.WorldStateScoreFrameLeaveButton:Enable()
+	_G.PVPMatchResults.buttonContainer.leaveButton:Enable()
 end

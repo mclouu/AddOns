@@ -187,13 +187,22 @@ end
 
 --
 local tNextSoundTime = 0;
-local function VUHDO_playDebuffSound(aSound)
+local function VUHDO_playDebuffSound(aSound, aDebuffName)
 	if (aSound or "") == "" or GetTime() < tNextSoundTime then
 		return;
 	end
 
-	PlaySoundFile(aSound);
-	tNextSoundTime = GetTime() + 2;
+	local tSuccess = VUHDO_playSoundFile(aSound);
+
+	if tSuccess then
+		tNextSoundTime = GetTime() + 2;
+	else
+		if aDebuffName then
+			VUHDO_Msg(format(VUHDO_I18N_PLAY_SOUND_FILE_CUSTOM_DEBUFF_ERR, aSound, aDebuffName));
+		else
+			VUHDO_Msg(format(VUHDO_I18N_PLAY_SOUND_FILE_DEBUFF_ERR, aSound));
+		end
+	end
 end
 
 
@@ -298,7 +307,7 @@ function VUHDO_determineDebuff(aUnit)
 		tNow = GetTime();
 
 		for tCnt = 1, huge do
-			tName, tIcon, tStacks, tTypeString, tDuration, tExpiry, tUnitCaster, _, _, tSpellId, _, tIsBossDebuff = UnitDebuff(aUnit, tCnt, false);
+			tName, tIcon, tStacks, tTypeString, tDuration, tExpiry, tUnitCaster, _, _, tSpellId, _, tIsBossDebuff = UnitDebuff(aUnit, tCnt);
 			if not tIcon then 
 				break;
 			end
@@ -353,16 +362,16 @@ function VUHDO_determineDebuff(aUnit)
 		end
 
 		for tCnt = 1, huge do
-			tName, tIcon, tStacks, _, tDuration, tExpiry, _, _, _, tSpellId = UnitBuff(aUnit, tCnt);
+			tName, tIcon, tStacks, _, tDuration, tExpiry, tUnitCaster, _, _, tSpellId = UnitBuff(aUnit, tCnt);
 			if not tIcon then	break; end
 
 			tDebuffConfig = VUHDO_CUSTOM_DEBUFF_CONFIG[tName] or VUHDO_CUSTOM_DEBUFF_CONFIG[tostring(tSpellId)] or sEmpty;
 
-			if tDebuffConfig[1] then -- Set color
+			if tDebuffConfig[1] and ((tDebuffConfig[3] and tUnitCaster == "player") or (tDebuffConfig[4] and tUnitCaster ~= "player")) then -- Color?
 				sCurChosenType, sCurChosenName, sCurChosenSpellId = 6, tName, tSpellId; -- VUHDO_DEBUFF_TYPE_CUSTOM
 			end
 
-			if tDebuffConfig[2] then -- Set icon
+			if tDebuffConfig[2] and ((tDebuffConfig[3] and tUnitCaster == "player") or (tDebuffConfig[4] and tUnitCaster ~= "player")) then -- Icon?
 				sCurIcons[tName] = VUHDO_getOrCreateIconArray(tIcon, tExpiry, tStacks or 0, tDuration, true, tSpellId, tCnt);
 			end
 		end
@@ -373,7 +382,7 @@ function VUHDO_determineDebuff(aUnit)
 
 			if not VUHDO_UNIT_CUSTOM_DEBUFFS[aUnit][tName] then 
 				-- tExpiry, tStacks, tIcon
-				VUHDO_UNIT_CUSTOM_DEBUFFS[aUnit][tName] = { tDebuffInfo[2], tDebuffInfo[3], tDebuffInfo[1] };
+				VUHDO_UNIT_CUSTOM_DEBUFFS[aUnit][tName] = { tDebuffInfo[2], tDebuffInfo[3], tDebuffInfo[1], tDebuffInfo[7] };
 
 				VUHDO_addDebuffIcon(aUnit, tDebuffInfo[1], tName, tDebuffInfo[2], tDebuffInfo[3], tDebuffInfo[4], tDebuffInfo[5], tDebuffInfo[6], tDebuffInfo[7]);
 
@@ -382,9 +391,9 @@ function VUHDO_determineDebuff(aUnit)
 					tDebuffSettings = sAllDebuffSettings[tName] or sAllDebuffSettings[tostring(tDebuffInfo[6])];
 
 					if tDebuffSettings then -- particular custom debuff sound?
-						VUHDO_playDebuffSound(tDebuffSettings["SOUND"]);
+						VUHDO_playDebuffSound(tDebuffSettings["SOUND"], tName);
 					elseif VUHDO_CONFIG["CUSTOM_DEBUFF"]["SOUND"] then -- default custom debuff sound?
-						VUHDO_playDebuffSound(VUHDO_CONFIG["CUSTOM_DEBUFF"]["SOUND"]);
+						VUHDO_playDebuffSound(VUHDO_CONFIG["CUSTOM_DEBUFF"]["SOUND"], tName);
 					end
 				end
 
@@ -555,4 +564,12 @@ function VUHDO_resetDebuffsFor(aUnit)
 	twipe(VUHDO_UNIT_CUSTOM_DEBUFFS[aUnit]);
 end
 
+
+
+--
+function VUHDO_getUnitCustomDebuffs()
+	
+	return VUHDO_UNIT_CUSTOM_DEBUFFS;
+
+end
 

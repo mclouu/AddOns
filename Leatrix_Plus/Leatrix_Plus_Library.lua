@@ -3,10 +3,10 @@
 ----------------------------------------------------------------------
 
 	-- LibDBIcon 8.0.4
-	-- 11: LibStub: (?<=-- LibStubStart\r\n)[\s\S]*(?=^-- LibStubEnd)
-	-- 12: LibCallbackHandler: (?<=-- CallbackStart\r\n)[\s\S]*(?=^-- CallbackEnd)
-	-- 13: LibDataBroker: (?<=-- DataBrokerStart\r\n)[\s\S]*(?=^-- DataBrokerEnd)
-	-- 14: LibDBIcon: (?<=-- LibDBIconStart\r\n)[\s\S]*(?=^-- LibDBIconEnd)
+	-- 11: LibStub: (?s)-- LibStubStart\R?\K.*?(?=-- LibStubEnd)
+	-- 12: LibCallbackHandler: (?s)-- CallbackStart\R?\K.*?(?=-- CallbackEnd)
+	-- 13: LibDataBroker: (?s)-- DataBrokerStart\R?\K.*?(?=-- DataBrokerEnd)
+	-- 14: LibDBIcon: (?s)-- LibDBIconStart\R?\K.*?(?=-- LibDBIconEnd)
 
 ----------------------------------------------------------------------
 -- L11: LibDBIcon: LibStub

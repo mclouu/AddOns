@@ -85,7 +85,8 @@ local GhostIndication = {} do
 		end
 		if activeGroup ~= ret then GhostIndication:Deactivate() end
 		if ret.incident ~= incidentAngle or ret.count ~= count then
-			local radius, angleStep = CalculateRingRadius(count, 48*mainScale, 48*0.80, 30, incidentAngle-180)/0.80, 360/count
+			local baseSize = 48 + 48*configCache.MIButtonMargin
+			local radius, angleStep = CalculateRingRadius(count, baseSize*mainScale, baseSize*0.80, 30, incidentAngle-180)/0.80, 360/count
 			local angle = 90 + incidentAngle + angleStep
 			for i=2,count do
 				local cell = ret[i] or next(spareSlices) or CreateIndicator(nil, ret, 48, true)
@@ -330,7 +331,8 @@ end)
 local api, iapi = {}, {}
 function iapi:Show(_, fcSlice, fastOpen, reFrame)
 	triggerFrame, _, mainFrame.count, mainFrame.offset = reFrame, OneRingLib:GetOpenRing(configCache)
-	mainFrame.radius = CalculateRingRadius(mainFrame.count or 3, 48, 48, 95, 90-(mainFrame.offset or 0))
+	local baseSize = 48 + 48*configCache.MIButtonMargin
+	mainFrame.radius = CalculateRingRadius(mainFrame.count or 3, baseSize, baseSize, 100, 90-(mainFrame.offset or 0))
 	mainFrame:SetScript("OnUpdate", OnUpdate_ZoomIn)
 	mainFrame.eleft, mainFrame.fastClickSlice, mainFrame.oldSlice, mainFrame.angle, mainFrame.omState, mainFrame.oldIsGlowing = configCache.XTZoomTime * (fastOpen and 0.5 or 1), fcSlice or 0, -1
 	mainFrame.rotPeriod = nil
@@ -397,7 +399,7 @@ function api:SetIndicatorConstructor(func)
 end
 
 for k,v in pairs({ShowCooldowns=false, ShowRecharge=false, UseGameTooltip=true, ShowKeys=true,
-	MIScale=true, MISpinOnHide=true, GhostMIRings=true,
+	MIScale=true, MISpinOnHide=true, MIButtonMargin=0.1, GhostMIRings=true,
 	XTPointerSpeed=0, XTScaleSpeed=0, XTZoomTime=0.3, XTRotationPeriod=4, GhostShowDelay=0.25}) do
 	OneRingLib:RegisterOption(k,v)
 end
