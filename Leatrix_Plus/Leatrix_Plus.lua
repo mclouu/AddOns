@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
--- 	Leatrix Plus 8.2.05 (31st July 2019, www.leatrix.com)
+-- 	Leatrix Plus 8.2.07 (28th August 2019)
 ----------------------------------------------------------------------
 
 --	01:Functions	20:Live			50:RunOnce		70:Logout			
@@ -20,7 +20,7 @@
 	local void
 
 --	Version
-	LeaPlusLC["AddonVer"] = "8.2.05"
+	LeaPlusLC["AddonVer"] = "8.2.07"
 	LeaPlusLC["RestartReq"] = nil
 
 --	If client restart is required and has not been done, show warning and quit
@@ -284,12 +284,13 @@
 	function LeaPlusLC:FriendCheck(name)
 
 		-- Update friends list
-		ShowFriends()
+		C_FriendList.ShowFriends()
 
 		-- Check character friends
-		for i = 1, GetNumFriends() do
+		for i = 1, C_FriendList.GetNumOnlineFriends() do
 			-- Return true if name matches with or without realm
-			if name == GetFriendInfo(i) or name == strsplit("-", GetFriendInfo(i), 2) then
+			local charFriendName = C_FriendList.GetFriendInfoByIndex(i).name
+			if name == charFriendName or name == strsplit("-", charFriendName, 2) then
 				return true
 			end
 		end
@@ -1121,9 +1122,15 @@
 			LeaPlusCB["DressUpNudeBtn"]:ClearAllPoints()
 			LeaPlusCB["DressUpNudeBtn"]:SetPoint("RIGHT", DressUpFrameResetButton, "LEFT", 0, 0)
 			LeaPlusCB["DressUpNudeBtn"]:SetScript("OnClick", function()
-				DressUpFrameResetButton:Click() -- Done first in case any slots refuse to clear
-				for i = 1, 19 do
-					DressUpModel:UndressSlot(i) -- Done this way to prevent issues with Undress
+				if ClientVersion == "8.2.5" then
+					-- Strip model
+					SetupPlayerForModelScene(DressUpFrame.ModelScene, {}, false, false)
+				else
+					-- Pre 8.2.5
+					DressUpFrameResetButton:Click() -- Done first in case any slots refuse to clear
+					for i = 1, 19 do
+						DressUpModel:UndressSlot(i) -- Done this way to prevent issues with Undress
+					end
 				end
 			end)
 
@@ -1131,7 +1138,26 @@
 			LeaPlusCB["DressUpTabBtn"]:ClearAllPoints()
 			LeaPlusCB["DressUpTabBtn"]:SetPoint("RIGHT", LeaPlusCB["DressUpNudeBtn"], "LEFT", 0, 0)
 			LeaPlusCB["DressUpTabBtn"]:SetScript("OnClick", function()
-				DressUpModel:UndressSlot(19)
+				if ClientVersion == "8.2.5" then
+					-- Store all appearance sources in table
+					local appearanceSources = {}
+					local playerActor = DressUpFrame.ModelScene:GetPlayerActor()
+					for slotID = 1, 19 do
+						local appearanceSourceID, illusionSourceID = playerActor:GetSlotTransmogSources(slotID)
+						tinsert(appearanceSources, appearanceSourceID)
+					end
+					-- Strip model
+					SetupPlayerForModelScene(DressUpFrame.ModelScene, {}, false, false)
+					-- Apply all appearance sources except tabard slot (19)
+					for slotID = 1, 18 do
+						if appearanceSources[slotID] and appearanceSources[slotID] > 0 then
+							playerActor:TryOn(appearanceSources[slotID])
+						end
+					end
+				else
+					-- Pre 8.2.5
+					DressUpModel:UndressSlot(19)
+				end
 			end)
 
 			-- Only show dressup buttons if its a player (reset button will show too)
@@ -1145,53 +1171,114 @@
 				LeaPlusCB["DressUpTabBtn"]:Hide()
 			end)
 
-			local BtnStrata, BtnLevel = SideDressUpModelResetButton:GetFrameStrata(), SideDressUpModelResetButton:GetFrameLevel()
+			local BtnStrata, BtnLevel
+			if ClientVersion == "8.2.5" then
+				BtnStrata, BtnLevel = SideDressUpFrame.ResetButton:GetFrameStrata(), SideDressUpFrame.ResetButton:GetFrameLevel()
+			else
+				BtnStrata, BtnLevel = SideDressUpModelResetButton:GetFrameStrata(), SideDressUpModelResetButton:GetFrameLevel()
+			end
 
 			-- Add buttons to auction house dressup frame
 			LeaPlusLC:CreateButton("DressUpSideBtn", SideDressUpFrame, "Tabard", "BOTTOMLEFT", 14, 20, 60, 22, false, "")
-			LeaPlusCB["DressUpSideBtn"]:SetFrameStrata(BtnStrata);
-			LeaPlusCB["DressUpSideBtn"]:SetFrameLevel(BtnLevel);
+			if ClientVersion == "8.2.5" then
+				LeaPlusCB["DressUpSideBtn"]:ClearAllPoints()
+				LeaPlusCB["DressUpSideBtn"]:SetPoint("BOTTOMLEFT", SideDressUpFrame, "BOTTOMLEFT", 14, 40)
+			end
+			LeaPlusCB["DressUpSideBtn"]:SetFrameStrata(BtnStrata)
+			LeaPlusCB["DressUpSideBtn"]:SetFrameLevel(BtnLevel)
+			if ClientVersion == "8.2.5" then
+				LeaPlusCB["DressUpSideBtn"]:SetFrameStrata("HIGH")
+			end
 			LeaPlusCB["DressUpSideBtn"]:SetScript("OnClick", function()
-				SideDressUpModel:UndressSlot(19)
+				if ClientVersion == "8.2.5" then
+					-- Store all appearance sources in table
+					local appearanceSources = {}
+					local playerActor = SideDressUpFrame.ModelScene:GetPlayerActor()
+					for slotID = 1, 19 do
+						local appearanceSourceID, illusionSourceID = playerActor:GetSlotTransmogSources(slotID)
+						tinsert(appearanceSources, appearanceSourceID)
+					end
+					-- Strip model
+					SetupPlayerForModelScene(SideDressUpFrame.ModelScene, {}, false, false)
+					-- Apply all appearance sources except tabard slot (19)
+					for slotID = 1, 18 do
+						if appearanceSources[slotID] and appearanceSources[slotID] > 0 then
+							playerActor:TryOn(appearanceSources[slotID])
+						end
+					end
+				else
+					-- Pre 8.2.5
+					SideDressUpModel:UndressSlot(19)
+				end
 			end)
 
 			LeaPlusLC:CreateButton("DressUpSideNudeBtn", SideDressUpFrame, "Nude", "BOTTOMRIGHT", -18, 20, 60, 22, false, "")
-			LeaPlusCB["DressUpSideNudeBtn"]:SetFrameStrata(BtnStrata);
-			LeaPlusCB["DressUpSideNudeBtn"]:SetFrameLevel(BtnLevel);
+			if ClientVersion == "8.2.5" then
+				LeaPlusCB["DressUpSideNudeBtn"]:ClearAllPoints()
+				LeaPlusCB["DressUpSideNudeBtn"]:SetPoint("BOTTOMRIGHT", SideDressUpFrame, "BOTTOMRIGHT", -18, 40)
+			end
+			LeaPlusCB["DressUpSideNudeBtn"]:SetFrameStrata(BtnStrata)
+			LeaPlusCB["DressUpSideNudeBtn"]:SetFrameLevel(BtnLevel)
+			if ClientVersion == "8.2.5" then
+				LeaPlusCB["DressUpSideNudeBtn"]:SetFrameStrata("HIGH")
+			end
 			LeaPlusCB["DressUpSideNudeBtn"]:SetScript("OnClick", function()
-				SideDressUpModelResetButton:Click() -- Done first in case any slots refuse to clear
-				for i = 1, 19 do
-					SideDressUpModel:UndressSlot(i) -- Done this way to prevent issues with Undress
+				if ClientVersion == "8.2.5" then
+					-- Strip model
+					SetupPlayerForModelScene(SideDressUpFrame.ModelScene, {}, false, false)
+				else
+					-- Pre 8.2.5
+					SideDressUpModelResetButton:Click() -- Done first in case any slots refuse to clear
+					for i = 1, 19 do
+						SideDressUpModel:UndressSlot(i) -- Done this way to prevent issues with Undress
+					end
 				end
 			end)
 
 			-- Only show side dressup buttons if its a player (reset button will show too)
-			hooksecurefunc(SideDressUpModelResetButton, "Show", function()
-				LeaPlusCB["DressUpSideBtn"]:Show()
-				LeaPlusCB["DressUpSideNudeBtn"]:Show()
-			end)
+			if ClientVersion == "8.2.5" then
+				hooksecurefunc(SideDressUpFrame.ResetButton, "Show", function()
+					LeaPlusCB["DressUpSideBtn"]:Show()
+					LeaPlusCB["DressUpSideNudeBtn"]:Show()
+				end)
 
-			hooksecurefunc(SideDressUpModelResetButton, "Hide", function()
-				LeaPlusCB["DressUpSideBtn"]:Hide()
-				LeaPlusCB["DressUpSideNudeBtn"]:Hide()
-			end)
+				hooksecurefunc(SideDressUpFrame.ResetButton, "Hide", function()
+					LeaPlusCB["DressUpSideBtn"]:Hide()
+					LeaPlusCB["DressUpSideNudeBtn"]:Hide()
+				end)
+			else
+				hooksecurefunc(SideDressUpModelResetButton, "Show", function()
+					LeaPlusCB["DressUpSideBtn"]:Show()
+					LeaPlusCB["DressUpSideNudeBtn"]:Show()
+				end)
+
+				hooksecurefunc(SideDressUpModelResetButton, "Hide", function()
+					LeaPlusCB["DressUpSideBtn"]:Hide()
+					LeaPlusCB["DressUpSideNudeBtn"]:Hide()
+				end)
+			end
 
 			----------------------------------------------------------------------
 			-- Disable special animations
 			----------------------------------------------------------------------
 
-			-- Function to set animations
-			local function SetupAnimations()
-				DressUpModel:SetAnimation(255)
-				SideDressUpModel:SetAnimation(255)
-			end
+			if ClientVersion == "8.2.5" then
+			else
 
-			-- Dressing room
-			hooksecurefunc("DressUpFrame_Show", SetupAnimations)
-			DressUpFrame.ResetButton:HookScript("OnClick", SetupAnimations)
-			-- Auction house dressing room
-			hooksecurefunc(SideDressUpModel, "SetUnit", SetupAnimations)
-			SideDressUpModelResetButton:HookScript("OnClick", SetupAnimations)
+				-- Function to set animations
+				local function SetupAnimations()
+					DressUpModel:SetAnimation(255)
+					SideDressUpModel:SetAnimation(255)
+				end
+
+				-- Dressing room
+				hooksecurefunc("DressUpFrame_Show", SetupAnimations)
+				DressUpFrame.ResetButton:HookScript("OnClick", SetupAnimations)
+				-- Auction house dressing room
+				hooksecurefunc(SideDressUpModel, "SetUnit", SetupAnimations)
+				SideDressUpModelResetButton:HookScript("OnClick", SetupAnimations)
+
+			end
 
 			----------------------------------------------------------------------
 			-- Controls
@@ -1200,14 +1287,20 @@
 			-- Function to hide controls
 			local function SetupControls()
 				CharacterModelFrameControlFrame:Hide()
-				DressUpModelControlFrame:Hide()
-				SideDressUpModelControlFrame:Hide()
+				if ClientVersion == "8.2.5" then
+				else
+					DressUpModelControlFrame:Hide()
+					SideDressUpModelControlFrame:Hide()
+				end
 			end
 
 			-- Hide controls for character sheet, dressing room and auction house dressing room
 			CharacterModelFrameControlFrame:HookScript("OnShow", SetupControls)
-			DressUpModelControlFrame:HookScript("OnShow", SetupControls)
-			SideDressUpModelControlFrame:HookScript("OnShow", SetupControls)
+			if ClientVersion == "8.2.5" then
+			else
+				DressUpModelControlFrame:HookScript("OnShow", SetupControls)
+				SideDressUpModelControlFrame:HookScript("OnShow", SetupControls)
+			end
 
 			----------------------------------------------------------------------
 			-- Wardrobe and inspect system
@@ -7054,7 +7147,7 @@
 
 		if event == "CONFIRM_SUMMON" then
 			if not UnitAffectingCombat("player") then
-				ConfirmSummon()
+				C_SummonInfo.ConfirmSummon()
 				StaticPopup_Hide("CONFIRM_SUMMON")
 			end
 			return

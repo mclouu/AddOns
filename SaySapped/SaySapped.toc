@@ -1,6 +1,6 @@
-## Interface: 80000
+## Interface: 80200
 ## Title: SaySapped
-## Version: 2018-08-04
+## Version: 2019-08-27
 ## Notes: Says "Sapped" to alert those around you whenever a rogue saps you. Great for Arenas, Battlegrounds and World PvP!
 ## Author: Bitbyte of Icecrown
 ## X-eMail: saysapped at orgplay dot com

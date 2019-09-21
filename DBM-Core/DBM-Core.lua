@@ -68,9 +68,9 @@ local function showRealDate(curseDate)
 end
 
 DBM = {
-	Revision = parseCurseDate("20190816172852"),
-	DisplayVersion = "8.2.13", -- the string that is shown as version
-	ReleaseRevision = releaseDate(2019, 8, 16) -- the date of the latest stable version that is available, optionally pass hours, minutes, and seconds for multiple releases in one day
+	Revision = parseCurseDate("20190904205122"),
+	DisplayVersion = "8.2.16", -- the string that is shown as version
+	ReleaseRevision = releaseDate(2019, 9, 4) -- the date of the latest stable version that is available, optionally pass hours, minutes, and seconds for multiple releases in one day
 }
 DBM.HighestRelease = DBM.ReleaseRevision --Updated if newer version is detected, used by update nags to reflect critical fixes user is missing on boss pulls
 
@@ -1013,18 +1013,24 @@ do
 	end
 
 	function DBM:RegisterShortTermEvents(...)
-		if self.shortTermEventsRegistered then
-			return
-		end
-		self.shortTermRegisterEvents = {...}
-		for k, v in pairs(self.shortTermRegisterEvents) do
+		local _shortTermRegisterEvents = {...}
+		for k, v in pairs(_shortTermRegisterEvents) do
 			if v:sub(0, 5) == "UNIT_" and v:sub(v:len() - 10) ~= "_UNFILTERED" and not v:find(" ") and v ~= "UNIT_DIED" and v ~= "UNIT_DESTROYED" then
 				-- legacy event, oh noes
-				self.shortTermRegisterEvents[k] = v .. " boss1 boss2 boss3 boss4 boss5 target focus"
+				_shortTermRegisterEvents[k] = v .. " boss1 boss2 boss3 boss4 boss5 target focus"
 			end
 		end
 		self.shortTermEventsRegistered = 1
-		self:RegisterEvents(unpack(self.shortTermRegisterEvents))
+		self:RegisterEvents(unpack(_shortTermRegisterEvents))
+		-- Fix so we can register multiple short term events. Use at your own risk, as unsucribing will cause
+		-- all short term events to unregister.
+		if not self.shortTermRegisterEvents then
+			self.shortTermRegisterEvents = {}
+		end
+		for k, v in pairs(_shortTermRegisterEvents) do
+			self.shortTermRegisterEvents[k] = v
+		end
+		-- End fix
 	end
 
 	function DBM:UnregisterShortTermEvents()
@@ -2572,179 +2578,25 @@ end
 do
 	--Old LDB Functions
 	local frame = CreateFrame("Frame", "DBMLDBFrame")
-	local dropdownFrame = CreateFrame("Frame", "DBMLDBDropdownFrame", frame, "UIDropDownMenuTemplate")
-	local categories = {}
-	local initialize
-	local obj
-	local catBuilt = false
-	local function createBossModEntry(id, level)
-		local info
-		local mod = DBM:GetModByName(id)
-		if not mod then return end
-		info = UIDropDownMenu_CreateInfo()
-		info.text = mod.localization.general.name
-		info.isTitle = true
-		UIDropDownMenu_AddButton(info, level)
-		info = UIDropDownMenu_CreateInfo()
-		info.text = DBM_LDB_CAT_GENERAL
-		info.notCheckable = true
-		info.notClickable = true
-		UIDropDownMenu_AddButton(info, level)
-		info = UIDropDownMenu_CreateInfo()
-		info.text = DBM_LDB_ENABLE_BOSS_MOD
-		info.keepShownOnClick = 1
-		info.checked = mod.Options.Enabled
-		info.func = function() mod:Toggle() end
-		UIDropDownMenu_AddButton(info, level)
-		for i, v in ipairs(mod.categorySort) do
-			local cat = mod.optionCategories[v]
-			info = UIDropDownMenu_CreateInfo()
-			info.text = mod.localization.cats[v]
-			info.notCheckable = true
-			info.notClickable = true
-			UIDropDownMenu_AddButton(info, level)
-			if cat then
-				for i, v in ipairs(cat) do
-					if type(mod.Options[v]) == "boolean" then
-						info = UIDropDownMenu_CreateInfo()
-						info.text = mod.localization.options[v]
-						info.keepShownOnClick = 1
-						info.checked = mod.Options[v]
-						info.func = function() mod.Options[v] = not mod.Options[v] end
-						UIDropDownMenu_AddButton(info, level)
-					end
-				end
-			end
-		end
-	end
-
-	-- ugly? yes!
-	function initialize(self, level, menuList)
-		if not catBuilt then
-			for i, v in ipairs(DBM.AddOns) do
-				if not categories[v.category] then
-					categories[v.category] = {}
-					table.insert(categories, v.category)
-				end
-				table.insert(categories[v.category], v)
-			end
-			catBuilt = true
-		end
-		local info
-		if menuList and menuList:sub(0, 3) == "mod" then
-			createBossModEntry(menuList:sub(4), level)
-		elseif level == 1 then
-			info = UIDropDownMenu_CreateInfo()
-			info.text = "Deadly Boss Mods"
-			info.isTitle = true
-			UIDropDownMenu_AddButton(info, 1)
-			for i, v in ipairs(DBM.AddOns) do
-				if IsAddOnLoaded(v.modId) then
-					info = UIDropDownMenu_CreateInfo()
-					info.text = v.name
-					info.notCheckable = true
-					info.hasArrow = true
-					info.menuList = "instance"..v.modId
-					UIDropDownMenu_AddButton(info, 1)
-				end
-			end
-			info = UIDropDownMenu_CreateInfo()
-			info.text = DBM_LDB_LOAD_MODS
-			info.notCheckable = true
-			info.hasArrow = true
-			info.menuList = "load"
-			UIDropDownMenu_AddButton(info, 1)
-		elseif level == 2 then
-			if menuList == "load" then
-				for i, v in ipairs(categories) do
-					info = UIDropDownMenu_CreateInfo()
-					info.text = getglobal("DBM_LDB_CAT_"..strupper(v)) or v
-					info.notCheckable = true
-					info.hasArrow = true
-					info.menuList = "load"..v
-					UIDropDownMenu_AddButton(info, 2)
-				end
-			elseif menuList and menuList:sub(0, 8) == "instance" then
-				local modId = menuList:sub(9)
-				for i, v in ipairs(DBM.AddOns) do
-					if v.modId == modId then
-						if v.subTabs then
-							for i, tab in ipairs(v.subTabs) do
-								info = UIDropDownMenu_CreateInfo()
-								info.text = tab
-								info.notCheckable = true
-								info.hasArrow = true
-								info.menuList = "instance\t"..v.modId.."\t"..i
-								UIDropDownMenu_AddButton(info, 2)
-							end
-							return
-						else
-							for i, v in ipairs(DBM.Mods) do
-								if v.modId == modId then
-									info = UIDropDownMenu_CreateInfo()
-									info.text = v.localization.general.name
-									info.notCheckable = true
-									info.hasArrow = true
-									info.menuList = "mod"..v.id
-									UIDropDownMenu_AddButton(info, 2)
-								end
-							end
-						end
-						break
-					end
-				end
-			end
-		elseif level == 3 then
-			if menuList and menuList:sub(0, 4) == "load" then
-				local k = menuList:sub(5)
-				for i, v in ipairs(categories[k]) do
-					if not IsAddOnLoaded(v.modId) then
-						info = UIDropDownMenu_CreateInfo()
-						info.text = v.name
-						info.notCheckable = true
-						info.func = function() DBM:LoadMod(v, true) CloseDropDownMenus() end
-						UIDropDownMenu_AddButton(info, 3)
-					end
-				end
-			elseif menuList and menuList:sub(0, 8) == "instance" then
-				local modId, subTab = select(2, string.split("\t", menuList))
-				for i, v in ipairs(DBM.Mods) do
-					if v.modId == modId and v.subTab == tonumber(subTab) then
-						info = UIDropDownMenu_CreateInfo()
-						info.text = v.localization.general.name
-						info.notCheckable = true
-						info.hasArrow = true
-						info.menuList = "mod"..v.id
-						UIDropDownMenu_AddButton(info, 3)
-					end
-				end
-			end
-		end
-	end
 
 	--New LDB Object
 	if LibStub("LibDataBroker-1.1", true) then
 		dataBroker = LibStub("LibDataBroker-1.1"):NewDataObject("DBM",
-			{type = "launcher", label = "DBM", icon = "Interface\\AddOns\\DBM-Core\\textures\\Minimap-Button-Up"}
+			{type = "launcher", label = "DBM", icon = "Interface\\AddOns\\DBM-Core\\textures\\dbm_airhorn"}
 		)
 
 		function dataBroker.OnClick(self, button)
 			if IsShiftKeyDown() then return end
-			if button == "RightButton" then
-				UIDropDownMenu_Initialize(dropdownFrame, initialize)
-				ToggleDropDownMenu(1, nil, dropdownFrame, "cursor", 5, -10)
-			else
-				DBM:LoadGUI()
-			end
+			DBM:LoadGUI()
 		end
 
 		function dataBroker.OnTooltipShow(GameTooltip)
 			GameTooltip:SetText(DBM_CORE_MINIMAP_TOOLTIP_HEADER, 1, 1, 1)
-			GameTooltip:AddLine(ver, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+			GameTooltip:AddLine(("%s (%s)"):format(DBM.DisplayVersion, showRealDate(DBM.Revision)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 			GameTooltip:AddLine(" ")
 			GameTooltip:AddLine(DBM_CORE_MINIMAP_TOOLTIP_FOOTER, RAID_CLASS_COLORS.MAGE.r, RAID_CLASS_COLORS.MAGE.g, RAID_CLASS_COLORS.MAGE.b, 1)
 			GameTooltip:AddLine(DBM_LDB_TOOLTIP_HELP1, RAID_CLASS_COLORS.MAGE.r, RAID_CLASS_COLORS.MAGE.g, RAID_CLASS_COLORS.MAGE.b)
-			GameTooltip:AddLine(DBM_LDB_TOOLTIP_HELP2, RAID_CLASS_COLORS.MAGE.r, RAID_CLASS_COLORS.MAGE.g, RAID_CLASS_COLORS.MAGE.b)
+		--	GameTooltip:AddLine(DBM_LDB_TOOLTIP_HELP2, RAID_CLASS_COLORS.MAGE.r, RAID_CLASS_COLORS.MAGE.g, RAID_CLASS_COLORS.MAGE.b)
 		end
 	end
 
@@ -3259,12 +3111,6 @@ function DBM:LoadModOptions(modId, inCombat, first)
 					--Fix default options for colored bar by type that were set to 0 because no defaults existed at time they were created, but do now.
 					elseif option:find("TColor") then
 						if savedOptions[id][profileNum][option] and savedOptions[id][profileNum][option] == 0 and mod.DefaultOptions[option] and mod.DefaultOptions[option] ~= 0 then
-							savedOptions[id][profileNum][option] = mod.DefaultOptions[option]
-							self:Debug("Migrated "..option.." to option defaults")
-						end
-					--Fix default options for countdowns that were set to 0 because no defaults existed at time they were created, but do now.
-					elseif option:find("CVoice") then
-						if savedOptions[id][profileNum][option] and (type(savedOptions[id][profileNum][option]) == "number") and (savedOptions[id][profileNum][option] == 0) and mod.DefaultOptions[option] and mod.DefaultOptions[option] ~= 0 then
 							savedOptions[id][profileNum][option] = mod.DefaultOptions[option]
 							self:Debug("Migrated "..option.." to option defaults")
 						end
@@ -4131,23 +3977,25 @@ do
 			loadModByUnit(uId)
 		end
 		--Debug options for seeing where BossUnitTargetScanner can be used.
-		if (self.Options.DebugLevel > 2 or (Transcriptor and Transcriptor:IsLogging())) and (uId == "boss1" or uId == "boss2" or uId == "boss3" or uId == "boss4" or uId == "boss5") then
-			local targetName = uId == "boss1" and UnitName("boss1target") or uId == "boss2" and UnitName("boss2target") or uId == "boss3" and UnitName("boss3target") or uId == "boss4" and UnitName("boss4target") or uId == "boss5" and UnitName("boss5target") or "nil"
+		if (self.Options.DebugLevel > 2 or (Transcriptor and Transcriptor:IsLogging())) and uId:find("boss") then
+			local targetName = UnitName(uId.."target") or "nil"
 			self:Debug(uId.." changed targets to "..targetName)
 		end
 		--Active BossUnitTargetScanner
 		if targetMonitor[uId] and UnitExists(uId.."target") and UnitPlayerOrPetInRaid(uId.."target") then
-			self:Debug("targetMonitor exists, target exists", 2)
-			local modId, unitId, returnFunc = string.split("\t", targetMonitor[uId])
-			self:Debug("targetMonitor: "..modId..", "..unitId..", "..returnFunc, 2)
-			local tanking, status = UnitDetailedThreatSituation(unitId, unitId.."target")--Tanking may return 0 if npc is temporarily looking at an NPC (IE fracture) but status will still be 3 on true tank
-			if tanking or (status == 3) then
-				self:Debug("targetMonitor ending, it's a tank", 2)
-				return
-			end--It's a tank/highest threat, this method ignores tanks
+			self:Debug("targetMonitor for this unit exists, target exists", 2)
+			local modId, returnFunc = targetMonitor[uId].modid, targetMonitor[uId].returnFunc
+			self:Debug("targetMonitor: "..modId..", "..uId..", "..returnFunc, 2)
+			if not targetMonitor[uId].allowTank then
+				local tanking, status = UnitDetailedThreatSituation(uId, uId.."target")--Tanking may return 0 if npc is temporarily looking at an NPC (IE fracture) but status will still be 3 on true tank
+				if tanking or (status == 3) then
+					self:Debug("targetMonitor ending for unit without 'allowTank', ignoring target", 2)
+					return
+				end
+			end
 			local mod = self:GetModByName(modId)
-			self:Debug("targetMonitor success, a valid target that's not a tank", 2)
-			mod[returnFunc](mod, self:GetUnitFullName(unitId.."target"), unitId.."target", unitId)--Return results to warning function with all variables.
+			self:Debug("targetMonitor success for this unit, a valid target for returnFunc", 2)
+			mod[returnFunc](mod, self:GetUnitFullName(uId.."target"), uId.."target", uId)--Return results to warning function with all variables.
 			targetMonitor[uId] = nil
 		end
 	end
@@ -7233,7 +7081,7 @@ end
 
 --/run DBM:FindEncounterIDs(1179)--Eternal Palace
 --/run DBM:FindEncounterIDs(1178, 23)--Dungeon Template (mythic difficulty)
---/run DBM:FindEncounterIDs(231, 1)--Classic Dungeons need diff 1 specified
+--/run DBM:FindEncounterIDs(237, 1)--Classic Dungeons need diff 1 specified
 --/run DBM:FindDungeonMapIDs(1, 500)--Find Classic Dungeon Map IDs
 --/run DBM:FindInstanceIDs(1, 300)--Find Classic Dungeon Journal IDs
 function DBM:FindEncounterIDs(instanceID, diff)
@@ -7822,25 +7670,31 @@ do
 	end
 
 	function bossModPrototype:BossUnitTargetScannerAbort(uId)
-		if uId then
-			targetMonitor[uId] = nil
-		else--Legacy mod, just wipe entire table
-			twipe(targetMonitor)
+		if not uId then--Not called with unit, means mod requested to clear all used units
+			DBM:Debug("BossUnitTargetScannerAbort called without unit, clearing all targetMonitor units", 2)
+			table.wipe(targetMonitor)
+			return
 		end
-		DBM:Debug("Boss unit target scan should be aborting.", 3)
+		if targetMonitor[uId] and targetMonitor[uId].allowTank and UnitExists(uId.."target") and UnitPlayerOrPetInRaid(uId.."target") then
+			self:Debug("targetMonitor unit exists, allowTank target exists", 2)
+			local modId, returnFunc = targetMonitor[uId].modid, targetMonitor[uId].returnFunc
+			self:Debug("targetMonitor: "..modId..", "..uId..", "..returnFunc, 2)
+			local mod = self:GetModByName(modId)
+			self:Debug("targetMonitor found a target that probably is a tank", 2)
+			mod[returnFunc](mod, self:GetUnitFullName(uId.."target"), uId.."target", uId)--Return results to warning function with all variables.
+		end
+		targetMonitor[uId] = nil
+		DBM:Debug("Boss unit target scan should be aborting for "..uId, 3)
 	end
 
-	function bossModPrototype:BossUnitTargetScanner(unitId, returnFunc, scanTime)
-		--UNIT_TARGET technique was originally used by DXE on heroic lich king back in wrath to give most accurate defile/shadow trap warnings. Recently bigwigs started using it.
-		--This is fastest and most accurate method for getting the target and probably should be used where it does work 100% of time.
-		--This method fails if boss is already looking at correct target!! This method needs to monitor a target change so it must start before that target change
-		--In most cases, using BossTargetScanner is probably still better, especially if boss is expected to look at target before or immediately on cast start
-		--Limited to only one unitTarget scanner at a time. TODO, maybe make targetMonitor a table or something to support more than one scan at a time?
-		--This code is much prettier if it's in mod, but then it'd require copying and pasting it all the time. SO ugly code in core more convinient.
-		local modId = self.id
+	function bossModPrototype:BossUnitTargetScanner(uId, returnFunc, scanTime, allowTank)
+		--UNIT_TARGET event monitor target scanner. Will instantly detect a target change of a registered Unit
+		--If target change occurs before this method is called (or if boss doesn't change target because cast ends up actually being on the tank, target scan will fail completely
+		--If allowTank is passed, it basically tells this scanner to return current target of unitId at time of failure/abort when scanTime is complete
 		local scanDuration = scanTime or 1.5
-		targetMonitor[unitId] = modId.."\t"..unitId.."\t"..returnFunc
-		self:ScheduleMethod(scanDuration, "BossUnitTargetScannerAbort", unitId)--In case of BossUnitTargetScanner firing too late, and boss already having changed target before monitor started, it needs to abort after x seconds
+		targetMonitor[uId] = {}
+		targetMonitor[uId].modid, targetMonitor[uId].returnFunc, targetMonitor[uId].allowTank = self.id, returnFunc, allowTank
+		self:ScheduleMethod(scanDuration, "BossUnitTargetScannerAbort", uId)--In case of BossUnitTargetScanner firing too late, and boss already having changed target before monitor started, it needs to abort after x seconds
 	end
 
 	function bossModPrototype:BossTargetScanner(cidOrGuid, returnFunc, scanInterval, scanTimes, scanOnlyBoss, isEnemyScan, isFinalScan, targetFilter, tankFilter)
@@ -10608,6 +10462,7 @@ do
 		end
 	end
 
+	--If a new countdown default is added to a NewTimer object, change optionName of timer to reset a new default
 	function bossModPrototype:NewTimer(timer, name, texture, optionDefault, optionName, colorType, inlineIcon, keep, countdown, countdownMax, r, g, b)
 		if r and type(r) == "string" then
 			DBM:Debug("|cffff0000r probably has inline icon in it and needs to be fixed for |r"..name..r)
@@ -10644,6 +10499,7 @@ do
 
 	-- new constructor for the new auto-localized timer types
 	-- note that the function might look unclear because it needs to handle different timer types, especially achievement timers need special treatment
+	-- If a new countdown is added to an existing timer that didn't have one before, use optionName (number) to force timer to reset defaults by assigning it a new variable
 	local function newTimer(self, timerType, timer, spellId, timerText, optionDefault, optionName, colorType, texture, inlineIcon, keep, countdown, countdownMax, r, g, b)
 		if type(timer) == "string" and timer:match("OptionVersion") then
 			DBM:Debug("|cffff0000OptionVersion hack depricated, remove it from: |r"..spellId)
