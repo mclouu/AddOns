@@ -1,5 +1,5 @@
 --[[
-Copyright (c) 2010-2021, Hendrik "nevcairiel" Leppkes <h.leppkes@gmail.com>
+Copyright (c) 2010-2022, Hendrik "nevcairiel" Leppkes <h.leppkes@gmail.com>
 
 All rights reserved.
 
@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ]]
 local MAJOR_VERSION = "LibActionButton-1.0"
-local MINOR_VERSION = 88
+local MINOR_VERSION = 105
 
 if not LibStub then error(MAJOR_VERSION .. " requires LibStub.") end
 local lib, oldversion = LibStub:NewLibrary(MAJOR_VERSION, MINOR_VERSION)
@@ -40,10 +40,13 @@ local type, error, tostring, tonumber, assert, select = type, error, tostring, t
 local setmetatable, wipe, unpack, pairs, next = setmetatable, wipe, unpack, pairs, next
 local str_match, format, tinsert, tremove = string.match, format, tinsert, tremove
 
+local WoWRetail = (WOW_PROJECT_ID == WOW_PROJECT_MAINLINE)
 local WoWClassic = (WOW_PROJECT_ID == WOW_PROJECT_CLASSIC)
 local WoWBCC = (WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC)
 local WoWWrath = (WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC)
-local WoW10 = select(4, GetBuildInfo()) >= 100000
+
+-- Enable custom flyouts for WoW Retail
+local UseCustomFlyout = WoWRetail
 
 local KeyBound = LibStub("LibKeyBound-1.0", true)
 local CBH = LibStub("CallbackHandler-1.0")
@@ -60,6 +63,9 @@ lib.nonActionButtons = lib.nonActionButtons or {}
 
 lib.ChargeCooldowns = lib.ChargeCooldowns or {}
 lib.NumChargeCooldowns = lib.NumChargeCooldowns or 0
+
+lib.FlyoutInfo = lib.FlyoutInfo or {}
+lib.FlyoutButtons = lib.FlyoutButtons or {}
 
 lib.ACTION_HIGHLIGHT_MARKS = lib.ACTION_HIGHLIGHT_MARKS or setmetatable({}, { __index = ACTION_HIGHLIGHT_MARKS })
 
@@ -104,6 +110,8 @@ local UpdateFlyout, ShowGrid, HideGrid, UpdateGrid, SetupSecureSnippets, WrapOnC
 local ShowOverlayGlow, HideOverlayGlow
 local EndChargeCooldown
 
+local GetFlyoutHandler
+
 local InitializeEventHandler, OnEvent, ForAllButtons, OnUpdate
 
 local function GameTooltip_GetOwnerForbidden()
@@ -125,10 +133,60 @@ local DefaultConfig = {
 		macro = false,
 		hotkey = false,
 		equipped = false,
+		border = false,
+		borderIfEmpty = false,
 	},
 	keyBoundTarget = false,
+	keyBoundClickButton = "LeftButton",
 	clickOnDown = false,
 	flyoutDirection = "UP",
+	text = {
+		hotkey = {
+			font = {
+				font = false, -- "Fonts\\ARIALN.TTF",
+				size = WoWRetail and 14 or 13,
+				flags = "OUTLINE",
+			},
+			color = { 0.75, 0.75, 0.75 },
+			position = {
+				anchor = "TOPRIGHT",
+				relAnchor = "TOPRIGHT",
+				offsetX = -2,
+				offsetY = -4,
+			},
+			justifyH = "RIGHT",
+		},
+		count = {
+			font = {
+				font = false, -- "Fonts\\ARIALN.TTF",
+				size = 16,
+				flags = "OUTLINE",
+			},
+			color = { 1, 1, 1 },
+			position = {
+				anchor = "BOTTOMRIGHT",
+				relAnchor = "BOTTOMRIGHT",
+				offsetX = -2,
+				offsetY = 4,
+			},
+			justifyH = "RIGHT",
+		},
+		macro = {
+			font = {
+				font = false, -- "Fonts\\FRIZQT__.TTF",
+				size = 10,
+				flags = "OUTLINE",
+			},
+			color = { 1, 1, 1 },
+			position = {
+				anchor = "BOTTOM",
+				relAnchor = "BOTTOM",
+				offsetX = 0,
+				offsetY = 2,
+			},
+			justifyH = "CENTER",
+		},
+	},
 }
 
 --- Create a new action button.
@@ -149,7 +207,7 @@ function lib:CreateButton(id, name, header, config)
 
 	local button = setmetatable(CreateFrame("CheckButton", name, header, "SecureActionButtonTemplate, ActionButtonTemplate"), Generic_MT)
 	button:RegisterForDrag("LeftButton", "RightButton")
-	if WoW10 then
+	if WoWRetail then
 		button:RegisterForClicks("AnyDown", "AnyUp")
 	else
 		button:RegisterForClicks("AnyUp")
@@ -160,6 +218,7 @@ function lib:CreateButton(id, name, header, config)
 	button:SetScript("OnLeave", Generic.OnLeave)
 	button:SetScript("PreClick", Generic.PreClick)
 	button:SetScript("PostClick", Generic.PostClick)
+	button:SetScript("OnEvent", Generic.OnButtonEvent)
 
 	button.id = id
 	button.header = header
@@ -176,25 +235,25 @@ function lib:CreateButton(id, name, header, config)
 	SetupSecureSnippets(button)
 	WrapOnClick(button)
 
-	-- adjust hotkey style for better readability
-	button.HotKey:SetFont(button.HotKey:GetFont(), 13, "OUTLINE")
-	button.HotKey:SetVertexColor(0.75, 0.75, 0.75)
-	button.HotKey:SetPoint("TOPLEFT", button, "TOPLEFT", -2, -4)
-
-	-- adjust count/stack size
-	button.Count:SetFont(button.Count:GetFont(), 16, "OUTLINE")
+	-- if there is no button yet, initialize events later
+	local InitializeEvents = not next(ButtonRegistry)
 
 	-- Store the button in the registry, needed for event and OnUpdate handling
-	if not next(ButtonRegistry) then
-		InitializeEventHandler()
-	end
 	ButtonRegistry[button] = true
 
+	-- setup button configuration
 	button:UpdateConfig(config)
 
 	-- run an initial update
 	button:UpdateAction()
 	UpdateHotkeys(button)
+
+	button:SetAttribute("LABUseCustomFlyout", UseCustomFlyout)
+
+	-- initialize events
+	if InitializeEvents then
+		InitializeEventHandler()
+	end
 
 	-- somewhat of a hack for the Flyout buttons to not error.
 	button.action = 0
@@ -202,6 +261,10 @@ function lib:CreateButton(id, name, header, config)
 	lib.callbacks:Fire("OnButtonCreated", button)
 
 	return button
+end
+
+function lib:GetSpellFlyoutFrame()
+	return lib.flyoutHandler
 end
 
 function SetupSecureSnippets(button)
@@ -218,6 +281,32 @@ function SetupSecureSnippets(button)
 			local action_field = (type == "pet") and "action" or type
 			self:SetAttribute(action_field, action)
 			self:SetAttribute("action_field", action_field)
+		end
+		if IsPressHoldReleaseSpell then
+			local pressAndHold = false
+			if type == "action" then
+				self:SetAttribute("typerelease", "actionrelease")
+				local actionType, id = GetActionInfo(action)
+				if actionType == "spell" then
+					pressAndHold = IsPressHoldReleaseSpell(id)
+				elseif actionType == "macro" then
+					-- GetMacroSpell is not in the restricted environment
+					--[=[
+						local spellID = GetMacroSpell(id)
+						if spellID then
+							pressAndHold = IsPressHoldReleaseSpell(spellID)
+						end
+					]=]
+				end
+			elseif type == "spell" then
+				self:SetAttribute("typerelease", nil)
+				-- XXX: while we can query this attribute, there is no corresponding action to release a spell button, only "actionrelease" exists
+				pressAndHold = IsPressHoldReleaseSpell(action)
+			else
+				self:SetAttribute("typerelease", nil)
+			end
+
+			self:SetAttribute("pressAndHoldAction", pressAndHold)
 		end
 		local onStateChanged = self:GetAttribute("OnStateChanged")
 		if onStateChanged then
@@ -341,6 +430,10 @@ function SetupSecureSnippets(button)
 	]], [[
 		self:RunAttribute("UpdateState", self:GetAttribute("state"))
 	]])
+
+	if UseCustomFlyout then
+		button.header:SetFrameRef("flyoutHandler", GetFlyoutHandler())
+	end
 end
 
 function WrapOnClick(button)
@@ -348,14 +441,78 @@ function WrapOnClick(button)
 	button.header:WrapScript(button, "OnClick", [[
 		if self:GetAttribute("type") == "action" then
 			local type, action = GetActionInfo(self:GetAttribute("action"))
-			return nil, format("%s|%s", tostring(type), tostring(action))
+
+			if type == "flyout" and self:GetAttribute("LABUseCustomFlyout") then
+				local flyoutHandler = owner:GetFrameRef("flyoutHandler")
+				if not down and flyoutHandler then
+					flyoutHandler:SetAttribute("flyoutParentHandle", self)
+					flyoutHandler:RunAttribute("HandleFlyout", action)
+				end
+
+				self:CallMethod("UpdateFlyout")
+				return false
+			end
+
+			-- hide the flyout
+			local flyoutHandler = owner:GetFrameRef("flyoutHandler")
+			if flyoutHandler then
+				flyoutHandler:Hide()
+			end
+
+			-- if this is a pickup click, disable on-down casting
+			-- it should get re-enabled in the post handler, or the OnDragStart handler, whichever occurs
+			if button ~= "Keybind" and ((self:GetAttribute("unlockedpreventdrag") and not self:GetAttribute("buttonlock")) or IsModifiedClick("PICKUPACTION")) and not self:GetAttribute("LABdisableDragNDrop") then
+				self:CallMethod("ToggleOnDownForPickup", true)
+				self:SetAttribute("LABToggledOnDown", true)
+			end
+			return (button == "Keybind") and "LeftButton" or nil, format("%s|%s", tostring(type), tostring(action))
+		end
+
+		-- hide the flyout, the extra down/ownership check is needed to not hide the button we're currently pressing too early
+		local flyoutHandler = owner:GetFrameRef("flyoutHandler")
+		if flyoutHandler and (not down or self:GetParent() ~= flyoutHandler) then
+			flyoutHandler:Hide()
+		end
+
+		if button == "Keybind" then
+			return "LeftButton"
 		end
 	]], [[
 		local type, action = GetActionInfo(self:GetAttribute("action"))
 		if message ~= format("%s|%s", tostring(type), tostring(action)) then
 			self:RunAttribute("UpdateState", self:GetAttribute("state"))
 		end
+
+		-- re-enable ondown casting if needed
+		if self:GetAttribute("LABToggledOnDown") then
+			self:SetAttribute("LABToggledOnDown", nil)
+			self:CallMethod("ToggleOnDownForPickup", false)
+		end
 	]])
+end
+
+function Generic:OnButtonEvent(event, ...)
+	if event == "GLOBAL_MOUSE_UP" then
+		self:SetButtonState("NORMAL")
+		self:UnregisterEvent(event)
+
+		UpdateFlyout(self)
+	end
+end
+
+local _LABActionButtonUseKeyDown
+function Generic:ToggleOnDownForPickup(pre)
+	if pre then
+		if GetCVarBool("ActionButtonUseKeyDown") or _LABActionButtonUseKeyDown then
+			SetCVar("ActionButtonUseKeyDown", false)
+			_LABActionButtonUseKeyDown = true
+		else
+			_LABActionButtonUseKeyDown = false
+		end
+	elseif not pre and _LABActionButtonUseKeyDown then
+		SetCVar("ActionButtonUseKeyDown", true)
+		_LABActionButtonUseKeyDown = nil
+	end
 end
 
 -----------------------------------------------------------
@@ -394,8 +551,7 @@ function Generic:ClearStates()
 	wipe(self.state_actions)
 end
 
-function Generic:SetState(state, kind, action)
-	if not state then state = self:GetAttribute("state") end
+function Generic:SetStateFromHandlerInsecure(state, kind, action)
 	state = tostring(state)
 	-- we allow a nil kind for setting a empty state
 	if not kind then kind = "empty" end
@@ -422,6 +578,13 @@ function Generic:SetState(state, kind, action)
 
 	self.state_types[state] = kind
 	self.state_actions[state] = action
+end
+
+function Generic:SetState(state, kind, action)
+	if not state then state = self:GetAttribute("state") end
+	state = tostring(state)
+
+	self:SetStateFromHandlerInsecure(state, kind, action)
 	self:UpdateState(state)
 end
 
@@ -495,6 +658,345 @@ function Generic:UpdateAlpha()
 end
 
 -----------------------------------------------------------
+--- flyouts
+
+local DiscoverFlyoutSpells, UpdateFlyoutSpells, UpdateFlyoutHandlerScripts, FlyoutUpdateQueued
+
+if UseCustomFlyout then
+	-- params: self, flyoutID
+	local FlyoutHandleFunc = [[
+		local SPELLFLYOUT_DEFAULT_SPACING = 4
+		local SPELLFLYOUT_INITIAL_SPACING = 7
+		local SPELLFLYOUT_FINAL_SPACING = 9
+
+		local parent = self:GetAttribute("flyoutParentHandle")
+		if not parent then return end
+
+		if self:IsShown() and self:GetParent() == parent then
+			self:Hide()
+			return
+		end
+
+		local flyoutID = ...
+		local info = LAB_FlyoutInfo[flyoutID]
+		if not info then print("LAB: Flyout missing with ID " .. flyoutID) return end
+
+		local oldParent = self:GetParent()
+		self:SetParent(parent)
+
+		local direction = parent:GetAttribute("flyoutDirection") or "UP"
+
+		local usedSlots = 0
+		local prevButton
+		for slotID, slotInfo in ipairs(info.slots) do
+			if slotInfo.isKnown then
+				usedSlots = usedSlots + 1
+				local slotButton = self:GetFrameRef("flyoutButton" .. usedSlots)
+
+				-- set secure action attributes
+				slotButton:SetAttribute("type", "spell")
+				slotButton:SetAttribute("spell", slotInfo.spellID)
+
+				-- set LAB attributes
+				slotButton:SetAttribute("labtype-0", "spell")
+				slotButton:SetAttribute("labaction-0", slotInfo.spellID)
+
+				-- run LAB updates
+				slotButton:CallMethod("SetStateFromHandlerInsecure", 0, "spell", slotInfo.spellID)
+				slotButton:CallMethod("UpdateAction")
+
+				slotButton:ClearAllPoints()
+
+				if direction == "UP" then
+					if prevButton then
+						slotButton:SetPoint("BOTTOM", prevButton, "TOP", 0, SPELLFLYOUT_DEFAULT_SPACING)
+					else
+						slotButton:SetPoint("BOTTOM", self, "BOTTOM", 0, SPELLFLYOUT_INITIAL_SPACING)
+					end
+				elseif direction == "DOWN" then
+					if prevButton then
+						slotButton:SetPoint("TOP", prevButton, "BOTTOM", 0, -SPELLFLYOUT_DEFAULT_SPACING)
+					else
+						slotButton:SetPoint("TOP", self, "TOP", 0, -SPELLFLYOUT_INITIAL_SPACING)
+					end
+				elseif direction == "LEFT" then
+					if prevButton then
+						slotButton:SetPoint("RIGHT", prevButton, "LEFT", -SPELLFLYOUT_DEFAULT_SPACING, 0)
+					else
+						slotButton:SetPoint("RIGHT", self, "RIGHT", -SPELLFLYOUT_INITIAL_SPACING, 0)
+					end
+				elseif direction == "RIGHT" then
+					if prevButton then
+						slotButton:SetPoint("LEFT", prevButton, "RIGHT", SPELLFLYOUT_DEFAULT_SPACING, 0)
+					else
+						slotButton:SetPoint("LEFT", self, "LEFT", SPELLFLYOUT_INITIAL_SPACING, 0)
+					end
+				end
+
+				slotButton:Show()
+				prevButton = slotButton
+			end
+		end
+
+		-- hide excess buttons
+		for i = usedSlots + 1, self:GetAttribute("numFlyoutButtons") do
+			local slotButton = self:GetFrameRef("flyoutButton" .. i)
+			if slotButton then
+				slotButton:Hide()
+			end
+		end
+
+		if usedSlots == 0 then
+			self:Hide()
+			return
+		end
+
+		-- calculate extent for the long dimension
+		-- 3 pixel extra initial padding, button size + padding, and everything at 0.8 scale
+		local extent = (3 + (45 + 4) * usedSlots) * 0.8
+
+		self:ClearAllPoints()
+
+		if direction == "UP" then
+			self:SetPoint("BOTTOM", parent, "TOP")
+			self:SetWidth(45)
+			self:SetHeight(extent)
+		elseif direction == "DOWN" then
+			self:SetPoint("TOP", parent, "BOTTOM")
+			self:SetWidth(45)
+			self:SetHeight(extent)
+		elseif direction == "LEFT" then
+			self:SetPoint("RIGHT", parent, "LEFT")
+			self:SetWidth(extent)
+			self:SetHeight(45)
+		elseif direction == "RIGHT" then
+			self:SetPoint("LEFT", parent, "RIGHT")
+			self:SetWidth(extent)
+			self:SetHeight(45)
+		end
+
+		self:SetFrameStrata("DIALOG")
+		self:Show()
+
+		self:CallMethod("ShowFlyoutInsecure", direction)
+
+		if oldParent and oldParent:GetAttribute("LABUseCustomFlyout") then
+			oldParent:CallMethod("UpdateFlyout")
+		end
+	]]
+
+	local SPELLFLYOUT_INITIAL_SPACING = 7
+	local function ShowFlyoutInsecure(self, direction)
+		self.Background.End:ClearAllPoints()
+		self.Background.Start:ClearAllPoints()
+		if direction == "UP" then
+			self.Background.End:SetPoint("TOP", 0, SPELLFLYOUT_INITIAL_SPACING)
+			SetClampedTextureRotation(self.Background.End, 0)
+			SetClampedTextureRotation(self.Background.VerticalMiddle, 0)
+			self.Background.Start:SetPoint("TOP", self.Background.VerticalMiddle, "BOTTOM")
+			SetClampedTextureRotation(self.Background.Start, 0)
+			self.Background.HorizontalMiddle:Hide()
+			self.Background.VerticalMiddle:Show()
+			self.Background.VerticalMiddle:ClearAllPoints()
+			self.Background.VerticalMiddle:SetPoint("TOP", self.Background.End, "BOTTOM")
+			self.Background.VerticalMiddle:SetPoint("BOTTOM", 0, 0)
+		elseif direction == "DOWN" then
+			self.Background.End:SetPoint("BOTTOM", 0, -SPELLFLYOUT_INITIAL_SPACING)
+			SetClampedTextureRotation(self.Background.End, 180)
+			SetClampedTextureRotation(self.Background.VerticalMiddle, 180)
+			self.Background.Start:SetPoint("BOTTOM", self.Background.VerticalMiddle, "TOP")
+			SetClampedTextureRotation(self.Background.Start, 180)
+			self.Background.HorizontalMiddle:Hide()
+			self.Background.VerticalMiddle:Show()
+			self.Background.VerticalMiddle:ClearAllPoints()
+			self.Background.VerticalMiddle:SetPoint("BOTTOM", self.Background.End, "TOP")
+			self.Background.VerticalMiddle:SetPoint("TOP", 0, -0)
+		elseif direction == "LEFT" then
+			self.Background.End:SetPoint("LEFT", -SPELLFLYOUT_INITIAL_SPACING, 0)
+			SetClampedTextureRotation(self.Background.End, 270)
+			SetClampedTextureRotation(self.Background.HorizontalMiddle, 180)
+			self.Background.Start:SetPoint("LEFT", self.Background.HorizontalMiddle, "RIGHT")
+			SetClampedTextureRotation(self.Background.Start, 270)
+			self.Background.VerticalMiddle:Hide()
+			self.Background.HorizontalMiddle:Show()
+			self.Background.HorizontalMiddle:ClearAllPoints()
+			self.Background.HorizontalMiddle:SetPoint("LEFT", self.Background.End, "RIGHT")
+			self.Background.HorizontalMiddle:SetPoint("RIGHT", -0, 0)
+		elseif direction == "RIGHT" then
+			self.Background.End:SetPoint("RIGHT", SPELLFLYOUT_INITIAL_SPACING, 0)
+			SetClampedTextureRotation(self.Background.End, 90)
+			SetClampedTextureRotation(self.Background.HorizontalMiddle, 0)
+			self.Background.Start:SetPoint("RIGHT", self.Background.HorizontalMiddle, "LEFT")
+			SetClampedTextureRotation(self.Background.Start, 90)
+			self.Background.VerticalMiddle:Hide()
+			self.Background.HorizontalMiddle:Show()
+			self.Background.HorizontalMiddle:ClearAllPoints()
+			self.Background.HorizontalMiddle:SetPoint("RIGHT", self.Background.End, "LEFT")
+			self.Background.HorizontalMiddle:SetPoint("LEFT", 0, 0)
+		end
+
+		if direction == "UP" or direction == "DOWN" then
+			self.Background.Start:SetWidth(47)
+			self.Background.HorizontalMiddle:SetWidth(47)
+			self.Background.VerticalMiddle:SetWidth(47)
+			self.Background.End:SetWidth(47)
+		else
+			self.Background.Start:SetHeight(47)
+			self.Background.HorizontalMiddle:SetHeight(47)
+			self.Background.VerticalMiddle:SetHeight(47)
+			self.Background.End:SetHeight(47)
+		end
+	end
+
+	function UpdateFlyoutHandlerScripts()
+		lib.flyoutHandler:SetAttribute("HandleFlyout", FlyoutHandleFunc)
+		lib.flyoutHandler.ShowFlyoutInsecure = ShowFlyoutInsecure
+	end
+
+	local function FlyoutOnShowHide(self)
+		if self:GetParent() and self:GetParent().UpdateFlyout then
+			self:GetParent():UpdateFlyout()
+		end
+	end
+
+	function GetFlyoutHandler()
+		if not lib.flyoutHandler then
+			lib.flyoutHandler = CreateFrame("Frame", "LABFlyoutHandlerFrame", UIParent, "SecureHandlerBaseTemplate")
+			lib.flyoutHandler.Background = CreateFrame("Frame", nil, lib.flyoutHandler)
+			lib.flyoutHandler.Background:SetAllPoints()
+			lib.flyoutHandler.Background.End = lib.flyoutHandler.Background:CreateTexture(nil, "BACKGROUND")
+			lib.flyoutHandler.Background.End:SetAtlas("UI-HUD-ActionBar-IconFrame-FlyoutButton", true)
+			lib.flyoutHandler.Background.HorizontalMiddle = lib.flyoutHandler.Background:CreateTexture(nil, "BACKGROUND")
+			lib.flyoutHandler.Background.HorizontalMiddle:SetAtlas("_UI-HUD-ActionBar-IconFrame-FlyoutMidLeft", true)
+			lib.flyoutHandler.Background.HorizontalMiddle:SetHorizTile(true)
+			lib.flyoutHandler.Background.VerticalMiddle = lib.flyoutHandler.Background:CreateTexture(nil, "BACKGROUND")
+			lib.flyoutHandler.Background.VerticalMiddle:SetAtlas("!UI-HUD-ActionBar-IconFrame-FlyoutMid", true)
+			lib.flyoutHandler.Background.VerticalMiddle:SetVertTile(true)
+			lib.flyoutHandler.Background.Start = lib.flyoutHandler.Background:CreateTexture(nil, "BACKGROUND")
+			lib.flyoutHandler.Background.Start:SetAtlas("UI-HUD-ActionBar-IconFrame-FlyoutBottom", true)
+
+			lib.flyoutHandler.Background.Start:SetVertexColor(0.7, 0.7, 0.7)
+			lib.flyoutHandler.Background.HorizontalMiddle:SetVertexColor(0.7, 0.7, 0.7)
+			lib.flyoutHandler.Background.VerticalMiddle:SetVertexColor(0.7, 0.7, 0.7)
+			lib.flyoutHandler.Background.End:SetVertexColor(0.7, 0.7, 0.7)
+
+			lib.flyoutHandler:Hide()
+
+			lib.flyoutHandler:SetScript("OnShow", FlyoutOnShowHide)
+			lib.flyoutHandler:SetScript("OnHide", FlyoutOnShowHide)
+
+			lib.flyoutHandler:SetAttribute("numFlyoutButtons", 0)
+			UpdateFlyoutHandlerScripts()
+		end
+
+		return lib.flyoutHandler
+	end
+
+	-- sync flyout information to the restricted environment
+	local InSync = false
+	local function SyncFlyoutInfoToHandler()
+		if InCombatLockdown() or InSync then return end
+		InSync = true
+
+		local maxNumSlots = 0
+
+		local data = "LAB_FlyoutInfo = newtable();\n"
+		for flyoutID, info in pairs(lib.FlyoutInfo) do
+			if info.isKnown then
+				local numSlots = 0
+				data = data .. ("LAB_FlyoutInfo[%d] = newtable();LAB_FlyoutInfo[%d].slots = newtable();\n"):format(flyoutID, flyoutID)
+				for slotID, slotInfo in ipairs(info.slots) do
+					data = data .. ("LAB_FlyoutInfo[%d].slots[%d] = newtable();LAB_FlyoutInfo[%d].slots[%d].spellID = %d;LAB_FlyoutInfo[%d].slots[%d].isKnown = %s;\n"):format(flyoutID, slotID, flyoutID, slotID, slotInfo.spellID, flyoutID, slotID, slotInfo.isKnown and "true" or "nil")
+					numSlots = numSlots + 1
+				end
+
+				if numSlots > maxNumSlots then
+					maxNumSlots = numSlots
+				end
+			end
+		end
+
+		-- load generated data into the restricted environment
+		GetFlyoutHandler():Execute(data)
+
+		if maxNumSlots > #lib.FlyoutButtons then
+			for i = #lib.FlyoutButtons + 1, maxNumSlots do
+				local button = lib:CreateButton(i, "LABFlyoutButton" .. i, lib.flyoutHandler, nil)
+				button:SetScale(0.8)
+				button:Hide()
+
+				-- disable drag and drop
+				button:SetAttribute("LABdisableDragNDrop", true)
+
+				-- link the button to the header
+				lib.flyoutHandler:SetFrameRef("flyoutButton" .. i, button)
+				table.insert(lib.FlyoutButtons, button)
+
+				lib.callbacks:Fire("OnFlyoutButtonCreated", button)
+			end
+
+			lib.flyoutHandler:SetAttribute("numFlyoutButtons", #lib.FlyoutButtons)
+		end
+
+		InSync = false
+	end
+
+	-- discover all possible flyouts
+	function DiscoverFlyoutSpells()
+		-- 300 is a safe upper limit in 10.0.2, the highest known spell is 229
+		for flyoutID = 1, 300 do
+			local success, _, _, numSlots, isKnown = pcall(GetFlyoutInfo, flyoutID)
+			if success then
+				lib.FlyoutInfo[flyoutID] = { numSlots = numSlots, isKnown = isKnown, slots = {} }
+				for slotID = 1, numSlots do
+					local spellID, overrideSpellID, isKnownSlot = GetFlyoutSlotInfo(flyoutID, slotID)
+
+					-- hide empty pet slots from the flyout
+					local petIndex, petName = GetCallPetSpellInfo(spellID)
+					if petIndex and (not petName or petName == "") then
+						isKnownSlot = false
+					end
+
+					lib.FlyoutInfo[flyoutID].slots[slotID] = { spellID = spellID, overrideSpellID = overrideSpellID, isKnown = isKnownSlot }
+				end
+			end
+		end
+
+		SyncFlyoutInfoToHandler()
+	end
+
+	-- update flyout information (mostly the isKnown flag)
+	function UpdateFlyoutSpells()
+		if InCombatLockdown() then
+			FlyoutUpdateQueued = true
+			return
+		end
+
+		for flyoutID, data in pairs(lib.FlyoutInfo) do
+			local success, _, _, numSlots, isKnown = pcall(GetFlyoutInfo, flyoutID)
+			if success then
+				data.isKnown = isKnown
+				for slotID = 1, numSlots do
+					local spellID, overrideSpellID, isKnownSlot = GetFlyoutSlotInfo(flyoutID, slotID)
+
+					-- hide empty pet slots from the flyout
+					local petIndex, petName = GetCallPetSpellInfo(spellID)
+					if petIndex and (not petName or petName == "") then
+						isKnownSlot = false
+					end
+
+					data.slots[slotID].spellID = spellID
+					data.slots[slotID].overrideSpellID = overrideSpellID
+					data.slots[slotID].isKnown = isKnownSlot
+				end
+			end
+		end
+
+		SyncFlyoutInfoToHandler()
+	end
+end
+
+-----------------------------------------------------------
 --- frame scripts
 
 -- copied (and adjusted) from SecureHandlers.lua
@@ -533,9 +1035,13 @@ function Generic:OnEnter()
 		ClearNewActionHighlight(self._state_action, false, false)
 		UpdateNewAction(self)
 	end
+
+	UpdateFlyout(self)
 end
 
 function Generic:OnLeave()
+	UpdateFlyout(self)
+
 	if GameTooltip:IsForbidden() then return end
 	GameTooltip:Hide()
 end
@@ -568,8 +1074,9 @@ local function formatHelper(input)
 	end
 end
 
-function Generic:PostClick()
+function Generic:PostClick(button, down)
 	UpdateButtonState(self)
+	UpdateFlyout(self, down)
 	if self._receiving_drag and not InCombatLockdown() then
 		if self._old_type then
 			self:SetAttribute("type", self._old_type)
@@ -589,6 +1096,10 @@ function Generic:PostClick()
 
 	if self._state_type == "action" and lib.ACTION_HIGHLIGHT_MARKS[self._state_action] then
 		ClearNewActionHighlight(self._state_action, false, false)
+	end
+
+	if down and IsMouseButtonDown() then
+		self:RegisterEvent("GLOBAL_MOUSE_UP")
 	end
 end
 
@@ -611,6 +1122,21 @@ local function merge(target, source, default)
 	return target
 end
 
+local function UpdateTextElement(element, config, defaultFont)
+	element:SetFont(config.font.font or defaultFont, config.font.size, config.font.flags or "")
+	element:SetJustifyH(config.justifyH)
+	element:ClearAllPoints()
+	element:SetPoint(config.position.anchor, element:GetParent(), config.position.relAnchor or config.position.anchor, config.position.offsetX or 0, config.position.offsetY or 0)
+
+	element:SetVertexColor(unpack(config.color))
+end
+
+local function UpdateTextElements(button)
+	UpdateTextElement(button.HotKey, button.config.text.hotkey, NumberFontNormalSmallGray:GetFont())
+	UpdateTextElement(button.Count, button.config.text.count, NumberFontNormal:GetFont())
+	UpdateTextElement(button.Name, button.config.text.macro, GameFontHighlightSmallOutline:GetFont())
+end
+
 function Generic:UpdateConfig(config)
 	if config and type(config) ~= "table" then
 		error("LibActionButton-1.0: UpdateConfig requires a valid configuration!", 2)
@@ -625,8 +1151,6 @@ function Generic:UpdateConfig(config)
 	end
 	if self.config.outOfRangeColoring == "hotkey" then
 		self.outOfRange = nil
-	elseif oldconfig and oldconfig.outOfRangeColoring == "hotkey" then
-		self.HotKey:SetVertexColor(0.75, 0.75, 0.75)
 	end
 
 	if self.config.hideElements.macro then
@@ -637,10 +1161,11 @@ function Generic:UpdateConfig(config)
 
 	self:SetAttribute("flyoutDirection", self.config.flyoutDirection)
 
+	UpdateTextElements(self)
 	UpdateHotkeys(self)
 	UpdateGrid(self)
 	Update(self)
-	if not WoW10 then
+	if not WoWRetail then
 		self:RegisterForClicks(self.config.clickOnDown and "AnyDown" or "AnyUp")
 	end
 end
@@ -707,13 +1232,31 @@ function InitializeEventHandler()
 	lib.eventFrame:RegisterEvent("LOSS_OF_CONTROL_ADDED")
 	lib.eventFrame:RegisterEvent("LOSS_OF_CONTROL_UPDATE")
 
+	if UseCustomFlyout then
+		lib.eventFrame:RegisterEvent("PLAYER_LOGIN")
+		lib.eventFrame:RegisterEvent("SPELLS_CHANGED")
+		lib.eventFrame:RegisterEvent("SPELL_FLYOUT_UPDATE")
+	end
+
 	lib.eventFrame:Show()
 	lib.eventFrame:SetScript("OnUpdate", OnUpdate)
+
+	if UseCustomFlyout and IsLoggedIn() then
+		DiscoverFlyoutSpells()
+	end
 end
 
 local _lastFormUpdate = GetTime()
 function OnEvent(frame, event, arg1, ...)
-	if (event == "UNIT_INVENTORY_CHANGED" and arg1 == "player") or event == "LEARNED_SPELL_IN_TAB" then
+	if event == "PLAYER_LOGIN" then
+		if UseCustomFlyout then
+			DiscoverFlyoutSpells()
+		end
+	elseif event == "SPELLS_CHANGED" or event == "SPELL_FLYOUT_UPDATE" then
+		if UseCustomFlyout then
+			UpdateFlyoutSpells()
+		end
+	elseif (event == "UNIT_INVENTORY_CHANGED" and arg1 == "player") or event == "LEARNED_SPELL_IN_TAB" then
 		local tooltipOwner = GameTooltip_GetOwnerForbidden()
 		if tooltipOwner and ButtonRegistry[tooltipOwner] then
 			tooltipOwner:SetTooltip()
@@ -808,6 +1351,11 @@ function OnEvent(frame, event, arg1, ...)
 				StopFlash(button)
 			end
 		end
+
+		if UseCustomFlyout and FlyoutUpdateQueued then
+			UpdateFlyoutSpells()
+			FlyoutUpdateQueued = nil
+		end
 	elseif event == "START_AUTOREPEAT_SPELL" then
 		for button in next, ActiveButtons do
 			if button:IsAutoRepeat() then
@@ -822,6 +1370,10 @@ function OnEvent(frame, event, arg1, ...)
 		end
 	elseif event == "PET_STABLE_UPDATE" or event == "PET_STABLE_SHOW" then
 		ForAllButtons(Update)
+
+		if event == "PET_STABLE_UPDATE" and UseCustomFlyout then
+			UpdateFlyoutSpells()
+		end
 	elseif event == "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW" then
 		for button in next, ActiveButtons do
 			local spellId = button:GetSpellId()
@@ -912,7 +1464,7 @@ function OnUpdate(_, elapsed)
 						if inRange == false then
 							hotkey:SetVertexColor(unpack(button.config.colors.range))
 						else
-							hotkey:SetVertexColor(0.75, 0.75, 0.75)
+							hotkey:SetVertexColor(unpack(button.config.text.hotkey.color))
 						end
 					end
 				end
@@ -966,11 +1518,11 @@ end
 --- KeyBound integration
 
 function Generic:GetBindingAction()
-	return self.config.keyBoundTarget or "CLICK "..self:GetName()..":LeftButton"
+	return self.config.keyBoundTarget or ("CLICK %s:%s"):format(self:GetName(), self.config.keyBoundClickButton)
 end
 
 function Generic:GetHotkey()
-	local name = "CLICK "..self:GetName()..":LeftButton"
+	local name = ("CLICK %s:%s"):format(self:GetName(), self.config.keyBoundClickButton)
 	local key = GetBindingKey(self.config.keyBoundTarget or name)
 	if not key and self.config.keyBoundTarget then
 		key = GetBindingKey(name)
@@ -999,7 +1551,7 @@ function Generic:GetBindings()
 		keys = getKeys(self.config.keyBoundTarget)
 	end
 
-	keys = getKeys("CLICK "..self:GetName()..":LeftButton", keys)
+	keys = getKeys(("CLICK %s:%s"):format(self:GetName(), self.config.keyBoundClickButton), keys)
 
 	return keys
 end
@@ -1008,7 +1560,7 @@ function Generic:SetKey(key)
 	if self.config.keyBoundTarget then
 		SetBinding(key, self.config.keyBoundTarget)
 	else
-		SetBindingClick(key, self:GetName(), "LeftButton")
+		SetBindingClick(key, self:GetName(), self.config.keyBoundClickButton)
 	end
 	lib.callbacks:Fire("OnKeybindingChanged", self, key)
 end
@@ -1023,7 +1575,7 @@ function Generic:ClearBindings()
 	if self.config.keyBoundTarget then
 		clearBindings(self.config.keyBoundTarget)
 	end
-	clearBindings("CLICK "..self:GetName()..":LeftButton")
+	clearBindings(("CLICK %s:%s"):format(self:GetName(), self.config.keyBoundClickButton))
 	lib.callbacks:Fire("OnKeybindingChanged", self, nil)
 end
 
@@ -1104,7 +1656,31 @@ function Update(self)
 		self.icon:SetTexture(texture)
 		self.icon:Show()
 		self.rangeTimer = - 1
-		if not WoW10 then
+		if WoWRetail then
+			if not self.MasqueSkinned then
+				self.SlotBackground:Hide()
+				if self.config.hideElements.border then
+					self.NormalTexture:SetTexture()
+					self.icon:RemoveMaskTexture(self.IconMask)
+					self.HighlightTexture:SetSize(52, 51)
+					self.HighlightTexture:SetPoint("TOPLEFT", self, "TOPLEFT", -2.5, 2.5)
+					self.CheckedTexture:SetSize(52, 51)
+					self.CheckedTexture:SetPoint("TOPLEFT", self, "TOPLEFT", -2.5, 2.5)
+					self.cooldown:ClearAllPoints()
+					self.cooldown:SetAllPoints()
+				else
+					self:SetNormalAtlas("UI-HUD-ActionBar-IconFrame-AddRow")
+					self.icon:AddMaskTexture(self.IconMask)
+					self.HighlightTexture:SetSize(46, 45)
+					self.HighlightTexture:SetPoint("TOPLEFT")
+					self.CheckedTexture:SetSize(46, 45)
+					self.CheckedTexture:SetPoint("TOPLEFT")
+					self.cooldown:ClearAllPoints()
+					self.cooldown:SetPoint("TOPLEFT", self, "TOPLEFT", 3, -2)
+					self.cooldown:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -3, 3)
+				end
+			end
+		else
 			self:SetNormalTexture("Interface\\Buttons\\UI-Quickslot2")
 			if not self.LBFSkinned and not self.MasqueSkinned then
 				self.NormalTexture:SetTexCoord(0, 0, 0, 0)
@@ -1117,9 +1693,18 @@ function Update(self)
 		if self.HotKey:GetText() == RANGE_INDICATOR then
 			self.HotKey:Hide()
 		else
-			self.HotKey:SetVertexColor(0.75, 0.75, 0.75)
+			self.HotKey:SetVertexColor(unpack(self.config.text.hotkey.color))
 		end
-		if not WoW10 then
+		if WoWRetail then
+			if not self.MasqueSkinned then
+				self.SlotBackground:Show()
+				if self.config.hideElements.borderIfEmpty then
+					self.NormalTexture:SetTexture()
+				else
+					self:SetNormalAtlas("UI-HUD-ActionBar-IconFrame-AddRow")
+				end
+			end
+		else
 			self:SetNormalTexture("Interface\\Buttons\\UI-Quickslot")
 			if not self.LBFSkinned and not self.MasqueSkinned then
 				self.NormalTexture:SetTexCoord(-0.15, 1.15, -0.15, 1.17)
@@ -1577,7 +2162,7 @@ else
 					self.FlyoutArrowContainer.FlyoutArrowPushed:Hide()
 				end
 
-				local isFlyoutShown = SpellFlyout and SpellFlyout:IsShown() and SpellFlyout:GetParent() == self
+				local isFlyoutShown = (SpellFlyout and SpellFlyout:IsShown() and SpellFlyout:GetParent() == self) or (lib.flyoutHandler and lib.flyoutHandler:IsShown() and lib.flyoutHandler:GetParent() == self)
 				local arrowDistance = isFlyoutShown and 1 or 4
 
 				-- Update arrow
@@ -1818,4 +2403,8 @@ if oldversion and next(lib.buttonRegistry) then
 			end
 		end
 	end
+end
+
+if oldversion and lib.flyoutHandler then
+	UpdateFlyoutHandlerScripts()
 end

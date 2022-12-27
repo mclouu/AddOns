@@ -4,8 +4,9 @@ local L = WeakAuras.L
 
 local pairs, next, type, unpack = pairs, next, type, unpack
 
-local Type, Version = "WeakAurasPendingUpdateButton", 3
+local Type, Version = "WeakAurasPendingUpdateButton", 4
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
+local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0")
 
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then
   return
@@ -73,7 +74,7 @@ local methods = {
     self.frame:SetScript("OnMouseUp", function()
       Hide_Tooltip()
       self:SetMenu()
-      EasyMenu(self.menu, WeakAuras_DropDownMenu, self.frame, 0, 0, "MENU")
+      LibDD:EasyMenu(self.menu, WeakAuras_DropDownMenu, self.frame, 0, 0, "MENU")
     end)
 
     self.frame:SetScript("OnEnter", function()
@@ -98,7 +99,10 @@ local methods = {
                 func = function()
                   local auraData = WeakAuras.GetData(auraId)
                   if auraData then
-                    WeakAuras.Import(self.companionData.encoded, auraData)
+                    local success, error = WeakAuras.Import(self.companionData.encoded, auraData)
+                    if not success then
+                      WeakAuras.prettyPrint(error)
+                    end
                   end
                 end
               },
@@ -213,7 +217,7 @@ local methods = {
       self:ReleaseThumbnail()
       self:AcquireThumbnail()
     else
-      local option = WeakAuras.regionOptions[self.thumbnailType]
+      local option = OptionsPrivate.Private.regionOptions[self.thumbnailType]
       if option and option.modifyThumbnail then
         option.modifyThumbnail(self.frame, self.thumbnail, self.data)
       end
@@ -227,7 +231,7 @@ local methods = {
 
     if self.thumbnail then
       local regionType = self.thumbnailType
-      local option = WeakAuras.regionOptions[regionType]
+      local option = OptionsPrivate.Private.regionOptions[regionType]
       if self.thumbnail.icon then
         self.thumbnail.icon:SetDesaturated(false)
       end
@@ -250,7 +254,7 @@ local methods = {
     local regionType = self.data.regionType
     self.thumbnailType = regionType
 
-    local option = WeakAuras.regionOptions[regionType]
+    local option = OptionsPrivate.Private.regionOptions[regionType]
     if option and option.acquireThumbnail then
       self.thumbnail = option.acquireThumbnail(button, self.data)
       if self.thumbnail.icon then
@@ -359,6 +363,7 @@ local function Constructor()
   update:Hide()
   updateLogo:Hide()
 
+  --- @type table<string, any>
   local widget = {
     frame = button,
     title = title,

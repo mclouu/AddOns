@@ -9,12 +9,10 @@
 
 	[ Notes ]
 
-	To help with translations, use the localization system on WoWAce (https://www.wowace.com/projects/masque/localization)
+	To help with translations, use the localization system on CurseForge (https://www.curseforge.com/wow/addons/masque/localization)
 	or contribute directly on GitHub (https://github.com/SFX-WoW/Masque).
 
 ]]
-
--- GLOBALS: GetLocale
 
 if GetLocale() ~= "zhTW" then return end
 
@@ -30,24 +28,32 @@ L["API"] = "API"
 L["For more information, please visit one of the sites listed below."] = "更多訊息說明，請拜訪下列其中之一的網站。"
 L["Masque is a skinning engine for button-based add-ons."] = "Masque 是幫插件按鈕更換外觀的引擎。"
 L["Select to view."] = "選擇以查看。"
--- L["Supporters"] = "Supporters"
+L["Supporters"] = "支援者"
 L["You must have an add-on that supports Masque installed to use it."] = "必須安裝支援 Masque 按鈕外觀的插件才能使用。"
 
 ----------------------------------------
--- Classic Skin
+-- Blizzard Classic Skin
 ---
 
-L["An improved version of the game's default button style."] = "遊戲預設按鈕樣式的改進版本。"
+L["The default Classic button style."] = "預設的經典按鈕樣式。"
+
+----------------------------------------
+-- Blizzard Modern Skin
+---
+
+L["The default Dragonflight button style."] = "預設的巨龍崛起按鈕樣式。"
+
+----------------------------------------
+-- Classic Redux Skin
+---
+
+L["A modified version of the Classic button style."] = "經典按鈕樣式的修改版。"
 
 ----------------------------------------
 -- Core Settings
 ---
 
 L["About"] = "關於"
-L["Click to load Masque's options."] = "點擊來載入Masque的選項。"
-L["Load Options"] = "載入選項"
-L["Masque's options are load on demand. Click the button below to load them."] = "Masque的選項是需求時才載入。點擊下面的按鈕來載入它。"
-L["This action will increase memory usage."] = "這個動作會增加記憶體的使用量。"
 L["This section will allow you to view information about Masque and any skins you have installed."] = "此部分允許您查看有關Masque和已安裝的任何外觀的訊息。"
 
 ----------------------------------------
@@ -105,6 +111,8 @@ L["Websites"] = "網站"
 -- Interface Settings
 ---
 
+L["Alternate Sorting"] = "另一種排序"
+L["Causes the skins included with Masque to be listed above third-party skins."] = "讓 Masque 內建的外觀排列在第三方外觀上方。"
 L["Enable the Minimap icon."] = "啟用小地圖按鈕。"
 L["Interface"] = "介面"
 L["Interface Settings"] = "介面設置"
@@ -142,6 +150,7 @@ L["Profile Settings"] = "設定檔設定"
 -- Skin Settings
 ---
 
+L["Adjust the scale of this group's skin."] = "調整群組外觀的縮放。"
 L["Backdrop"] = "背景設定"
 L["Checked"] = "已勾選"
 L["Color"] = "顏色"
@@ -149,8 +158,8 @@ L["Colors"] = "顏色"
 L["Cooldown"] = "冷卻中"
 L["Disable"] = "停用"
 L["Disable the skinning of this group."] = "停用這個群組的按鈕外觀。"
-L["Disabled"] = "已停用"
 L["Enable"] = "啟用"
+L["Enable skin scaling."] = "啟用外觀縮放。"
 L["Enable the Backdrop texture."] = "啟用背景材質。"
 L["Enable the Gloss texture."] = "啟用光澤材質。"
 L["Enable the Shadow texture."] = "啟用陰影材質。"
@@ -164,10 +173,10 @@ L["Pulse"] = "脈衝"
 L["Pushed"] = "按下"
 L["Reset all skin options to the defaults."] = "重置所有外觀選項為預設值。"
 L["Reset Skin"] = "重置外觀"
+L["Scale"] = "縮放"
 L["Set the color of the Backdrop texture."] = "設定背景材質顏色。"
 L["Set the color of the Checked texture."] = "設定已勾選材質顏色。"
 L["Set the color of the Cooldown animation."] = "設定冷卻倒數動畫顏色。"
-L["Set the color of the Disabled texture."] = "設定已停用材質顏色。"
 L["Set the color of the Flash texture."] = "設定閃光材質顏色。"
 L["Set the color of the Gloss texture."] = "設定光澤材質顏色。"
 L["Set the color of the Highlight texture."] = "設定高亮材質顏色。"

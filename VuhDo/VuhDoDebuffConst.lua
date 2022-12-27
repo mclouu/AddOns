@@ -32,19 +32,27 @@ VUHDO_INIT_DEBUFF_ABILITIES = {
 		[VUHDO_DEBUFF_TYPE_MAGIC] = { VUHDO_SPELL_ID.PURIFY },
 	},
 	["SHAMAN"] = {
-		[VUHDO_DEBUFF_TYPE_CURSE] = { VUHDO_SPELL_ID.PURIFY_SPIRIT, VUHDO_SPELL_ID.CLEANSE_SPIRIT },
-		[VUHDO_DEBUFF_TYPE_MAGIC] = { VUHDO_SPELL_ID.PURIFY_SPIRIT },
+		-- Shaman has two dispel spells with the same name ("Purify Spirit") so need to reference by ID
+		[VUHDO_DEBUFF_TYPE_CURSE] = { 383016, VUHDO_SPELL_ID.CLEANSE_SPIRIT },
+		[VUHDO_DEBUFF_TYPE_MAGIC] = { 383016, 77130 },
 	},
 	["WARLOCK"] = {
 		[VUHDO_DEBUFF_TYPE_MAGIC] = { "*" },
 	},
 	["DEATHKNIGHT"] = { },
-	["MONK"] = { -- Monk has two dispel spells with the same name ("Detox") and needs to be referenced by ID
+	["MONK"] = {
+		-- Monk has two dispel spells with the same name ("Detox") so need to reference by ID
 		[VUHDO_DEBUFF_TYPE_POISON] = { 218164, 115450 },
 		[VUHDO_DEBUFF_TYPE_DISEASE] = { 218164, 115450 },
 		[VUHDO_DEBUFF_TYPE_MAGIC] = { 115450 }, -- Now Mistweaver "Detox" only
 	},
 	["DEMONHUNTER"] = { },
+	["EVOKER"] = {
+		-- Evoker 'Expunge' morphs into 'Naturalize' for Preservation spec
+		-- Mapping needed for VUHDO_isSpellKnown() by name so use spell ID to force check by IsSpellKnown()
+		[VUHDO_DEBUFF_TYPE_POISON] = { 360823, VUHDO_SPELL_ID.EXPUNGE },
+		[VUHDO_DEBUFF_TYPE_MAGIC] = { 360823 },
+	},
 };
 
 
@@ -52,6 +60,7 @@ VUHDO_INIT_DEBUFF_ABILITIES = {
 VUHDO_SPEC_TO_DEBUFF_ABIL = { 
 	[115450] = GetSpellInfo(115450), -- MW Monk "Detox"
 	[218164] = GetSpellInfo(218164), -- WW/BM Monk "Detox"
+	[360823] = GetSpellInfo(360823), -- Preservation Evoker "Naturalize" (morphed "Expunge")
 };
 
 
@@ -117,6 +126,9 @@ VUHDO_INIT_IGNORE_DEBUFFS_BY_CLASS = {
 		[VUHDO_SPELL_ID.DEBUFF_UNSTABLE_AFFL] = true,
 	},
 	["DEMONHUNTER"] = {
+		[VUHDO_SPELL_ID.DEBUFF_UNSTABLE_AFFL] = true,
+	},
+	["EVOKER"] = {
 		[VUHDO_SPELL_ID.DEBUFF_UNSTABLE_AFFL] = true,
 	},
 };

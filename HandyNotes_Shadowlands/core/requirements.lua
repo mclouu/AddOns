@@ -108,6 +108,23 @@ end
 function Item:IsMet() return ns.PlayerHasItem(self.id, self.count) end
 
 -------------------------------------------------------------------------------
+--------------------------------- PROFESSION ----------------------------------
+-------------------------------------------------------------------------------
+
+local Profession = Class('Profession', Requirement)
+
+function Profession:Initialize(skillID, variantID, level)
+    self.skillID = skillID
+    self.variantID = variantID
+    self.level = level
+    self.text = C_TradeSkillUI.GetTradeSkillDisplayName(variantID or skillID)
+
+    if level then self.text = self.text .. ' (' .. level .. ')' end
+end
+
+function Profession:IsMet() return ns.PlayerHasProfession(self.skillID) end
+
+-------------------------------------------------------------------------------
 ------------------------------------ QUEST ------------------------------------
 -------------------------------------------------------------------------------
 
@@ -115,7 +132,8 @@ local Quest = Class('Quest', Requirement)
 
 function Quest:Initialize(id) self.id = id end
 
-function Quest:GetText() return C_QuestLog.GetTitleForQuestID(self.id) end
+function Quest:GetText() return
+    C_QuestLog.GetTitleForQuestID(self.id) or UNKNOWN end
 
 function Quest:IsMet() return C_QuestLog.IsQuestFlaggedCompleted(self.id) end
 
@@ -126,17 +144,22 @@ function Quest:IsMet() return C_QuestLog.IsQuestFlaggedCompleted(self.id) end
 local Reputation = Class('Reputation', Requirement)
 
 -- @todo will cause problems when requiring lower / negative reputations. Maybe add comparison as optional parameter with default value '>='.
-function Reputation:Initialize(id, level) self.id, self.level = id, level end
+function Reputation:Initialize(id, level, isRenown)
+    self.id, self.level, self.isRenown = id, level, isRenown
+end
 
 function Reputation:GetText()
     local name = GetFactionInfoByID(self.id)
-    local level = GetText('FACTION_STANDING_LABEL' .. self.level)
+    local level = self.isRenown and self.level or
+                      GetText('FACTION_STANDING_LABEL' .. self.level)
+
     return string.format(name .. ' (' .. level .. ')')
 end
 
 function Reputation:IsMet()
-    local _, _, standingID = GetFactionInfoByID(self.id)
-
+    local standingID = self.isRenown and
+                           C_MajorFactions.GetCurrentRenownLevel(self.id) or
+                           select(3, GetFactionInfoByID(self.id))
     return standingID >= self.level
 end
 
@@ -179,6 +202,7 @@ ns.requirement = {
     GarrisonTalent = GarrisonTalent,
     GarrisonTalentRank = GarrisonTalentRank,
     Item = Item,
+    Profession = Profession,
     Quest = Quest,
     Reputation = Reputation,
     Requirement = Requirement,

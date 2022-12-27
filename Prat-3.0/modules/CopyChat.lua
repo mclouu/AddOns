@@ -113,8 +113,7 @@ PL:AddLocale(PRAT_MODULE, "enUS", L)
 
 L = {
 	["CopyChat"] = {
-		--[[Translation missing --]]
-		[" Text"] = " Text",
+		[" Text"] = "Testo",
 		--[[Translation missing --]]
 		["BBCode"] = "BBCode",
 		--[[Translation missing --]]
@@ -668,7 +667,7 @@ end
       for lineIndex, visibleLine in ipairs(frame.visibleLines) do
         if visibleLine:IsMouseOver() then
           local info = visibleLine.messageInfo
-          if info.message then
+          if info and info.message then
             local text = info.message:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|H.-|h", ""):gsub("|h", "")
             text = text:gsub("|K.-|k", ""):gsub("|T.-|t", ""):gsub("|A.-|a", "")
 
@@ -742,6 +741,9 @@ end
   local function stripChatText(text)
     local stripped = text:gsub("|K[^|]-|k", "<BNET REMOVED>")
     stripped = stripped:gsub("|T.-|t", "")
+    stripped = stripped:gsub("|A.-|a", "")
+    stripped = stripped:gsub("|cff......|H.-|h(%[.-%])|h|r", "%1")
+    stripped = stripped:gsub("|cff......(.-)|r", "%1")
 
     return stripped
   end
@@ -776,9 +778,8 @@ end
     local lines = {}
     local str
 
-    for i = frame:GetNumVisibleLines(), 1, -1 do
-      local msg = frame.visibleLines[i].messageInfo
-      msg = msg and msg.message
+    for i = 1, frame:GetNumMessages() do
+      local msg = frame:GetMessageInfo(i)
 
       if msg then
         lines[#lines+1] = stripChatText(msg)
@@ -855,7 +856,7 @@ end
       local b = _G[name]
       if not b then
         b = CreateFrame("Button", name, cf)
-        b:SetFrameStrata("LOW")
+        b:SetFrameStrata("MEDIUM")
         b:SetWidth(24)
         b:SetHeight(24)
         b:SetNormalTexture("Interface\\Addons\\Prat-3.0\\textures\\prat-chatcopy2")

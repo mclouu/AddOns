@@ -3,49 +3,7 @@ local _, T = ...
 local AB = assert(T.ActionBook:compatible(2, 23), "A compatible version of ActionBook is required.")
 local MODERN = select(4,GetBuildInfo()) >= 8e4
 local L = AB:locale()
-
-local CreateEdge do
-	local edgeSlices = {
-		{"TOPLEFT", 0, -1, "BOTTOMRIGHT", "BOTTOMLEFT", 1, 1}, -- L
-		{"TOPRIGHT", 0, -1, "BOTTOMLEFT", "BOTTOMRIGHT", -1, 1}, -- R
-		{"TOPLEFT", 1, 0, "BOTTOMRIGHT", "TOPRIGHT", -1, -1, ccw=true}, -- T
-		{"BOTTOMLEFT", 1, 0, "TOPRIGHT", "BOTTOMRIGHT", -1, 1, ccw=true}, -- B
-		{"TOPLEFT", 0, 0, "BOTTOMRIGHT", "TOPLEFT", 1, -1},
-		{"TOPRIGHT", 0, 0, "BOTTOMLEFT", "TOPRIGHT", -1, -1},
-		{"BOTTOMLEFT", 0, 0, "TOPRIGHT", "BOTTOMLEFT", 1, 1},
-		{"BOTTOMRIGHT", 0, 0, "TOPLEFT", "BOTTOMRIGHT", -1, 1}
-	}
-	function CreateEdge(f, info, bgColor, edgeColor)
-		local insets = info.insets
-		local es = info.edgeFile and (info.edgeSize or 39) or 0
-		if info.bgFile then
-			local bg = f:CreateTexture(nil, "BACKGROUND", nil, -7)
-			local tileBackground = not not info.tile
-			bg:SetTexture(info.bgFile, tileBackground, tileBackground)
-			bg:SetPoint("TOPLEFT", (insets and insets.left or 0), -(insets and insets.top or 0))
-			bg:SetPoint("BOTTOMRIGHT", -(insets and insets.right or 0), (insets and insets.bottom or 0))
-			local n = bgColor or 0xffffff
-			bg:SetVertexColor((n - n % 2^16) / 2^16 % 256 / 255, (n - n % 2^8) / 2^8 % 256 / 255, n % 256 / 255, n >= 2^24 and (n - n % 2^24) / 2^24 % 256 / 255 or 1)
-		end
-		if info.edgeFile then
-			local n = edgeColor or 0xffffff
-			local r,g,b,a = (n - n % 2^16) / 2^16 % 256 / 255, (n - n % 2^8) / 2^8 % 256 / 255, n % 256 / 255, n >= 2^24 and (n - n % 2^24) / 2^24 % 256 / 255 or 1
-			for i=1,#edgeSlices do
-				local t, s = f:CreateTexture(nil, "BORDER", nil, -7), edgeSlices[i]
-				t:SetTexture(info.edgeFile)
-				t:SetPoint(s[1], s[2]*es, s[3]*es)
-				t:SetPoint(s[4], f, s[5], s[6]*es, s[7]*es)
-				local x1, x2, y1, y2 = 1/128+(i-1)/8, i/8-1/128, 0.0625, 1-0.0625
-				if s.ccw then
-					t:SetTexCoord(x1,y2, x2,y2, x1,y1, x2,y1)
-				else
-					t:SetTexCoord(x1, x2, y1, y2)
-				end
-				t:SetVertexColor(r,g,b,a)
-			end
-		end
-	end
-end
+local CreateEdge = T.CreateEdge
 
 local multilineInput do
 	local function onNavigate(self, _x,y, _w,h)
@@ -72,7 +30,7 @@ local multilineInput do
 		input:SetWidth(width)
 		input:SetMultiLine(true)
 		input:SetAutoFocus(false)
-		input:SetTextInsets(2,4,0,2)
+		input:SetTextInsets(2,4,2,2)
 		input:SetFontObject(GameFontHighlight)
 		input:SetScript("OnCursorChanged", onNavigate)
 		scroller:EnableMouse(1)
@@ -178,6 +136,7 @@ do -- .macrotext
 			:gsub("{{(spellr?):([%d/]+)}}", decodeSpellLink)
 			:gsub("{{mount:ground}}", "|cff71d5ff|Hrkmount:ground|h" .. L"Ground Mount" .. "|h|r")
 			:gsub("{{mount:air}}", "|cff71d5ff|Hrkmount:air|h" .. L"Flying Mount" .. "|h|r")
+			:gsub("{{mount:dragon}}", "|cff71d5ff|Hrkmount:dragon|h" .. L"Dragonriding Mount" .. "|h|r")
 			:gsub("|Hrk", tagReplace)
 		))
 	end
@@ -194,25 +153,27 @@ do -- .macrotext
 	function bg:IsOwned(owner)
 		return bg:GetParent() == owner
 	end
+	local function isCursorOnEmptyLine(box)
+		box:Insert("") -- Clobber selection
+		local text, cp = box:GetText() or "", box:GetCursorPosition()
+		local isEmptyLine = text == ""
+		if text ~= "" then
+			isEmptyLine = (cp == 0 or text:match("^\n", cp)) and (text:match("^%s*\n", cp+1) or cp == #text)
+		end
+		return isEmptyLine
+	end
 	bg.editBox, bg.scrollFrame = bg, eb
-	do -- Hook linking
-		local old = ChatEdit_InsertLink
-		function ChatEdit_InsertLink(link, ...)
-			if GetCurrentKeyBoardFocus() == eb then
-				local isEmpty = eb:GetText() == ""
-				if link:match("item:") then
-					eb:Insert((isEmpty and (GetItemSpell(link) and SLASH_USE1 or SLASH_EQUIP1) or "") .. " " .. GetItemInfo(link))
-				elseif link:match("spell:") and not IsPassiveSpell(tonumber(link:match("spell:(%d+)"))) then
-					eb:Insert((isEmpty and SLASH_CAST1 or "") .. " " .. decodeSpellLink(link:match("(spell):(%d+)")):gsub("|Hrk", tagReplace))
-				else
-					eb:Insert(link:match("|h%[?(.-[^%]])%]?|h"))
-				end
-				return true
+	hooksecurefunc("ChatEdit_InsertLink", function(link, ...)
+		if GetCurrentKeyBoardFocus() == eb then
+			if link:match("item:") then
+				eb:Insert((isCursorOnEmptyLine(eb) and (GetItemSpell(link) and SLASH_USE1 or SLASH_EQUIP1) or "") .. " " .. GetItemInfo(link))
+			elseif link:match("spell:") and not IsPassiveSpell(tonumber(link:match("spell:(%d+)"))) then
+				eb:Insert((isCursorOnEmptyLine(eb) and SLASH_CAST1 or "") .. " " .. decodeSpellLink(link:match("(spell):(%d+)")):gsub("|Hrk", tagReplace))
 			else
-				return old(link, ...)
+				eb:Insert(link:match("|h%[?(.-[^%]])%]?|h"))
 			end
 		end
-	end
+	end)
 	AB:RegisterEditorPanel("macrotext", bg)
 end
 
@@ -227,11 +188,10 @@ local RegisterSimpleOptionsPanel do
 		end
 	end
 	for i=1,3 do
-		e = CreateFrame("CheckButton", nil, f, "InterfaceOptionsCheckButtonTemplate")
-		e:SetHitRectInsets(0, -200, 4, 4)
+		e = T.TenSettings:CreateOptionsCheckButton(nil, f)
 		e:SetMotionScriptsWhileDisabled(1)
 		e:SetScript("OnClick", callSave)
-		e:SetPoint("TOPRIGHT", -261, 23-21*i)
+		e:SetPoint("TOPLEFT", 256, 23-21*i)
 		f.Options[i] = e
 	end
 
@@ -322,4 +282,3 @@ end
      Writing directly to this table is also terrible.
 --]]
 T.ActionBook._CreateSimpleEditorPanel = RegisterSimpleOptionsPanel
-T.ActionBook._CreateEdge = CreateEdge

@@ -19,7 +19,6 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["%d |4aura:auras; modified"] = "%d |4aura:auras; modified"
 	L["%i auras selected"] = "%i auras seleccionados"
-	L["%i Matches"] = "%i Correspondencias"
 	--[[Translation missing --]]
 	L["%s - %i. Trigger"] = "%s - %i. Trigger"
 	--[[Translation missing --]]
@@ -86,6 +85,8 @@ local L = WeakAuras.L
 	--[[Translation missing --]]
 	L["%s Stacks Function"] = "%s Stacks Function"
 	--[[Translation missing --]]
+	L["%s stores around %s KB of data"] = "%s stores around %s KB of data"
+	--[[Translation missing --]]
 	L["%s Texture"] = "%s Texture"
 	--[[Translation missing --]]
 	L["%s Texture Function"] = "%s Texture Function"
@@ -94,6 +95,10 @@ local L = WeakAuras.L
 	L["%s Trigger Function"] = "%s Trigger Function"
 	--[[Translation missing --]]
 	L["%s Untrigger Function"] = "%s Untrigger Function"
+	--[[Translation missing --]]
+	L["%s X offset by %d"] = "%s X offset by %d"
+	--[[Translation missing --]]
+	L["%s Y offset by %d"] = "%s Y offset by %d"
 	L["%s Zoom: %d%%"] = "%s Zoom: %d%%"
 	L["%s, Border"] = "%s, Borde"
 	L["%s, Offset: %0.2f;%0.2f"] = "%s, Desplazamiento: %0.2f;%0.2f"
@@ -150,7 +155,6 @@ local L = WeakAuras.L
 |cffff0000Note|r: Without a direct relationship to actual unitIDs, results may vary.
 
 |cffffff00*|r Yellow Unit settings can match multiple units and will default to being active even while no affected units are found without a Unit Count or Match Count setting.]=]
-	L["1 Match"] = "1 Correspondencia"
 	L["A 20x20 pixels icon"] = "Un icono de 20x20 píxeles"
 	L["A 32x32 pixels icon"] = "Un icono de 32x32 píxeles"
 	L["A 40x40 pixels icon"] = "Un icono de 40x40 píxeles"
@@ -189,7 +193,8 @@ Enable this setting if you want this timer to be hidden, or when using a WeakAur
 	L["Align"] = "Alinear"
 	L["Alignment"] = "Alineamiento"
 	L["All of"] = "Todo"
-	L["Allow Full Rotation"] = "Permitir Rotación Total"
+	--[[Translation missing --]]
+	L["Allow Full Rotation"] = "Allow Full Rotation"
 	L["Alpha"] = "Transparencia"
 	L["Anchor"] = "Anclaje"
 	L["Anchor Point"] = "Punto de Anclaje"
@@ -248,10 +253,11 @@ Off Screen]=]
 	--[[Translation missing --]]
 	L["Aura Name Pattern"] = "Aura Name Pattern"
 	--[[Translation missing --]]
+	L["Aura Order"] = "Aura Order"
+	--[[Translation missing --]]
 	L["Aura received from: %s"] = "Aura received from: %s"
 	--[[Translation missing --]]
 	L["Aura Type"] = "Aura Type"
-	L["Aura(s)"] = "Aura(s)"
 	--[[Translation missing --]]
 	L["Aura: '%s'"] = "Aura: '%s'"
 	--[[Translation missing --]]
@@ -278,8 +284,9 @@ Off Screen]=]
 	L["Background Offset"] = "Desplazamiento del Fondo"
 	L["Background Texture"] = "Textura del Fondo"
 	L["Bar Alpha"] = "Transparencia de la Barra"
-	L["Bar Color"] = "Color de la Barra"
 	L["Bar Color Settings"] = "Configuración de color de barra"
+	--[[Translation missing --]]
+	L["Bar Color/Gradient Start"] = "Bar Color/Gradient Start"
 	L["Bar Texture"] = "Textura de la Barra"
 	--[[Translation missing --]]
 	L["Big Icon"] = "Big Icon"
@@ -314,8 +321,6 @@ Off Screen]=]
 	--[[Translation missing --]]
 	L["Browse Wago, the largest collection of auras."] = "Browse Wago, the largest collection of auras."
 	--[[Translation missing --]]
-	L["Can be a Name or a Unit ID (e.g. party1). A name only works on friendly players in your group."] = "Can be a Name or a Unit ID (e.g. party1). A name only works on friendly players in your group."
-	--[[Translation missing --]]
 	L["Can be a UID (e.g., party1)."] = "Can be a UID (e.g., party1)."
 	--[[Translation missing --]]
 	L["Can set to 0 if Columns * Width equal File Width"] = "Can set to 0 if Columns * Width equal File Width"
@@ -342,6 +347,8 @@ Off Screen]=]
 	L["Class"] = "Class"
 	--[[Translation missing --]]
 	L["Clear Debug Logs"] = "Clear Debug Logs"
+	--[[Translation missing --]]
+	L["Clear Saved Data"] = "Clear Saved Data"
 	--[[Translation missing --]]
 	L["Clip Overlays"] = "Clip Overlays"
 	--[[Translation missing --]]
@@ -388,9 +395,9 @@ Off Screen]=]
 	L["Control-click to select multiple displays"] = "Control-click to select multiple displays"
 	L["Controls the positioning and configuration of multiple displays at the same time"] = "Controla la posición y configuración de varias auras a la vez"
 	--[[Translation missing --]]
-	L["Convert to New Aura Trigger"] = "Convert to New Aura Trigger"
-	--[[Translation missing --]]
 	L["Convert to..."] = "Convert to..."
+	--[[Translation missing --]]
+	L["Cooldown Numbers might be added by WoW. You can configure these in the game settings."] = "Cooldown Numbers might be added by WoW. You can configure these in the game settings."
 	--[[Translation missing --]]
 	L["Cooldown Reduction changes the duration of seconds instead of showing the real time seconds."] = "Cooldown Reduction changes the duration of seconds instead of showing the real time seconds."
 	--[[Translation missing --]]
@@ -451,6 +458,10 @@ Múltiples eventos pueden ser especificados, sepáralos con comas o espacios.
 |cFF4444FFPor Ejemplo:|r
 UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED
 ]=]
+	--[[Translation missing --]]
+	L["Custom Trigger: Ignore Lua Errors on OPTIONS event"] = "Custom Trigger: Ignore Lua Errors on OPTIONS event"
+	--[[Translation missing --]]
+	L["Custom Trigger: Send fake events instead of STATUS event"] = "Custom Trigger: Send fake events instead of STATUS event"
 	L["Custom Untrigger"] = "Disparador No-Personalizado"
 	--[[Translation missing --]]
 	L["Custom Variables"] = "Custom Variables"
@@ -482,7 +493,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED
 	L["Disabled"] = "Desactivado"
 	--[[Translation missing --]]
 	L["Disallow Entry Reordering"] = "Disallow Entry Reordering"
-	L["Discrete Rotation"] = "Rotación Discreta"
+	--[[Translation missing --]]
+	L["Discrete Rotation"] = "Discrete Rotation"
 	L["Display"] = "Mostrar"
 	--[[Translation missing --]]
 	L["Display Name"] = "Display Name"
@@ -540,6 +552,8 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED
 	--[[Translation missing --]]
 	L["Enable Debug Logging"] = "Enable Debug Logging"
 	--[[Translation missing --]]
+	L["Enable Gradient"] = "Enable Gradient"
+	--[[Translation missing --]]
 	L["Enable Swipe"] = "Enable Swipe"
 	--[[Translation missing --]]
 	L["Enable the \"Swipe\" radial overlay"] = "Enable the \"Swipe\" radial overlay"
@@ -552,7 +566,6 @@ UNIT_POWER, UNIT_AURA PLAYER_TARGET_CHANGED
 	L["Enemy nameplate(s) found"] = "Enemy nameplate(s) found"
 	--[[Translation missing --]]
 	L["Enter a Spell ID"] = "Enter a Spell ID"
-	L["Enter an aura name, partial aura name, or spell id"] = "Introduce el nombre del aura (total o parcial), o el identificador del aura"
 	--[[Translation missing --]]
 	L["Enter an Aura Name, partial Aura Name, or Spell ID. A Spell ID will match any spells with the same name."] = "Enter an Aura Name, partial Aura Name, or Spell ID. A Spell ID will match any spells with the same name."
 	--[[Translation missing --]]
@@ -699,6 +712,10 @@ Can use \ to escape -.]=]
 	L["Glow Frame Type"] = "Glow Frame Type"
 	--[[Translation missing --]]
 	L["Glow Type"] = "Glow Type"
+	--[[Translation missing --]]
+	L["Gradient End"] = "Gradient End"
+	--[[Translation missing --]]
+	L["Gradient Orientation"] = "Gradient Orientation"
 	L["Green Rune"] = "Runa verde"
 	--[[Translation missing --]]
 	L["Grid direction"] = "Grid direction"
@@ -735,7 +752,6 @@ Con |cFF00CC00>= 0|r se activará siempre.]=]
 	L["Group Icon"] = "Group Icon"
 	--[[Translation missing --]]
 	L["Group key"] = "Group key"
-	L["Group Member Count"] = "Contador del Miembro de Grupo"
 	--[[Translation missing --]]
 	L["Group Options"] = "Group Options"
 	--[[Translation missing --]]
@@ -767,7 +783,6 @@ Con |cFF00CC00>= 0|r se activará siempre.]=]
 	L["Hide this group's children"] = "Hide this group's children"
 	--[[Translation missing --]]
 	L["Hide Timer Text"] = "Hide Timer Text"
-	L["Hide When Not In Group"] = "Esconder si no Estas Agrupado"
 	L["Horizontal Align"] = "Alineado Horizontal"
 	--[[Translation missing --]]
 	L["Horizontal Bar"] = "Horizontal Bar"
@@ -816,13 +831,9 @@ Con |cFF00CC00>= 0|r se activará siempre.]=]
 	--[[Translation missing --]]
 	L["Ignore Disconnected"] = "Ignore Disconnected"
 	--[[Translation missing --]]
-	L["Ignore Lua Errors on OPTIONS event"] = "Ignore Lua Errors on OPTIONS event"
-	--[[Translation missing --]]
 	L["Ignore out of checking range"] = "Ignore out of checking range"
 	--[[Translation missing --]]
 	L["Ignore Self"] = "Ignore Self"
-	--[[Translation missing --]]
-	L["Ignore self"] = "Ignore self"
 	--[[Translation missing --]]
 	L["Ignore updates"] = "Ignore updates"
 	L["Ignored"] = "Ignorar"
@@ -1010,8 +1021,6 @@ Sólo un valor coincidente puede ser escogido.]=]
 	--[[Translation missing --]]
 	L["Note: Automated Messages to SAY and YELL are blocked outside of Instances."] = "Note: Automated Messages to SAY and YELL are blocked outside of Instances."
 	--[[Translation missing --]]
-	L["Note: The legacy buff trigger is now permanently disabled. It will be removed in the near future."] = "Note: The legacy buff trigger is now permanently disabled. It will be removed in the near future."
-	--[[Translation missing --]]
 	L["Npc ID"] = "Npc ID"
 	--[[Translation missing --]]
 	L["Number of Entries"] = "Number of Entries"
@@ -1028,10 +1037,8 @@ Sólo un valor coincidente puede ser escogido.]=]
 	L["On Show"] = "Mostrar"
 	--[[Translation missing --]]
 	L["Only Match auras cast by a player (not an npc)"] = "Only Match auras cast by a player (not an npc)"
-	L["Only match auras cast by people other than the player"] = "Solamente corresponder auras conjuradas por otros jugadores"
 	--[[Translation missing --]]
 	L["Only match auras cast by people other than the player or his pet"] = "Only match auras cast by people other than the player or his pet"
-	L["Only match auras cast by the player"] = "Solamente corresponder auras conjuradas por ti"
 	--[[Translation missing --]]
 	L["Only match auras cast by the player or his pet"] = "Only match auras cast by the player or his pet"
 	L["Operator"] = "Operador"
@@ -1182,6 +1189,8 @@ Sólo un valor coincidente puede ser escogido.]=]
 	--[[Translation missing --]]
 	L["Same texture as Foreground"] = "Same texture as Foreground"
 	--[[Translation missing --]]
+	L["Saved Data"] = "Saved Data"
+	--[[Translation missing --]]
 	L["Scale"] = "Scale"
 	L["Search"] = "Buscar"
 	--[[Translation missing --]]
@@ -1214,7 +1223,6 @@ Sólo un valor coincidente puede ser escogido.]=]
 	L["Show \"Edge\""] = "Show \"Edge\""
 	--[[Translation missing --]]
 	L["Show \"Swipe\""] = "Show \"Swipe\""
-	L["Show all matches (Auto-clone)"] = "Mostrar todas las coincidencias (Auto-clonar)"
 	--[[Translation missing --]]
 	L["Show and Clone Settings"] = "Show and Clone Settings"
 	--[[Translation missing --]]
@@ -1227,8 +1235,6 @@ Sólo un valor coincidente puede ser escogido.]=]
 	L["Show Icon"] = "Show Icon"
 	--[[Translation missing --]]
 	L["Show If Unit Does Not Exist"] = "Show If Unit Does Not Exist"
-	--[[Translation missing --]]
-	L["Show If Unit Is Invalid"] = "Show If Unit Is Invalid"
 	--[[Translation missing --]]
 	L["Show Matches for"] = "Show Matches for"
 	--[[Translation missing --]]
@@ -1321,7 +1327,6 @@ Sólo un valor coincidente puede ser escogido.]=]
 	L["Start Collapsed"] = "Start Collapsed"
 	--[[Translation missing --]]
 	L["Start of %s"] = "Start of %s"
-	L["Stealable"] = "Puede Robarse"
 	--[[Translation missing --]]
 	L["Step Size"] = "Step Size"
 	--[[Translation missing --]]
@@ -1348,9 +1353,19 @@ Sólo un valor coincidente puede ser escogido.]=]
 	L["Texture"] = "Textura"
 	L["Texture Info"] = "Información de Textura"
 	--[[Translation missing --]]
+	L["Texture Rotation"] = "Texture Rotation"
+	--[[Translation missing --]]
 	L["Texture Settings"] = "Texture Settings"
 	--[[Translation missing --]]
 	L["Texture Wrap"] = "Texture Wrap"
+	--[[Translation missing --]]
+	L["Texture X Offset"] = "Texture X Offset"
+	--[[Translation missing --]]
+	L["Texture Y Offset"] = "Texture Y Offset"
+	--[[Translation missing --]]
+	L["The addon ElvUI is enabled. It might add cooldown numbers to the swipe. You can configure these in the ElvUI settings"] = "The addon ElvUI is enabled. It might add cooldown numbers to the swipe. You can configure these in the ElvUI settings"
+	--[[Translation missing --]]
+	L["The addon OmniCC is enabled. It might add cooldown numbers to the swipe. You can configure these in the OmniCC settings"] = "The addon OmniCC is enabled. It might add cooldown numbers to the swipe. You can configure these in the OmniCC settings"
 	L["The duration of the animation in seconds."] = "Duración de la animación (en segundos)."
 	--[[Translation missing --]]
 	L["The duration of the animation in seconds. The finish animation does not start playing until after the display would normally be hidden."] = "The duration of the animation in seconds. The finish animation does not start playing until after the display would normally be hidden."
@@ -1382,7 +1397,7 @@ It might not work correctly with your version!]=]
 	--[[Translation missing --]]
 	L["This display is not currently loaded"] = "This display is not currently loaded"
 	--[[Translation missing --]]
-	L["This enables the collection of debug logs. This requires custom coded auras that use DebugPrints."] = "This enables the collection of debug logs. This requires custom coded auras that use DebugPrints."
+	L["This enables the collection of debug logs. Custom code can add debug information to the log through the function DebugPrint."] = "This enables the collection of debug logs. Custom code can add debug information to the log through the function DebugPrint."
 	--[[Translation missing --]]
 	L["This is a modified version of your aura, |cff9900FF%s.|r"] = "This is a modified version of your aura, |cff9900FF%s.|r"
 	--[[Translation missing --]]
@@ -1469,18 +1484,16 @@ It might not work correctly with your version!]=]
 	L["Use Custom Color"] = "Use Custom Color"
 	--[[Translation missing --]]
 	L["Use Display Info Id"] = "Use Display Info Id"
-	L["Use Full Scan (High CPU)"] = "Escaneo Total (carga el procesador)"
-	--[[Translation missing --]]
-	L["Use nth value from tooltip:"] = "Use nth value from tooltip:"
 	--[[Translation missing --]]
 	L["Use SetTransform"] = "Use SetTransform"
 	--[[Translation missing --]]
 	L["Use Texture"] = "Use Texture"
-	L["Use tooltip \"size\" instead of stacks"] = "Usa \"tamaño\" en vez de acumulaciones"
+	--[[Translation missing --]]
+	L["Used in Auras:"] = "Used in Auras:"
 	--[[Translation missing --]]
 	L["Used in auras:"] = "Used in auras:"
 	--[[Translation missing --]]
-	L["Used in Auras:"] = "Used in Auras:"
+	L["Uses Texture Coordinates to rotate the texture."] = "Uses Texture Coordinates to rotate the texture."
 	--[[Translation missing --]]
 	L["Uses UnitIsVisible() to check if in range. This is polled every second."] = "Uses UnitIsVisible() to check if in range. This is polled every second."
 	--[[Translation missing --]]

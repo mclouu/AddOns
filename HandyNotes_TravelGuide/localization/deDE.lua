@@ -35,6 +35,9 @@ L["config_petbattle_portal_desc"] = "Zeigt die Positionen von Haustierkampfporta
 L["config_ogreWaygate"] = "Ogerportale"
 L["config_ogreWaygate_desc"] = "Zeigt die Positionen von Ogerportalen an."
 
+L["config_show_reflectivePortal"] = "Reflexionsportale"
+L["config_show_reflectivePortal_desc"] = "Zeigt die Positionen von Reflexionsportalen an."
+
 L["config_boat"] = "Schiffe"
 L["config_boat_desc"] = "Zeigt die Positionen von Schiffen an."
 L["config_boat_alliance"] = "Allianz Schiffe"
@@ -54,8 +57,19 @@ L["config_molemachine_desc"] = "Zeigt die Position von Zielen der Maulwurfmaschi
 L["config_note"] = "Notizen"
 L["config_note_desc"] = "Zeigt zusätzliche Notizen an, wenn diese verfügbar sind."
 
+L["config_remove_unknown"] = "Entferne unbekannte Reiseziele"
+L["config_remove_unknown_desc"] = "Dadurch werden Reiseziele deren Voraussetzung nicht erfüllt werden von der Weltkarte entfernt."
+
+L["config_remove_AreaPois"] = "Entferne Blizzards Knotenpunkte für Reiseziele"
+L["config_remove_AreaPois_desc"] = "Dadurch werden die von Blizzard festgelegten Points of Interest (POIs) für Reiseziele auf der Weltkarte entfernt."
+
 L["config_easy_waypoints"] = "Vereinfachte Wegpunkte"
 L["config_easy_waypoints_desc"] = "Aktiviert die vereinfachte Wegpunkterstellung. \nErlaubt es per Rechtsklick einen Wegpunkt zu setzen und per STRG + Rechtsklick mehr Optionen aufzurufen."
+L["config_waypoint_dropdown"] = "Wähle aus"
+L["config_waypoint_dropdown_desc"] = "Wähle aus, wie der Wegpunkt erstellt werden soll."
+L["Blizzard"] = true
+L["TomTom"] = true
+L["Both"] = "Beide"
 
 L["config_teleportPlatform"] = "Teleportplattformen in Oribos"
 L["config_teleportPlatform_desc"] = "Zeigt die Positionen von Teleportplattformen in Oribos an."
@@ -90,6 +104,7 @@ L["dev_config_show_prints_desc"] = "Zeigt print() Nachrichten im Chatfenster an.
 
 L["handler_context_menu_addon_name"] = "HandyNotes: TravelGuide"
 L["handler_context_menu_add_tomtom"] = "Zu TomTom hinzufügen"
+L["handler_context_menu_add_map_pin"] = "Kartenmarkierung setzen"
 L["handler_context_menu_hide_node"] = "Verstecke diesen Punkt"
 
 --============================================TOOLTIPS============================================--
@@ -100,6 +115,7 @@ L["handler_tooltip_data"] = "DATEN ABRUFEN..."
 L["handler_tooltip_quest"] = "Freigeschaltet mit der Quest"
 L["handler_tooltip_requires_level"] = "Benötigt min. Spielerlevel"
 L["handler_tooltip_rep"] = "Benötigt Ruf bei"
+L["handler_tooltip_toy"] = "Benötigt das Spielzeug"
 L["handler_tooltip_TNTIER"] = "Stufe %s des Reisenetzwerks."
 L["handler_tooltip_not_available"] = "zurzeit NICHT Verfügbar"
 --L["currently available"] = "zurzeit Verfügbar"
@@ -108,6 +124,14 @@ L["handler_tooltip_not_discovered"] = "noch nicht entdeckt"
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------DATABASE----------------------------------------------
 ----------------------------------------------------------------------------------------------------
+
+--==========================================DRAGONFLIGHT==========================================--
+
+L["Portal to Shadowmoon Valley"] = "Portal ins Schattenmondtal"
+L["Portal to Valdrakken"] = "Portal nach Valdrakken"
+L["Boat to Dragon Isle"] = "Schiff zu den Dracheninseln"
+L["Zeppelin to Dragon Isle"] = "Zeppelin zu den Dracheninseln"
+L["Teleport to Seat of the Aspects"] = "Teleport zum Sitz der Aspekte"
 
 --==========================================SHADOWLANDS===========================================--
 
@@ -149,6 +173,7 @@ L["Portal to Arathi Highlands"] = "Portal ins Arathihochland"
 L["Portal to Port of Zandalar"] = "Portal zum Hafen von Zandalar"
 L["Portal to Darkshore"] = "Portal zur Dunkelküste"
 L["Portal to Port of Boralus"] = "Portal zum Hafen von Boralus"
+L["Boat to Echo Isles"] = "Schiff zu den Echoinseln"
 
 -----------------------------------------------LEGION-----------------------------------------------
 
@@ -162,6 +187,12 @@ L["Portal to Suramar"] = "Portal nach Suramar"
 L["Portal to Highmountain"] = "Portal zum Hochberg"
 L["Great Eagle to Trueshot Lodge"] = "Großer Adler zur Volltrefferhütte"
 L["Jump to Skyhold"] = "Zur Himmelfeste springen"
+L["Portal to Duskwood"] = "Portal in den Dämmerwald"
+L["Portal to Feralas"] = "Portal nach Feralas"
+L["Portal to Grizzly Hills"] = "Portal zu den Grizzly Hügeln"
+L["Portal to Hinterlands"] = "Portal ins Hinterland"
+L["Portal to Moonglade"] = "Portal zur Mondlichtung"
+L["Portal to Dreamgrove"] = "Portal zum Hain der Träume"
 
 -------------------------------------------------WoD------------------------------------------------
 
@@ -170,6 +201,7 @@ L["Portal to Stormshield"] = "Portal zum Sturmschild"
 L["Portal to Vol'mar"] = "Portal nach Vol'mar"
 L["Portal to Lion's watch"] = "Portal zur Löwenwacht"
 L["Ogre Waygate"] = "Ogerportal"
+L["Reflective Portal"] = "Reflexionsportal"
 
 -------------------------------------------------MoP------------------------------------------------
 
@@ -243,7 +275,7 @@ L["Portal to Darnassus"] = "Portal nach Darnassus"
 
 L["Boat to Ratchet"] = "Schiff nach Ratchet"
 
-L["Boat to Theramore"] = "Schiff nach Theramore"
+L["Boat to Theramore Isle"] = "Schiff nach Theramore"
 
 L["Portal to Caverns of Time"] = "Portal zu den Höhlen der Zeit"
 

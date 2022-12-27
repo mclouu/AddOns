@@ -1678,7 +1678,8 @@ function PawnUICompareItemShortcut_TooltipOn(self)
 	local Item = PawnUIShortcutItems[ShortcutIndex]
 	if Item then
 		GameTooltip:SetOwner(getglobal("PawnUICompareItemShortcut" .. ShortcutIndex), "ANCHOR_TOPLEFT")
-		GameTooltip:SetHyperlink(PawnUnenchantItemLink(Item.Link, true))
+		local ItemLink = PawnUnenchantItemLink(Item.Link, true)
+		GameTooltip:SetHyperlink(ItemLink)
 	end
 end
 
@@ -1987,7 +1988,15 @@ function PawnUIFrame_ShowBagUpgradeAdvisorCheck_OnClick()
 	local BagIndex
 	for BagIndex = 1, NUM_CONTAINER_FRAMES, 1 do
 		local BagFrame = _G["ContainerFrame" .. BagIndex];
-		if BagFrame:IsShown() then ContainerFrame_UpdateItemUpgradeIcons(BagFrame) end
+		if BagFrame:IsShown() then
+			if BagFrame.UpdateItemUpgradeIcons then
+				-- Dragonflight onward
+				BagFrame:UpdateItemUpgradeIcons()
+			else
+				-- Legion through Shadowlands
+				ContainerFrame_UpdateItemUpgradeIcons(BagFrame)
+			end
+		end
 	end
 end
 
@@ -2101,11 +2110,10 @@ function PawnUI_OnSocketUpdate()
 		local ScaleName = Entry[1]
 		if PawnIsScaleVisible(ScaleName) then
 			local Scale = PawnCommon.Scales[ScaleName]
-			local ScaleValues = Scale.Values
 			local TextColor = VgerCore.Color.Blue
 			if Scale.Color and strlen(Scale.Color) == 6 then TextColor = "|cff" .. Scale.Color end
 
-			local _, _, SocketBonusValue = PawnGetItemValue(Item.UnenchantedStats, Item.Level, Item.SocketBonusStats, ScaleName, false, true)
+			local _, _, SocketBonusValue = PawnGetItemValue(Item.UnenchantedStats, Item.Level, Item.UnenchantedSocketBonusStats, ScaleName, false, true)
 			local GemListString, IsVague
 			if SocketBonusValue and SocketBonusValue > 0 then
 				local ThisColorGemList
@@ -2267,7 +2275,7 @@ function PawnUI_LootHistoryFrame_UpdateItemFrame(self, ItemFrame, ...)
 	if ItemLink == nil then return end
 
 	-- Is this item an upgrade?
-	local IsUpgrade = PawnCommon.ShowLootUpgradeAdvisor and PawnShouldItemLinkHaveUpgradeArrow(ItemLink)
+	local IsUpgrade = PawnCommon.ShowLootUpgradeAdvisor and PawnShouldItemLinkHaveUpgradeArrow(ItemLink, false, true)
 	if IsUpgrade then
 		-- If the arrow hasn't already been created, create it.
 		if not ItemFrame.PawnLootAdvisorArrow then
@@ -2291,7 +2299,7 @@ function PawnUI_LootWonAlertFrame_SetUp(self, ItemLink, ...)
 
 	-- Is this item an upgrade?
 	if ItemLink == nil then return end
-	local IsUpgrade = PawnCommon.ShowLootUpgradeAdvisor and PawnShouldItemLinkHaveUpgradeArrow(ItemLink)
+	local IsUpgrade = PawnCommon.ShowLootUpgradeAdvisor and PawnShouldItemLinkHaveUpgradeArrow(ItemLink, false, true)
 
 	if IsUpgrade then
 		-- If the arrow hasn't already been created, create it.

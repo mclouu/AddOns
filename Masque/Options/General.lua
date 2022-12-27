@@ -19,7 +19,7 @@ local MASQUE, Core = ...
 local ReloadUI = ReloadUI
 
 ----------------------------------------
--- Locals
+-- Internal
 ---
 
 -- @ Options\Core
@@ -78,6 +78,14 @@ function Setup.General(self)
 						order = 1,
 						fontSize = "medium",
 					},
+					Standlone = {
+						type = "toggle",
+						name = L["Stand-Alone GUI"],
+						desc = L["Use a resizable, stand-alone options window."],
+						get = function() return Core.db.profile.StandAlone end,
+						set = function(i, v) Core.db.profile.StandAlone = v end,
+						order = 3,
+					},
 					Icon = {
 						type = "toggle",
 						name = L["Minimap Icon"],
@@ -91,16 +99,16 @@ function Setup.General(self)
 								Core.LDBI:Show(MASQUE)
 							end
 						end,
-						order = 3,
+						order = 4,
 						disabled = function() return not Core.LDBI end,
 					},
-					Standalone = {
+					Sort = {
 						type = "toggle",
-						name = L["Stand-Alone GUI"],
-						desc = L["Use a resizable, stand-alone options window."],
-						get = function() return Core.db.profile.StandAlone end,
-						set = function(i, v) Core.db.profile.StandAlone = v end,
-						order = 4,
+						name = L["Alternate Sorting"],
+						desc = L["Causes the skins included with Masque to be listed above third-party skins."],
+						get = function() return Core.db.profile.AltSort end,
+						set = function(i, v) Core.db.profile.AltSort = v end,
+						order = 5,
 					},
 				},
 			},
@@ -195,7 +203,9 @@ function Setup.General(self)
 	}
 
 	self.Options.args.General = Options
-	self.ProfilesPanel = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(MASQUE, L["General Settings"], MASQUE, "General")
+
+	local Path = "General"
+	self:AddOptionsPanel(Path, LibStub("AceConfigDialog-3.0"):AddToBlizOptions(MASQUE, L["General Settings"], MASQUE, Path))
 
 	-- GC
 	Setup.General = nil

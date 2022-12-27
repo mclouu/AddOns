@@ -1,9 +1,8 @@
 local mod	= DBM:NewMod("BoralusTrash", "DBM-Party-BfA", 5)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20190720003055")
+mod:SetRevision("20220920232426")
 --mod:SetModelID(47785)
-mod:SetZone()
 
 mod.isTrashMod = true
 
@@ -24,6 +23,7 @@ local specWarnSlobberKnocker		= mod:NewSpecialWarningDodge(256627, "Tank", nil, 
 local specWarnSingingSteel			= mod:NewSpecialWarningDodge(256709, "Tank", nil, nil, 1, 2)
 local specWarnCrushingSlam			= mod:NewSpecialWarningDodge(272711, "Tank", nil, nil, 1, 2)
 local specWarnTrample				= mod:NewSpecialWarningDodge(272874, nil, nil, nil, 2, 2)
+local specWarnBroadside				= mod:NewSpecialWarningDodge(268260, nil, nil, nil, 2, 2)
 local specWarnSavageTempest			= mod:NewSpecialWarningRun(257170, nil, nil, nil, 4, 2)--can tank run out too? or does it follow tank
 local specWarnSightedArt			= mod:NewSpecialWarningYou(272421, nil, nil, nil, 1, 2)
 local yellSightedArt				= mod:NewYell(272421)
@@ -33,7 +33,7 @@ local specWarnChokingWaters			= mod:NewSpecialWarningInterrupt(272571, false, ni
 local specWarnWatertightShellDispel	= mod:NewSpecialWarningDispel(256957, "MagicDispeller", nil, nil, 1, 2)
 local specWarnCursedSlash			= mod:NewSpecialWarningDispel(257168, "RemoveCurse", nil, nil, 1, 2)
 local specWarnFerocity				= mod:NewSpecialWarningDispel(272888, "RemoveEnrage", nil, 2, 1, 2)
-local specWarnChokingWatersDispel	= mod:NewSpecialWarningDispel(272571, "Healer", nil, nil, 1, 2)
+local specWarnChokingWatersDispel	= mod:NewSpecialWarningDispel(272571, "RemoveMagic", nil, 2, 1, 2)
 local specWarnFear					= mod:NewSpecialWarningSpell(257169, nil, nil, nil, 2, 2)
 
 function mod:SPELL_CAST_START(args)
@@ -75,14 +75,14 @@ function mod:SPELL_AURA_APPLIED(args)
 	if spellId == 256957 and self:IsValidWarning(args.sourceGUID) and not args:IsDestTypePlayer() then
 		specWarnWatertightShellDispel:CombinedShow(1, args.destName)
 		specWarnWatertightShellDispel:ScheduleVoice(1, "helpdispel")
-	elseif spellId == 257168 and self:IsValidWarning(args.sourceGUID) and self:CheckDispelFilter() then
+	elseif spellId == 257168 and self:IsValidWarning(args.sourceGUID) and self:CheckDispelFilter("curse") then
 		specWarnCursedSlash:Show(args.destName)
 		specWarnCursedSlash:Play("helpdispel")
 	elseif spellId == 272421 and args:IsPlayer() then
 		specWarnSightedArt:Show()
 		specWarnSightedArt:Play("targetyou")
 		yellSightedArt:Yell()
-	elseif spellId == 272571 and args:IsDestTypePlayer() and self:CheckDispelFilter() then
+	elseif spellId == 272571 and args:IsDestTypePlayer() and self:CheckDispelFilter("magic") then
 		specWarnChokingWatersDispel:Show(args.destName)
 		specWarnChokingWatersDispel:Play("helpdispel")
 	elseif spellId == 272888 and self:IsValidWarning(args.sourceGUID) then
@@ -114,6 +114,11 @@ function mod:UNIT_SPELLCAST_START(uId, _, spellId)
 		if self:IsValidWarning(guid, uId) then
 			self:SendSync("CrushingSlam")
 		end
+	elseif spellId == 268260 then
+		local guid = UnitGUID(uId)
+		if self:IsValidWarning(guid, uId) then
+			self:SendSync("Broadside")
+		end
 	end
 end
 
@@ -124,5 +129,8 @@ function mod:OnSync(msg)
 	elseif msg == "CrushingSlam" and self:AntiSpam(2.5, 2) then
 		specWarnCrushingSlam:Show()
 		specWarnCrushingSlam:Play("shockwave")
+	elseif msg == "Broadside" then
+		specWarnBroadside:Show()
+		specWarnBroadside:Play("watchstep")
 	end
 end

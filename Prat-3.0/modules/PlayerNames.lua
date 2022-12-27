@@ -1397,11 +1397,11 @@ L = {
   end
 
   function module:updateGroup()
-  	if IsInRaid() then
-  		self:updateRaid()
-  	elseif IsInGroup() then
-  		self:updateParty()
-  	end
+    if IsInRaid() then
+      self:updateRaid()
+    elseif IsInGroup() then
+      self:updateParty()
+    end
   end
 
   function module:updateTarget()
@@ -1641,7 +1641,11 @@ L = {
       if self.db.profile.bnetclienticon then
         local client = GetBnetClientByID(message.PRESENCE_ID)
         if client then
-          message.PLAYERCLIENTICON = ("|T%s:%d:%d:%d:%d|t"):format(BNet_GetClientTexture(client), 14)
+          if BNet_GetClientEmbeddedAtlas then
+            message.PLAYERCLIENTICON = BNet_GetClientEmbeddedAtlas(client)
+          else
+            message.PLAYERCLIENTICON = ("|T%s:%d:%d:%d:%d|t"):format(BNet_GetClientTexture(client), 14)
+          end
         end
       end
     else

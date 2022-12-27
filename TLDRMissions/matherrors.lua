@@ -34,7 +34,7 @@ local knownErrors = {
   {input = {135, 40}, output = 53, restrictTo = {"Shield of Tomorrow (Main)"}},
   {input = {220, 40}, output = 87, restrictTo = {"Shield of Tomorrow (Main)"}},
   {input = {140, 40}, output = 55, restrictTo = {"Shield of Tomorrow (Main)"}},
-  {input = {37, 90}, output = 32},
+  {input = {37, 90}, output = 32, restrictTo = {"Shield of Tomorrow (Main)", "Shield of Tomorrow (Alt)"}},
   {input = {37, 140}, output = 50},
   {input = {330, 40}, output = 131, restrictTo = {"Shield of Tomorrow (Alt)"}},
   {input = {360, 80}, output = 287, restrictTo = {"Shield of Tomorrow (Alt)"}},

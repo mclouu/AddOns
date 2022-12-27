@@ -13,42 +13,41 @@
 local MASQUE, Core = ...
 
 ----------------------------------------
--- WoW API
----
-
-local InterfaceOptionsFrame = InterfaceOptionsFrame
-local InterfaceOptionsFrame_OpenToCategory = InterfaceOptionsFrame_OpenToCategory
-local InterfaceOptionsFrame_Show = InterfaceOptionsFrame_Show
-
-----------------------------------------
 -- Libraries
 ---
 
 local ACD = LibStub("AceConfigDialog-3.0")
 
 ----------------------------------------
+-- WoW API
+---
+
+local InterfaceOptionsFrame_OpenToCategory = InterfaceOptionsFrame_OpenToCategory
+local InterfaceOptionsFrame_Show = InterfaceOptionsFrame_Show
+
+----------------------------------------
+-- Internal
+---
+
+-- @ Masque
+local WOW_RETAIL = Core.WOW_RETAIL
+
+----------------------------------------
 -- Locals
 ---
 
--- Necessary for UI consistency across game versions.
+-- Necessary for consistency across clients.
 local CRLF = "\n "
-Core.CRLF = CRLF
+
+-- Loader Frame
+local OPT_FRAME
 
 ----------------------------------------
 -- Setup
 ---
 
--- Options Loader
+-- Options Setup Table
 local Setup = {}
-
-Core.Setup = setmetatable(Setup, {
-	__call = function(self, Name, ...)
-		local func = Name and self[Name]
-		if func then
-			func(Core, ...)
-		end
-	end,
-})
 
 -- Sets up the root options group/panel.
 function Setup.Core(self)
@@ -79,38 +78,6 @@ function Setup.Core(self)
 						hidden = function() return not Core.OptionsLoaded end,
 						fontSize = "medium",
 					},
-					-- Necessary when manually navigating to the InterfaceOptionsFrame prior to the options being loaded.
-					Load = {
-						type = "group",
-						name = "",
-						inline = true,
-						hidden = function() return Core.OptionsLoaded end,
-						--order = 100,
-						args = {
-							Desc = {
-								type = "description",
-								name = L["Masque's options are load on demand. Click the button below to load them."]..CRLF,
-								order = 0,
-								fontSize = "medium",
-							},
-							Button = {
-								type = "execute",
-								name = L["Load Options"],
-								desc = L["Click to load Masque's options."],
-								func = function()
-									if Setup.LoD then Setup("LoD") end
-									-- Force a sub-panel refresh.
-									InterfaceOptionsFrame_OpenToCategory(Core.OptionsPanel)
-									InterfaceOptionsFrame_OpenToCategory(Core.SkinOptionsPanel)
-									InterfaceOptionsFrame_OpenToCategory(Core.OptionsPanel)
-									Core.Options.args.Core.args.Load = nil -- GC
-								end,
-								order = 1,
-								confirm = true,
-								confirmText = L["This action will increase memory usage."].."\n",
-							},
-						},
-					},
 				},
 			},
 		},
@@ -119,7 +86,12 @@ function Setup.Core(self)
 	self.Options = Options
 
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(MASQUE, self.Options)
-	self.OptionsPanel = ACD:AddToBlizOptions(MASQUE, MASQUE, nil, "Core")
+
+	local Path = "Core"
+	self:AddOptionsPanel(Path, ACD:AddToBlizOptions(MASQUE, MASQUE, nil, Path))
+
+	OPT_FRAME = CreateFrame("Frame", "MSQ_OPT_FRAME", SettingsPanel or InterfaceOptionsFrame)
+	OPT_FRAME:SetScript("OnShow", function() Setup("LoD") end)
 
 	-- GC
 	Setup.Core = nil
@@ -136,6 +108,10 @@ function Setup.LoD(self)
 	Setup("Profiles")
 
 	-- GC
+	if OPT_FRAME then
+		OPT_FRAME:SetScript("OnShow", nil)
+	end
+
 	Setup.LoD = nil
 end
 
@@ -143,11 +119,36 @@ end
 -- Core
 ---
 
+Core.CRLF = CRLF
+Core.Setup = setmetatable(Setup, {
+	__call = function(self, Name, ...)
+		local func = Name and self[Name]
+		if func then
+			func(Core, ...)
+		end
+	end,
+})
+
+-- Adds options panel info.
+function Core:AddOptionsPanel(Path, Frame, Name)
+	local Panels = self.OptionsPanels
+
+	if not Panels then
+		Panels = {Frames = {}}
+		self.OptionsPanels = Panels
+	end
+
+	local Frames = Panels.Frames
+
+	Frames[Path] = Frame
+	Panels[Path] = Name
+end
+
 -- Toggles the Interface/ACD options frame.
 function Core:ToggleOptions()
 	if Setup.LoD then Setup("LoD") end
 
-	local IOF_Open = InterfaceOptionsFrame:IsShown()
+	local IOF_Open = InterfaceOptionsFrame and InterfaceOptionsFrame:IsShown()
 	local ACD_Open = ACD.OpenFrames[MASQUE]
 
 	-- Toggle the stand-alone GUI if enabled.
@@ -158,6 +159,7 @@ function Core:ToggleOptions()
 			ACD:Close(MASQUE)
 		else
 			ACD:Open(MASQUE)
+			ACD:SelectGroup(MASQUE, "Skins", "Global")
 		end
 	-- Toggle the Interface Options frame.
 	else
@@ -166,9 +168,15 @@ function Core:ToggleOptions()
 		elseif IOF_Open then
 			InterfaceOptionsFrame_Show()
 		else
-			-- Call twice to make sure the IOF opens to the proper category.
-			InterfaceOptionsFrame_OpenToCategory(self.OptionsPanel)
-			InterfaceOptionsFrame_OpenToCategory(self.SkinOptionsPanel)
+			if WOW_RETAIL then
+				SettingsPanel:OpenToCategory(self.OptionsPanels.Core)
+			else
+				local Frames = self.OptionsPanels.Frames
+
+				-- Call twice to make sure the IOF opens to the proper category.
+				InterfaceOptionsFrame_OpenToCategory(Frames.Core)
+				InterfaceOptionsFrame_OpenToCategory(Frames.Skins)
+			end
 		end
 	end
 end

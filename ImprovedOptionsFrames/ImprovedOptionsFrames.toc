@@ -1,8 +1,0 @@
-## Interface: 80000
-## Title: Improved Options Frames
-## Version: 1.5.8
-## Author: Cybeloras of Aerie Peak
-## Notes: Allows you to scale and move the Blizzard options frames.
-## SavedVariables: ImprovedOptionsFramesDB
-
-ImprovedOptionsFrames.lua

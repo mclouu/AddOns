@@ -1,0 +1,19 @@
+## Interface: 100002
+## Author: Nerc
+## Title: Map Pin Enhanced
+## Version: 2.1
+## License: All Rights Reserved
+## Notes: Enhances the functionality of the map pin
+## SavedVariables: MapPinEnhancedDB
+## OptionalDeps: Ace3
+## X-Embeds: Ace3
+## X-Curse-Project-ID: 441677
+## X-Wago-ID: RqGZqqKd
+
+
+embeds.xml
+core.lua
+frames\frames.xml
+
+importbox.lua
+config.lua

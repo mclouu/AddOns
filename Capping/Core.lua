@@ -556,7 +556,7 @@ do
 			[219] = "colorHorde",
 		}
 		local atlasColors = nil
-		local GetPOITextureCoords = GetPOITextureCoords
+		local GetPOITextureCoords = C_Minimap.GetPOITextureCoords
 		local capTime = 0
 		local curMapID = 0
 		local curMod = nil
@@ -701,6 +701,44 @@ do
 		end
 	end
 
+	do
+		local GetOptions = C_GossipInfo.GetOptions
+		local SelectOption = C_GossipInfo.SelectOption
+		function API:GetGossipNumOptions()
+			local gossipOptions = GetOptions()
+			return #gossipOptions
+		end
+		function API:GetGossipID(id)
+			local gossipOptions = GetOptions()
+			for i = 1, #gossipOptions do
+				local gossipTable = gossipOptions[i]
+				if gossipTable.gossipOptionID == id then
+					return true
+				end
+			end
+		end
+		function API:SelectGossipID(id)
+			SelectOption(id)
+		end
+	end
+
+	do
+		local GetAvailableQuests = C_GossipInfo.GetAvailableQuests
+		local SelectAvailableQuest = C_GossipInfo.SelectAvailableQuest
+		function API:GetGossipAvailableQuestID(id)
+			local gossipOptions = GetAvailableQuests()
+			for i = 1, #gossipOptions do
+				local gossipTable = gossipOptions[i]
+				if gossipTable.questID == id then
+					return true
+				end
+			end
+		end
+		function API:SelectGossipAvailableQuestID(id)
+			SelectAvailableQuest(id)
+		end
+	end
+
 	function mod:NewMod()
 		local t = {}
 		for k,v in next, API do
@@ -746,10 +784,11 @@ function core:ADDON_LOADED(addon)
 				barOnShift = "SAY",
 				barOnControl = "INSTANCE_CHAT",
 				barOnAlt = "NONE",
+				autoTurnIn = true,
 			},
 		}
 		db = LibStub("AceDB-3.0"):New("CappingSettings", defaults, true)
-		CappingFrame.db = db
+		frame.db = db
 		do
 			local rl = function() ReloadUI() end
 			db.RegisterCallback(self, "OnProfileChanged", rl)

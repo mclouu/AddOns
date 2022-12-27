@@ -30,11 +30,12 @@ ns.RegisterPoints(525, { -- FrostfireRidge
     [40902010]={quest=34473, loot={110536}, label="Envoy's Satchel"},
     [42401970]={quest=34520, loot={120341}, label="Burning Pearl"},
     [42703170]={quest=33940, loot={112187}, label="Crag-Leaper's Cache"},
-    [54803540]={quest=33525, loot={107273}, note="Combine with Frostwolf First-Fang @ 63,48"}, -- Young Orc Traveler
     [57105210]={quest=34476, loot={111554}, label="Frozen Orc Skeleton"},
     [61804250]={quest=33511, npc=72156, loot={112110}, note="Interrupt the ritual, then feed him ogres"},
-    [63401480]={quest=33525, npc=75081, loot={107272}, note="Combine with Snow Hare's Foot @ 54,35"}, -- Young Orc Woman
     [64406580]={quest=33505, loot={{117564, pet=1471}}, label="Wiggling Egg", note="rylak nests on the roof"},
+    -- paired treasure
+    [54803540]={quest=33525, npc=75072, loot={107273, 112206}, route={54803540, 63401480}, atlas="VignetteLoot", note="Combine with Frostwolf First-Fang @ 63,14"}, -- Young Orc Traveler
+    [63401480]={quest=33525, npc=75081, loot={107272, 112206}, route=54803540, atlas="VignetteLoot", note="Combine with Snow Hare's Foot @ 54,35"}, -- Young Orc Woman
     -- bladespire...
     [26503640]={quest=35367, currency=824, label="Gorr'thogg's Personal Reserve"},
     [26703940]={quest=35370, loot={113189}, label="Doorog's Secret Stash"},
@@ -50,6 +51,7 @@ ns.RegisterPoints(525, { -- FrostfireRidge
 }, {
     achievement=9728,
     hide_quest=34557,
+    minimap=true,
 })
 -- All these Bladespire ones are available for Alliance, but Horde have to complete Moving In (33657) first
 ns.RegisterPoints(526, { -- Turgall's Den: Bladespire Citadel
@@ -59,6 +61,7 @@ ns.RegisterPoints(526, { -- Turgall's Den: Bladespire Citadel
 }, {
     achievement=9728,
     hide_quest=34557,
+    minimap=true,
 })
 ns.RegisterPoints(527, { -- Turgall's Den: Bladespite Courtyard
     [36502900]={quest=35347, currency=824, label="Ogre Booty"},
@@ -71,12 +74,14 @@ ns.RegisterPoints(527, { -- Turgall's Den: Bladespite Courtyard
 }, {
     achievement=9728,
     hide_quest=34557,
+    minimap=true,
 })
 ns.RegisterPoints(528, { -- Turgall's Den: Bladespite Throne
     [31706640]={quest=35367, loot={113108}, label="Gorr'thogg's Personal Reserve"},
 }, {
     achievement=9728,
     hide_quest=34557,
+    minimap=true,
 })
 
 ns.RegisterPoints(525, { -- FrostfireRidge

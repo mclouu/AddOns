@@ -19,10 +19,10 @@ local _, Core = ...
 ---
 
 -- @ Skins\Default
-local Defaults = Core.Skins.Default
+local Defaults = Core.DEFAULT_SKIN
 
 -- @ Core\Utility
-local GetSize, SetPoints = Core.GetSize, Core.SetPoints
+local GetSize, GetTypeSkin, SetPoints = Core.GetSize, Core.GetTypeSkin, Core.SetPoints
 
 ----------------------------------------
 -- Core
@@ -33,12 +33,15 @@ function Core.SkinText(Layer, Region, Button, Skin, xScale, yScale)
 	local bType = Button.__MSQ_bType
 	local Default = Defaults[Layer]
 
-	Skin = Skin[bType] or Skin
+	Skin = GetTypeSkin(Button, bType, Skin)
 	Default = Default[bType] or Default
+
+	local Wrap = (Skin.Wrap and true) or false
 
 	Region:SetJustifyH(Skin.JustifyH or Default.JustifyH)
 	Region:SetJustifyV(Skin.JustifyV or "MIDDLE")
+	Region:SetWordWrap(Wrap)
 	Region:SetDrawLayer(Skin.DrawLayer or Default.DrawLayer)
-	Region:SetSize(GetSize(Skin.Width, Skin.Height or 10, xScale, yScale))
+	Region:SetSize(GetSize(Skin.Width or 36, Skin.Height or 0, xScale, yScale, Button))
 	SetPoints(Region, Button, Skin, Default)
 end

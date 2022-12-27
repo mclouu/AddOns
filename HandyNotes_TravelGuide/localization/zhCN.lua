@@ -3,8 +3,12 @@ local L = LibStub("AceLocale-3.0"):NewLocale("HandyNotes_TravelGuide", "zhCN", f
 if not L then return end
 -- Simplified Chinese translation by mmk5 ( https://www.curseforge.com/members/mmk5 )
 --  zhCN client: (NGA-男爵凯恩)
---  Last update: 2022/06/07
+--  Last update: 2022/11/29
 if L then
+----------------------------------------------------------------------------------------------------
+-----------------------------------------------CONFIG-----------------------------------------------
+----------------------------------------------------------------------------------------------------
+
 L["config_plugin_name"] = "旅行指南"
 L["config_plugin_desc"] = "在世界地图和小地图上显示传送门、飞艇、港口图标。"
 
@@ -19,19 +23,22 @@ L["config_what_to_display"] = "显示什么？"
 L["config_what_to_display_desc"] = "在这里设置显示哪些类型的图标。"
 
 L["config_portal"] = "传送门"
-L["config_portal_desc"] = "显示传送门位置。"
+L["config_portal_desc"] = "显示传送门的位置。"
 
 L["config_order_hall_portal"] = "职业大厅"
-L["config_order_hall_portal_desc"] = "显示职业大厅传送门。"
+L["config_order_hall_portal_desc"] = "显示职业大厅传送门的位置。"
 
 L["config_warfront_portal"] = "战争前线传送门"
-L["config_warfront_portal_desc"] = "显示战争前线传送门。"
+L["config_warfront_portal_desc"] = "显示战争前线传送门的位置。"
 
 L["config_petbattle_portal"] = "宠物对战传送门"
-L["config_petbattle_portal_desc"] = "显示宠物对战传送门"
+L["config_petbattle_portal_desc"] = "显示宠物对战传送门的位置。"
 
 L["config_ogreWaygate"] = "食人魔传送门"
-L["config_ogreWaygate_desc"] = "显示食人魔传送门"
+L["config_ogreWaygate_desc"] = "显示食人魔传送门的位置。"
+
+L["config_show_reflectivePortal"] = "隐形传送门"
+L["config_show_reflectivePortal_desc"] = "显示隐形传送门的位置。"
 
 L["config_boat"] = "船"
 L["config_boat_desc"] = "显示船的位置。"
@@ -46,20 +53,31 @@ L["config_zeppelin_horde_desc"] = "显示所有部落飞艇的位置。"
 L["config_tram"] = "矿道地铁"
 L["config_tram_desc"] = "显示暴风城和铁炉堡的矿道地铁位置。"
 
--- L["config_molemachine"] = "Mole Machine"
--- L["config_molemachine_desc"] = "Show destinations for the Mole Machine."
+L["config_molemachine"] = "钻探机[黑铁矮人]"
+L["config_molemachine_desc"] = "显示钻探机[黑铁矮人]目的地。"
 
 L["config_note"] = "图标"
 L["config_note_desc"] = "当图标（船/传送点）可用时，显示相关的注释。"
 
+L["config_remove_unknown"] = "删除未知的目的地"
+L["config_remove_unknown"] = "这将删除在世界地图上没有满足要求的目的地。"
+  
+L["config_remove_AreaPois"] = "删除暴雪在地图上的标注"
+L["config_remove_AreaPois_desc"] = "这将删除暴雪在世界地图上为目的地设置的标注点（POI）。"
+
 L["config_easy_waypoints"] = "简易导航点"
 L["config_easy_waypoints_desc"] = "创建简易导航点。\n右键点击设置导航，CTRL + 右键更多选项。"
+L["config_waypoint_dropdown"] = "选择"
+L["config_waypoint_dropdown_desc"] = "选择如何建立导航点"
+L["Blizzard"] = "暴雪原生"
+L["TomTom"] = true
+L["Both"] = "同时显示"
 
 L["config_teleportPlatform"] = "奥利波斯传送平台"
 L["config_teleportPlatform_desc"] = "显示奥利波斯传送平台位置."
 
 L["config_animaGateway"] = "显示心能传送门"
-L["config_animaGateway_desc"] = "显示心能传送门位置。."
+L["config_animaGateway_desc"] = "显示心能传送门位置。"
 
 L["config_others"] = "其它"
 L["config_others_desc"] = "显示所有其它POI。"
@@ -77,8 +95,8 @@ L["dev_config_tab"] = "DEV"
 L["dev_config_force_nodes"] = "强制显示"
 L["dev_config_force_nodes_desc"] = "无论你的职业或阵营, 强制显示所有的点."
 
-L["dev_config_show_prints"] = "显示 print()"
-L["dev_config_show_prints_desc"] = "在聊天窗口中显示 print() 的信息."
+L["dev_config_show_prints"] = "显示标记()"
+L["dev_config_show_prints_desc"] = "在聊天窗口中显示标记() 的信息."
 
 ----------------------------------------------------------------------------------------------------
 -----------------------------------------------HANDLER----------------------------------------------
@@ -88,6 +106,7 @@ L["dev_config_show_prints_desc"] = "在聊天窗口中显示 print() 的信息."
 
 L["handler_context_menu_addon_name"] = "HandyNotes: 旅行指南"
 L["handler_context_menu_add_tomtom"] = "添加到TomTom"
+L['handler_context_menu_add_map_pin'] = "设置航点"
 L["handler_context_menu_hide_node"] = "隐藏图标"
 
 --============================================TOOLTIPS============================================--
@@ -98,14 +117,23 @@ L["handler_tooltip_data"] = "接收数据中..."
 L["handler_tooltip_quest"] = "需要解锁任务"
 L["handler_tooltip_requires_level"] = "需要玩家等级"
 L["handler_tooltip_rep"] = "需要声望"
+L["handler_tooltip_toy"] = "需要玩具"
 L["handler_tooltip_TNTIER"] = "旅行网络的第 %s 层."
 L["handler_tooltip_not_available"] = "当前不可用"
 -- L["currently available"] = "目前可用"
--- L["handler_tooltip_not_discovered"] = "not yet discovered"
+L["handler_tooltip_not_discovered"] = "尚未发现"
 
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------DATABASE----------------------------------------------
 ----------------------------------------------------------------------------------------------------
+
+--==========================================DRAGONFLIGHT==========================================--
+
+L["Portal to Shadowmoon Valley"] = "通往影月谷"
+L["Portal to Valdrakken"] = "通往瓦德拉肯的传送门"
+L["Boat to Dragon Isle"] = "前往巨龙群岛的船"
+L["Zeppelin to Dragon Isle"] = "前往巨龙群岛的飞艇"
+L["Teleport to Seat of the Aspects"] = "传送到守护巨龙之座"
 
 --==========================================SHADOWLANDS===========================================--
 
@@ -135,8 +163,9 @@ L["Boat to Nazmir"] = "前往纳兹米尔的船"
 L["Portal to Nazjatar"] = "通往纳沙塔尔"
 L["Submarine to Mechagon"] = "前往麦卡贡的潜艇"
 L["Portal to Silithus"] = "通往希利苏斯"
+L["Boat to Echo Isles"] = "通往回声群岛的船"
 
-L["Portal to Boralus"] = "伯拉勒斯"
+L["Portal to Boralus"] = "通往伯拉勒斯"
 L["Boat to Boralus"] = "前往伯拉勒斯的船"
 L["Return to Boralus"] = "返回伯拉勒斯"
 L["Boat to Drustvar"] = "前往德鲁斯瓦的船"
@@ -160,6 +189,12 @@ L["Portal to Suramar"] = "通往苏拉玛"
 L["Portal to Highmountain"] = "通往至高岭"
 L["Great Eagle to Trueshot Lodge"] = "前往神射手营地的巨鹰"
 L["Jump to Skyhold"] = "前往苍穹要塞，跳！"
+L["Portal to Duskwood"] = "通往暮色森林"
+L["Portal to Feralas"] = "通往菲拉斯"
+L["Portal to Grizzly Hills"] = "通往灰熊丘陵"
+L["Portal to Hinterlands"] = "通往辛特兰"
+L["Portal to Moonglade"] = "通往月光林地"
+L["Portal to Dreamgrove"] = "通往梦境林地"
 
 -------------------------------------------------WoD------------------------------------------------
 
@@ -168,6 +203,7 @@ L["Portal to Stormshield"] = "通往暴风之盾"
 L["Portal to Vol'mar"] = "通往沃马尔"
 L["Portal to Lion's watch"] = "通往雄狮岗哨"
 L["Ogre Waygate"] = "食人魔传送门"
+L["Reflective Portal"] = "隐形传送门"
 
 -------------------------------------------------MoP------------------------------------------------
 
@@ -241,7 +277,7 @@ L["Portal to Darnassus"] = "通往达纳苏斯"
 
 L["Boat to Ratchet"] = "前往棘齿城（北贫瘠之地）的船"
 
-L["Boat to Theramore"] = "前往塞拉摩的船"
+L["Boat to Theramore Isle"] = "前往塞拉摩的船"
 
 L["Portal to Caverns of Time"] = "通往时光之穴"
 
@@ -250,5 +286,5 @@ L["Portal to the Sepulcher"] = "墓地"
 
 L["Waygate to Un'Goro Crater"] = "通往安戈洛环形山"
 L["The Masonary"] = "石匠区"
--- L["inside Blackrock Mountain"] = ""
+L["inside Blackrock Mountain"] = "在黑石山内部"
 end

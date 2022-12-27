@@ -1,11 +1,7 @@
 # TL;DR Missions
 
-##  (2022-09-25)
+##  (2022-12-12)
  
 
 - Update TLDRMissions.toc  
-- TL;DR-TFF: allow specifying layer to queue for via /tldr-tff #  
-    https://github.com/TLDRMissions/TLDRMissions/issues/577  
-    eg: /tldr-tff 4  
-- 2191  
-    Internal log  
+- Workaround for issue found in The Waking Shores - the Scouting Map behaves internally like the Covenant Mission Tables for some reason?  

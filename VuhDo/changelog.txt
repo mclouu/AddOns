@@ -1,3 +1,155 @@
+Version 3.145  
+  
+  
+Known issues:  
+-- Shadowlands stat squish cleanup still a work in progress  
+--   AOE Advice spell equations need complete overhaul  
+--   Some text providers need changes to better display small numbers  
+-- Debuff tooltips are currently bugged when using ElvUI  
+--   Deselect 'VuhDo Options > Panels > Tooltips > Tooltips > Debuffs'  
+-- Blizzard continues to have a bug that breaks proper spell targeting.  
+--   Under 'Game Menu > Options > Gameplay > Combat' deselect 'Auto Self Cast'  
+--   and set 'Self Cast Key' to 'None'  
+  
+  
+Bugfixes:  
+-- Fixed tracking of ambiguously named HoTs by spell ID  
+-- Fixed resurrection smart cast for Evoker 'Return' and 'Mass Return'  
+-- Fixed Evoker debuff abilities ('Naturalize' and 'Expunge')  
+-- Fixed 'Flag: Debuff, configured' validator when no debuffs present  
+-- Fixed safe color application for statusbar type bouquet validators  
+  
+  
+Improvements:  
+-- Added default HoTs for Preservation Evoker  
+-- Added Rogue non-lethal 'Atrophic Poison' to Buff Watch  
+  
+  
+--------------------------------------------------------------  
+Version 3.144  
+  
+  
+Known issues:  
+-- Shadowlands stat squish cleanup still a work in progress  
+--   AOE Advice spell equations need complete overhaul  
+--   Some text providers need changes to better display small numbers  
+-- Debuff tooltips are currently bugged when using ElvUI  
+--   Deselect 'VuhDo Options > Panels > Tooltips > Tooltips > Debuffs'  
+-- Blizzard continues to have a bug that breaks proper spell targeting.  
+--   Under 'Game Menu > Options > Gameplay > Combat' deselect 'Auto Self Cast'  
+--   and set 'Self Cast Key' to 'None'  
+  
+  
+Bugfixes:  
+-- Fixed visibility of empty panels containing only target/focus models  
+-- Fixed visibility of empty panels on show/hide of 'VuhDo Options > Move!'  
+-- Fixed VuhDo Options demo mode when 'Hide Panels > Empty' selected  
+-- Fixed keybindings under 'Game Menu > Options > Gameplay > Keybindings > AddOns'  
+-- Fixed mouse/key bindings after spells are learned from talent changes  
+-- Fixed debuff types for both basic and talented Shaman 'Purify Spirit'  
+-- Fixed clock sweep for HoT Icons whose duration increases post application  
+  
+  
+Improvements:  
+-- Added option to only show text with no icon for HoT Icons  
+-- Bump TOC interface for 10.0.2  
+  
+  
+--------------------------------------------------------------  
+Version 3.143  
+  
+  
+Known issues:  
+-- Shadowlands stat squish cleanup still a work in progress  
+--   AOE Advice spell equations need complete overhaul  
+--   Some text providers need changes to better display small numbers  
+-- Debuff tooltips are currently bugged when using ElvUI  
+--   Deselect 'VuhDo Options > Panels > Tooltips > Tooltips > Debuffs'  
+-- Blizzard continues to have a bug that breaks proper spell targeting.  
+--   Under 'Game Menu > Options > Gameplay > Combat' deselect 'Auto Self Cast'  
+--   and set 'Self Cast Key' to 'None'  
+  
+  
+Bugfixes:  
+-- Fixed game stutters caused by macro'ed console commands  
+-- Fixed error where bouquets are evaluated before decompression  
+-- Fixed application of specified opacity for HoT Icons  
+  
+  
+Improvements:  
+-- Added Druid spell 'Mark of the Wild' to Buff Watch  
+-- Added Shaman totem 'Liquid Magma Totem' to Buff Watch  
+-- Added Shaman totem 'Wind Rush Totem' to Buff Watch  
+-- Added Shaman totem 'Tranquil Air Totem' to Buff Watch  
+-- Added Shaman totem 'Storm Elemental Totem' to Buff Watch  
+-- Added Shaman totem 'Stoneskin Totem' to Buff Watch  
+-- Added Shaman totem 'Mana Spring Totem' to Buff Watch  
+-- Added Shaman totem 'Poison Cleansing Totem' to Buff Watch  
+-- Added Shaman weapon enchant 'Earthliving Weapon' to Buff Watch  
+-- Added Priest spell 'Guardian Spirit' to Buff Watch  
+-- Added Mage spell 'Timewarp' to Buff Watch  
+-- Added Hunter spell 'Ancient Hysteria' to Buff Watch  
+-- Added Evoker spell 'Blessing of the Bronze' to Buff Watch  
+-- Added Evoker spell 'Fury of the Aspects' to Buff Watch  
+-- Added Paladin battle resurrection spell 'Intercession'  
+  
+  
+--------------------------------------------------------------  
+Version 3.142  
+  
+  
+Known issues:  
+-- Shadowlands stat squish cleanup still a work in progress  
+--   AOE Advice spell equations need complete overhaul  
+--   Some text providers need changes to better display small numbers  
+-- Debuff tooltips are currently bugged when using ElvUI  
+--   Deselect 'VuhDo Options > Panels > Tooltips > Tooltips > Debuffs'  
+  
+  
+Bugfixes:  
+  
+  
+Improvements:  
+-- Bump TOC interface for 10.0.0 Dragonflight pre-patch  
+  
+  
+--------------------------------------------------------------  
+Version 3.141  
+  
+  
+Known issues:  
+-- Shadowlands stat squish cleanup still a work in progress  
+--   AOE Advice spell equations need complete overhaul  
+--   Some text providers need changes to better display small numbers  
+-- Debuff tooltips are currently bugged when using ElvUI  
+--   Deselect 'VuhDo Options > Panels > Tooltips > Tooltips > Debuffs'  
+  
+  
+Bugfixes:  
+  
+  
+Improvements:  
+  
+  
+--------------------------------------------------------------  
+Version 3.140  
+  
+  
+Known issues:  
+-- Shadowlands stat squish cleanup still a work in progress  
+--   AOE Advice spell equations need complete overhaul  
+--   Some text providers need changes to better display small numbers  
+-- Debuff tooltips are currently bugged when using ElvUI  
+--   Deselect 'VuhDo Options > Panels > Tooltips > Tooltips > Debuffs'  
+  
+  
+Bugfixes:  
+  
+  
+Improvements:  
+  
+  
+--------------------------------------------------------------  
 Version 3.139  
   
   

@@ -1,16 +1,15 @@
 local mod	= DBM:NewMod(2355, "DBM-Party-BfA", 11, 1178)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20190821200328")
+mod:SetRevision("20221016002954")
 mod:SetCreatureID(150190)
 mod:SetEncounterID(2291)
-mod:SetZone()
 
 mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
 	"SPELL_CAST_START 295536 295939",
-	"SPELL_CAST_SUCCESS 302274 303885 301351 303553 295445 301177",
+	"SPELL_CAST_SUCCESS 302274 303885 301351 303553 301177",
 	"SPELL_AURA_APPLIED 296080 302274 303885 303252",
 	"SPELL_AURA_REMOVED 296080 303885",
 	"UNIT_DIED"
@@ -22,40 +21,44 @@ mod:RegisterEventsInCombat(
 --TODO, need log that lets HK lift off and MK1 or MK2 to start a new cycle of all abilities at least once
 --[[
 (ability.id = 295536 or ability.id = 295939) and type = "begincast"
- or ability.id = 302274 or ability.id = 303885 or ability.id = 301351 or ability.id = 295445 or ability.id = 301177) and type = "cast"
+ or (ability.id = 302274 or ability.id = 303885 or ability.id = 301351 or ability.id = 302279 or ability.id = 301177) and type = "cast"
  or (target.id = 150295 or target.id = 155760) and type = "death"
+ or type = "dungeonencounterstart" or type = "dungeonencounterend"
  --]]
+ --Stage 1
+ mod:AddTimerLine(DBM:EJ_GetSectionInfo(20037))
 local warnReinforcementRelay		= mod:NewSpellAnnounce(301351, 2)
-local warnHaywire					= mod:NewTargetNoFilterAnnounce(296080, 1)
 local warnFulminatingZap			= mod:NewTargetNoFilterAnnounce(302274, 2, nil, "Healer")
 
 local specWarnCannonBlast			= mod:NewSpecialWarningDodge(295536, nil, nil, nil, 2, 2)
-local specWarnWreck					= mod:NewSpecialWarningDefensive(295445, "Tank", nil, nil, 1, 2)
+local specWarnWreck					= mod:NewSpecialWarningDefensive(302279, "Tank", nil, nil, 1, 2)
 local specWarnFulminatingBurst		= mod:NewSpecialWarningMoveTo(303885, nil, nil, nil, 1, 2)
 local yellFulminatingBurst			= mod:NewYell(303885, nil, nil, nil, "YELL")
 local yellFulminatingBurstFades		= mod:NewShortFadesYell(303885, nil, nil, nil, "YELL")
+
+--local timerCannonBlastCD			= mod:NewCDTimer(7.7, 295536, nil, nil, nil, 3, nil, DBM_COMMON_L.DEADLY_ICON)--7.7-13.4 variation, useless timer
+local timerReinforcementRelayCD		= mod:NewCDTimer(32.8, 301351, nil, nil, nil, 1)
+local timerWreckCD					= mod:NewCDTimer(24.3, 302279, nil, nil, nil, 5, nil, DBM_COMMON_L.TANK_ICON)
+--local timerFulminatingZapCD			= mod:NewCDTimer(17.0, 302274, nil, nil, nil, 3, nil, DBM_COMMON_L.HEALER_ICON)--Assumed
+local timerFulminatingBurstCD		= mod:NewCDTimer(17.0, 303885, nil, nil, nil, 3, nil, DBM_COMMON_L.HEALER_ICON)--Hard Mode
 --Stage 2
+ mod:AddTimerLine(DBM:EJ_GetSectionInfo(20039))
+local warnHaywire					= mod:NewTargetNoFilterAnnounce(296080, 1)
+
 local specWarnAnnihilationRay		= mod:NewSpecialWarningSpell(295939, nil, nil, nil, 2, 2)
 local specWarnAntiTresField			= mod:NewSpecialWarningMoveTo(303252, nil, nil, nil, 1, 2)
 local yellAntiTresField				= mod:NewYell(303252)
---local specWarnGTFO				= mod:NewSpecialWarningGTFO(238028, nil, nil, nil, 1, 8)
 
---local timerCannonBlastCD			= mod:NewCDTimer(7.7, 295536, nil, nil, nil, 3, nil, DBM_CORE_DEADLY_ICON)--7.7-13.4 variation, useless timer
-local timerReinforcementRelayCD		= mod:NewCDTimer(32.8, 301351, nil, nil, nil, 1)
-local timerWreckCD					= mod:NewCDTimer(24.3, 295445, nil, nil, nil, 5, nil, DBM_CORE_TANK_ICON)
-local timerFulminatingZapCD			= mod:NewCDTimer(17.0, 302274, nil, nil, nil, 3, nil, DBM_CORE_HEALER_ICON)--Assumed
-local timerFulminatingBurstCD		= mod:NewCDTimer(17.0, 303885, nil, nil, nil, 3, nil, DBM_CORE_HEALER_ICON)--Hard Mode
---Stage 2
 local timerHaywire					= mod:NewBuffActiveTimer(30, 296080, nil, nil, nil, 6)
---local timerHowlingFearCD			= mod:NewAITimer(13.4, 257791, nil, "HasInterrupt", nil, 4, nil, DBM_CORE_INTERRUPT_ICON)
+--local timerHowlingFearCD			= mod:NewCDTimer(13.4, 257791, nil, "HasInterrupt", nil, 4, nil, DBM_COMMON_L.INTERRUPT_ICON)
 
---mod:AddRangeFrameOption(5, 194966)
 mod:AddNamePlateOption("NPAuraOnWalkieShockie", 296522, false)
 
 mod.vb.hard = false
 local unitTracked = {}
 
-local function checkHardMode(self, delay)
+--[[
+local function checkHardMode(self)
 	local found = false
 	for i = 1, 5 do
 		local unitID = "boss"..i
@@ -63,15 +66,15 @@ local function checkHardMode(self, delay)
 			local cid = self:GetUnitCreatureId(unitID)
 			if cid == 150295 then--MK1
 				found = true
-				timerFulminatingZapCD:Start(8.4)--SUCCESS--Assumed
-				timerWreckCD:Start(15.7)--Assumed
-				timerReinforcementRelayCD:Start(19.8)--Assumed
+				timerFulminatingZapCD:Start(7.4)--SUCCESS--Assumed
+				timerWreckCD:Start(14.7)--Assumed
+				timerReinforcementRelayCD:Start(18.8)--Assumed
 			elseif cid == 155760 then--MK2 (hard mode)
 				found = true
 				self.vb.hard = true
-				timerFulminatingBurstCD:Start(8.4)--SUCCESS--VERIFIED
-				timerWreckCD:Start(15.7)--VERIFIED
-				timerReinforcementRelayCD:Start(19.8)--VERIFIED
+				timerFulminatingBurstCD:Start(7.4)--SUCCESS--VERIFIED
+				timerWreckCD:Start(14.7)--VERIFIED
+				timerReinforcementRelayCD:Start(18.8)--VERIFIED
 			end
 		end
 	end
@@ -79,14 +82,18 @@ local function checkHardMode(self, delay)
 		DBM:AddMsg("checkHardMode failed, tell DBM author")
 	end
 end
+--]]
 
 function mod:OnCombatStart(delay)
 	self.vb.hard = false
-	self:Schedule(1-delay, checkHardMode, self)
+--	self:Schedule(2-delay, checkHardMode, self)
+--	timerFulminatingZapCD:Start(9.2)--SUCCESS
+	timerWreckCD:Start(15)
+	timerReinforcementRelayCD:Start(20.8)
 	table.wipe(unitTracked)
 	if self.Options.NPAuraOnWalkieShockie then
 		DBM:FireEvent("BossMod_EnableHostileNameplates")
-		self:RegisterOnUpdateHandler(function(self)
+		self:RegisterOnUpdateHandler(function()
 			for i = 1, 40 do
 				local UnitID = "nameplate"..i
 				local GUID = UnitGUID(UnitID)
@@ -126,9 +133,6 @@ end
 
 function mod:OnCombatEnd()
 	table.wipe(unitTracked)
---	if self.Options.RangeFrame then
---		DBM.RangeCheck:Hide()
---	end
 	if self.Options.NPAuraOnWalkieShockie then
 		DBM.Nameplate:Hide(true, nil, nil, nil, true, true)
 	end
@@ -148,13 +152,13 @@ end
 function mod:SPELL_CAST_SUCCESS(args)
 	local spellId = args.spellId
 	if spellId == 302274 then
-		timerFulminatingZapCD:Start()
+--		timerFulminatingZapCD:Start()
 	elseif spellId == 303885 then
 		timerFulminatingBurstCD:Start()
 	elseif spellId == 301351 or spellId == 303553 then--Regular, Hard
 		warnReinforcementRelay:Show()
 		timerReinforcementRelayCD:Start()
-	elseif spellId == 295445 then
+	elseif spellId == 302279 then
 		specWarnWreck:Show()
 		specWarnWreck:Play("defensive")
 		timerWreckCD:Start()
@@ -169,6 +173,9 @@ function mod:SPELL_CAST_SUCCESS(args)
 			timerWreckCD:Start(15.7)--Assumed
 			timerReinforcementRelayCD:Start(19.8)--Assumed
 		end--]]
+--		timerFulminatingZapCD:Start(16.7)--SUCCESS
+		timerWreckCD:Start(22.5)--Assumed
+		timerReinforcementRelayCD:Start(29.1)
 	end
 end
 
@@ -181,7 +188,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		warnFulminatingZap:Show(args.destName)
 	elseif spellId == 303885 then
 		if args:IsPlayer() then
-			specWarnFulminatingBurst:Show(DBM_ALLY)
+			specWarnFulminatingBurst:Show(DBM_COMMON_L.ALLY)
 			yellFulminatingBurst:Yell()
 			yellFulminatingBurstFades:Countdown(spellId)
 		else
@@ -190,7 +197,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		specWarnFulminatingBurst:Play("gathershare")
 	elseif spellId == 303252 then
 		if args:IsPlayer() then
-			specWarnAntiTresField:Show(DBM_ALLY)
+			specWarnAntiTresField:Show(DBM_COMMON_L.ALLY)
 			yellAntiTresField:Yell()
 		else
 			specWarnAntiTresField:Show(args.destName)
@@ -198,7 +205,6 @@ function mod:SPELL_AURA_APPLIED(args)
 		specWarnAntiTresField:Play("gathershare")
 	end
 end
---mod.SPELL_AURA_APPLIED_DOSE = mod.SPELL_AURA_APPLIED
 
 function mod:SPELL_AURA_REMOVED(args)
 	local spellId = args.spellId
@@ -211,29 +217,12 @@ function mod:SPELL_AURA_REMOVED(args)
 	end
 end
 
---[[
-function mod:SPELL_PERIODIC_DAMAGE(_, _, _, _, destGUID, _, _, _, spellId)
-	if spellId == 228007 and destGUID == UnitGUID("player") and self:AntiSpam(2, 4) then
-		specWarnGTFO:Show()
-		specWarnGTFO:Play("watchfeet")
-	end
-end
-mod.SPELL_PERIODIC_MISSED = mod.SPELL_PERIODIC_DAMAGE
---]]
-
 function mod:UNIT_DIED(args)
 	local cid = self:GetCIDFromGUID(args.destGUID)
 	if cid == 150295 or cid == 155760 then--tank-buster-mk1/tank-buster-mk2
 		timerWreckCD:Stop()
 		timerReinforcementRelayCD:Stop()
-		timerFulminatingZapCD:Stop()
+--		timerFulminatingZapCD:Stop()
 		timerFulminatingBurstCD:Stop()
 	end
 end
-
---[[
-function mod:UNIT_SPELLCAST_SUCCEEDED(uId, _, spellId)
-	if spellId == 257939 then
-	end
-end
---]]

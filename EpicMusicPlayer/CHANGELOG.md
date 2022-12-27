@@ -1,6 +1,6 @@
 # EpicMusicPlayer
 
-## [v7.6.1](https://github.com/Kiatra/EpicMusicPlayer/tree/v7.6.1) (2022-03-03)
-[Full Changelog](https://github.com/Kiatra/EpicMusicPlayer/commits/v7.6.1) 
+## [7.8.6](https://github.com/Kiatra/EpicMusicPlayer/tree/7.8.6) (2022-12-18)
+[Full Changelog](https://github.com/Kiatra/EpicMusicPlayer/compare/7.8.5...7.8.6) 
 
-- Update EpicMusicPlayer.toc  
+- fix classic error  

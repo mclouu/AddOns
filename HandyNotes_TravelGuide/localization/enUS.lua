@@ -35,6 +35,9 @@ L["config_petbattle_portal_desc"] = "Show the Petbattle portal locations."
 L["config_ogreWaygate"] = "Ogre Waygate"
 L["config_ogreWaygate_desc"] = "Show the Ogre Waygat portal locations."
 
+L["config_show_reflectivePortal"] = "Reflective Portal"
+L["config_show_reflectivePortal_desc"] = "Show the Reflective Portal locations."
+
 L["config_boat"] = "Boat"
 L["config_boat_desc"] = "Show the boat locations."
 L["config_boat_alliance"] = "Alliance Boat"
@@ -54,8 +57,19 @@ L["config_molemachine_desc"] = "Show destinations for the Mole Machine."
 L["config_note"] = "Note"
 L["config_note_desc"] = "Show the node's additional notes when it's available."
 
+L["config_remove_unknown"] = "Remove unknown destinations"
+L["config_remove_unknown_desc"] = "This will hide destinations with unfulfilled requirements on the world map."
+
+L["config_remove_AreaPois"] = "Remove Blizzard's POIs for destinations"
+L["config_remove_AreaPois_desc"] = "This will remove the Points of Interest (POIs) set by Blizzard for destinations on the world map."
+
 L["config_easy_waypoints"] = "Easy Waypoints"
 L["config_easy_waypoints_desc"] = "Activates simplified waypoint creation. \nAllows you to set a waypoint by right-clicking and access to more options by CTRL + right-clicking."
+L["config_waypoint_dropdown"] = "Choose"
+L["config_waypoint_dropdown_desc"] = "Choose how the waypoint should be created."
+L["Blizzard"] = true
+L["TomTom"] = true
+L["Both"] = true
 
 L["config_teleportPlatform"] = "Teleport platforms in Oribos"
 L["config_teleportPlatform_desc"] = "Show the teleport plattform locations in Oribos."
@@ -90,6 +104,7 @@ L["dev_config_show_prints_desc"] = "Show print() messages in the chat window."
 
 L["handler_context_menu_addon_name"] = "HandyNotes: TravelGuide"
 L["handler_context_menu_add_tomtom"] = "Add to TomTom"
+L['handler_context_menu_add_map_pin'] = "Set map waypoint"
 L["handler_context_menu_hide_node"] = "Hide this node"
 
 --============================================TOOLTIPS============================================--
@@ -99,6 +114,7 @@ L["handler_tooltip_sanctum_feature"] = "a Sanctum Upgrade"
 L["handler_tooltip_data"] = "RETRIEVING DATA..."
 L["handler_tooltip_quest"] = "Unlocked with quest"
 L["handler_tooltip_rep"] = "Requires reputation with"
+L["handler_tooltip_toy"] = "Requires the toy"
 L["handler_tooltip_requires_level"] = "Requires at least player level"
 L["handler_tooltip_TNTIER"] = "Tier %s of the travel network."
 L["handler_tooltip_not_available"] = "currently NOT available"
@@ -108,6 +124,14 @@ L["handler_tooltip_not_discovered"] = "not yet discovered"
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------DATABASE----------------------------------------------
 ----------------------------------------------------------------------------------------------------
+
+--==========================================DRAGONFLIGHT==========================================--
+
+L["Portal to Shadowmoon Valley"] = true
+L["Portal to Valdrakken"] = true
+L["Boat to Dragon Isle"] = true
+L["Zeppelin to Dragon Isle"] = true
+L["Teleport to Seat of the Aspects"] = true
 
 --==========================================SHADOWLANDS===========================================--
 
@@ -149,6 +173,7 @@ L["Portal to Arathi Highlands"] = true
 L["Portal to Port of Zandalar"] = true
 L["Portal to Darkshore"] = true
 L["Portal to Port of Boralus"] = true
+L["Boat to Echo Isles"] = true
 
 -----------------------------------------------LEGION-----------------------------------------------
 
@@ -162,6 +187,12 @@ L["Portal to Suramar"] = true
 L["Portal to Highmountain"] = true
 L["Great Eagle to Trueshot Lodge"] = true
 L["Jump to Skyhold"] = true
+L["Portal to Duskwood"] = true
+L["Portal to Feralas"] = true
+L["Portal to Grizzly Hills"] = true
+L["Portal to Hinterlands"] = true
+L["Portal to Moonglade"] = true
+L["Portal to Dreamgrove"] = true
 
 -------------------------------------------------WoD------------------------------------------------
 
@@ -170,6 +201,7 @@ L["Portal to Stormshield"] = true
 L["Portal to Vol'mar"] = true
 L["Portal to Lion's watch"] = true
 L["Ogre Waygate"] = true
+L["Reflective Portal"] = true
 
 -------------------------------------------------MoP------------------------------------------------
 
@@ -243,7 +275,7 @@ L["Portal to Darnassus"] = true
 
 L["Boat to Ratchet"] = true
 
-L["Boat to Theramore"] = true
+L["Boat to Theramore Isle"] = true
 
 L["Portal to Caverns of Time"] = true
 

@@ -776,6 +776,7 @@ function addon:getPseudorandomRitualFervor(follower, field)
         {alive = {5, 8, 11}, target = 8},
         {alive = {5, 7, 8, 11}, target = 11},
         {alive = {6, 7, 8, 11, 12}, target = 7},
+        {alive = {7, 8, 9, 10, 11}, target = 8},
         
         -- observed in 2281
         -- see https://github.com/teelolws/TLDRMissions/issues/98
@@ -816,6 +817,7 @@ function addon:getPseudorandomRitualFervor(follower, field)
         {alive = {5, 6, 8, 9, 10, 11}, target = 6},
         {alive = {5, 8, 9, 10}, target = 10},
         {alive = {5, 8, 10, 11, 12}, target = 8},
+        {alive = {8, 9}, target = 9},
         
         -- observed in 2258 [Environment Effect]
         {alive = {5, 6, 7, 8, 9, 10}, target = 6},
@@ -978,6 +980,7 @@ function addon:getPseudorandomLashOut(follower, field)
         {alive = {0, 4, 8}, target = 4},
         {alive = {0, 3, 5, 6, 7, 10}, target = 3},
         {alive = {0, 1, 2, 3, 5, 10}, target = 1},
+        {alive = {0, 1, 3, 4, 7}, target = 1},
 
         -- observed in 2224 (Panic Attack)
         -- see https://github.com/TLDRMissions/TLDRMissions/issues/120
@@ -1080,6 +1083,22 @@ function addon:getPseudorandomLashOut(follower, field)
         {alive = {0, 1, 2, 4, 9, 10, 11, 12}, target = 12},
         {alive = {0, 1, 4, 12}, target = 12},
         {alive = {0, 1, 10, 11}, target = 11},
+        {alive = {0, 1, 2, 4, 6, 7}, target = 1},
+        {alive = {0, 1, 2, 12}, target = 12},
+        {alive = {0, 1, 4, 6, 7}, target = 1},
+        {alive = {0, 1, 3, 4, 7, 9, 10, 11, 12}, target = 7},
+        {alive = {1, 10}, target = 10},
+        {alive = {0, 1, 6, 7, 11}, target = 1},
+        {alive = {1, 7}, target = 7},
+        {alive = {0, 1, 9, 12}, target = 12},
+        {alive = {0, 1, 4, 9, 11}, target = 1},
+        {alive = {0, 2, 3, 10, 11, 12}, target = 2},
+        {alive = {0, 1, 2, 7, 11}, target = 1},
+        {alive = {0, 2, 3, 6, 10, 11}, target = 2},
+        {alive = {0, 3, 6, 10, 11}, target = 3},
+        {alive = {0, 1, 9, 11, 12}, target = 1},
+        {alive = {0, 9, 11, 12}, target = 12},
+        {alive = {1, 4, 10, 11}, target = 11},
     }
     
     local aliveMinions = {}

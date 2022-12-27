@@ -43,6 +43,7 @@ L['trinket'] = 'Abalorio'
 L['activation_unknown'] = nil
 L['requirement_not_found'] = nil
 L['multiple_spawns'] = nil
+L['shared_drops'] = nil
 
 L['Requires'] = nil
 L['ranked_research'] = nil
@@ -59,9 +60,11 @@ L['daily'] = nil
 L['weekly'] = 'Semanal'
 L['normal'] = 'Normal'
 L['hard'] = 'Difícil'
+L['heirloom'] = nil
 L['mount'] = 'Montura'
 L['pet'] = 'Mascota'
 L['spell'] = nil
+L['title'] = nil
 L['toy'] = 'Juguete'
 L['rep'] = nil
 L['completed'] = 'Terminado'
@@ -72,6 +75,11 @@ L['unobtainable'] = 'No se puede obtener'
 L['unlearnable'] = 'No se puede aprender'
 L['defeated'] = nil
 L['undefeated'] = nil
+L['elite'] = nil
+
+L['follower_type_follower'] = nil
+L['follower_type_champion'] = nil
+L['follower_type_companion'] = nil
 
 -------------------------------------------------------------------------------
 --------------------------------- CONTEXT MENU --------------------------------
@@ -79,6 +87,7 @@ L['undefeated'] = nil
 
 L['context_menu_set_waypoint'] = nil
 L['context_menu_add_tomtom'] = 'Agregar a TomTom'
+L['context_menu_add_group_tomtom'] = nil
 L['context_menu_hide_node'] = 'Ocultar este nodo'
 L['context_menu_restore_hidden_nodes'] = 'Restaurar todos los nodos ocultos'
 
@@ -172,6 +181,8 @@ L['options_toggle_show_notes_desc'] = 'Agregar las notas útiles al tooltip cuan
 --------------------------------- DEVELOPMENT ---------------------------------
 
 L['options_dev_settings'] = 'Desarrollo'
+L['options_toggle_show_debug_currency'] = nil
+L['options_toggle_show_debug_currency_desc'] = nil
 L['options_toggle_show_debug_map'] = 'Debug IDs del Mapa'
 L['options_toggle_show_debug_map_desc'] = 'Muestra información de debug para los mapas'
 L['options_toggle_show_debug_quest'] = 'Debug IDs de las Misiones'

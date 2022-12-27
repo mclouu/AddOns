@@ -1,4 +1,4 @@
-Get [VuhDo release v3.138](https://www.curseforge.com/wow/addons/vuhdo/download/3970675) now with support for Shadowlands Season 4 patch 9.2.7!
+Get [VuhDo release v3.143](https://www.curseforge.com/wow/addons/vuhdo/download/4060917) now with support for Dragonflight Pre-Patch 10.0.0!
 
 To get started read the updated [guide over at Icy-Veins](https://www.icy-veins.com/forums/topic/11805-vuhdo-a-comprehensive-guide/).
 
@@ -33,7 +33,7 @@ What VuhDo can do:
 - Shields
 
 2. Casting
-- You can heal, decurse, target, assist or focus raid memers with just one click
+- You can heal, decurse, target, assist or focus raid members with just one click
 - You can bind any usable item and any macro to mouse clicks
 - You can assign up to 40 mouse click combinations to cast on raid members
 - You can assign up to 16 keys to cast when mouse over

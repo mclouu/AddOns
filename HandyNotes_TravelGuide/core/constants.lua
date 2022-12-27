@@ -37,13 +37,17 @@ constants.defaults = {
         show_warfront = true,
         show_petBattlePortal = true,
         show_ogreWaygate = true,
+        show_reflectivePortal = true,
         show_tram = true,
         show_boat = true,
         show_aboat = true,
         show_zeppelin = true,
         show_hzeppelin = true,
         show_note = true,
+        remove_unknown = false,
+        remove_AreaPois = true,
         easy_waypoint = true,
+        easy_waypoint_dropdown = 1,
         show_animaGateway = true,
         show_teleportPlatform = true,
         show_molemachine = true,
@@ -76,29 +80,14 @@ constants.icongroup = {
     "teleportPlatform"
 }
 
-local left, right, top, bottom = GetObjectIconTextureCoords("4772") --MagePortalAlliance
-local left2, right2, top2, bottom2 = GetObjectIconTextureCoords("4773") --MagePortalHorde
-local MagePortalAlliance = {
-        icon = [[Interface\MINIMAP\OBJECTICONSATLAS]],
-        tCoordLeft = left,
-        tCoordRight = right,
-        tCoordTop = top,
-        tCoordBottom = bottom,
-    }
-
 constants.icon = {
-    portal = MagePortalAlliance,
-    orderhall = MagePortalAlliance,
-    petBattlePortal = MagePortalAlliance,
-    ogreWaygate = MagePortalAlliance,
-    MagePortalHorde = {
-        icon = [[Interface\MINIMAP\OBJECTICONSATLAS]],
-        tCoordLeft = left2,
-        tCoordRight = right2,
-        tCoordTop = top2,
-        tCoordBottom = bottom2,
-    },
-    mixedPortal       = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_mixed",
+    portal            = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_blue",
+    orderhall         = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_blue",
+    petBattlePortal   = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_blue",
+    portal_red        = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_red",
+    ogreWaygate       = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_ogre",
+    portal_purple     = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_purple",
+    portal_mixed      = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\portal_mixed",
     boat              = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\boat",
     aboat             = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\boat_alliance",
     boat_x            = "Interface\\AddOns\\"..FOLDER_NAME.."\\icons\\boat_grey_x",

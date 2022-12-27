@@ -1,8 +1,6 @@
 # Immersion
 
-## [1.4.5](https://github.com/seblindfors/Immersion/tree/1.4.5) (2022-09-03)
-[Full Changelog](https://github.com/seblindfors/Immersion/compare/1.4.4...1.4.5) [Previous Releases](https://github.com/seblindfors/Immersion/releases)
+## [1.4.18](https://github.com/seblindfors/Immersion/tree/1.4.18) (2022-12-04)
+[Full Changelog](https://github.com/seblindfors/Immersion/compare/1.4.17...1.4.18) [Previous Releases](https://github.com/seblindfors/Immersion/releases)
 
-- Fix classic check on internal API  
-- Revert "Fix classic check on internal API"  
-- Fix classic check on internal API  
+- Reverse logic for handling custom gossip types  

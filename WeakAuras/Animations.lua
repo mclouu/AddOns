@@ -1,4 +1,5 @@
 if not WeakAuras.IsLibsOK() then return end
+--- @type string, Private
 local AddonName, Private = ...
 local L = WeakAuras.L
 
@@ -9,7 +10,7 @@ local anim_function_strings = Private.anim_function_strings;
 
 local function noopErrorHandler() end
 
-local frame = WeakAuras.frames["WeakAuras Main Frame"]
+local frame = Private.frames["WeakAuras Main Frame"]
 
 local updatingAnimations;
 local last_update = GetTime();
@@ -121,7 +122,8 @@ local function UpdateAnimations()
       startR, startG, startB, startA = startR or 1, startG or 1, startB or 1, startA or 1;
       local ok, r, g, b, a = xpcall(anim.colorFunc, errorHandler, progress, startR, startG, startB, startA, anim.colorR, anim.colorG, anim.colorB, anim.colorA);
       if (ok) then
-        anim.region:ColorAnim(r, g, b, a);
+        local errorHandler = Private.GetErrorHandlerId(anim.region.id, "Custom Color")
+        xpcall(anim.region.ColorAnim, errorHandler, anim.region, r, g, b, a)
       end
     end
     Private.ActivateAuraEnvironment(nil);
@@ -314,7 +316,7 @@ function Private.Animate(namespace, uid, type, anim, region, inverse, onFinished
     if(namespace == "display" and type == "main" and not onFinished and not anim.duration_type == "relative") then
       local data = Private.GetDataByUID(uid);
       if(data and data.parent) then
-        local parentRegion = WeakAuras.regions[data.parent].region;
+        local parentRegion = WeakAuras.GetRegion(data.parent)
         if(parentRegion and parentRegion.controlledRegions) then
           for index, regionData in pairs(parentRegion.controlledRegions) do
             local childRegion = regionData.region;

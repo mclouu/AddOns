@@ -1,10 +1,13 @@
 # HandyNotes: Mists of Pandaria (Treasures and Rares)
 
-## [v22](https://github.com/kemayo/wow-handynotes-lostandfound/tree/v22) (2022-09-27)
-[Full Changelog](https://github.com/kemayo/wow-handynotes-lostandfound/compare/v21...v22) [Previous Releases](https://github.com/kemayo/wow-handynotes-lostandfound/releases)
+## [v25](https://github.com/kemayo/wow-handynotes-lostandfound/tree/v25) (2022-12-19)
+[Full Changelog](https://github.com/kemayo/wow-handynotes-lostandfound/compare/v24.1...v25) [Previous Releases](https://github.com/kemayo/wow-handynotes-lostandfound/releases)
 
-- Update handler and include new external  
-    * Just use the TOC title for the tooltips  
-    * Show a tooltip on the map icon  
-    * Don't create the point dropdown until it's needed  
-    * Use LibUIDropDownMenu-4.0 to avoid the taint mess of UIDropDownMenu  
+- Update handler  
+    Highlights:  
+    * Avoid some unusual errors when checking achievement criteria  
+    * Use Blizzard waypoints if they're available and TomTom isn't installed  
+    * New menu item: make a waypoint for all related points  
+    * Routes can now appear on the minimap  
+    ("Unify all my criteria checks so they can *all* be pcalled" to "Fix the  
+    debug-mode check")  

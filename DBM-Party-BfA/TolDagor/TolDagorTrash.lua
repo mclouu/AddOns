@@ -1,16 +1,14 @@
 local mod	= DBM:NewMod("TolDagorTrash", "DBM-Party-BfA", 9)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20190720003055")
+mod:SetRevision("20220920232426")
 --mod:SetModelID(47785)
-mod:SetZone()
 
 mod.isTrashMod = true
 
 mod:RegisterEvents(
 	"SPELL_CAST_START 259711 258128 258153 258317 258313 258634 258869 258917 258935",
 	"SPELL_AURA_APPLIED 258153 265889 258133 259188"
---	"SPELL_CAST_SUCCESS"
 )
 
 --local warnRiotShield				= mod:NewSpellAnnounce(258317, 4)
@@ -28,7 +26,7 @@ local specWarnFuselighter			= mod:NewSpecialWarningInterrupt(258634, "HasInterru
 local specWarnInnerFlames			= mod:NewSpecialWarningInterrupt(258935, "HasInterrupt", nil, nil, 1, 2)
 local specWarnWateryDome			= mod:NewSpecialWarningDispel(258153, "MagicDispeller", nil, nil, 1, 2)
 local specWarnDarkStep				= mod:NewSpecialWarningDispel(258133, "MagicDispeller", nil, nil, 1, 2)
-local specWarnTorchStrike			= mod:NewSpecialWarningDispel(265889, "Healer", nil, nil, 1, 2)
+local specWarnTorchStrike			= mod:NewSpecialWarningDispel(265889, "RemoveMagic", nil, 2, 1, 2)
 local specWarnRiotShield			= mod:NewSpecialWarningReflect(258317, "CasterDps", nil, nil, 1, 2)
 
 function mod:SPELL_CAST_START(args)
@@ -78,21 +76,11 @@ function mod:SPELL_AURA_APPLIED(args)
 	elseif spellId == 258133 and not args:IsDestTypePlayer() and self:AntiSpam(5, 1) then
 		specWarnDarkStep:Show(args.destName)
 		specWarnDarkStep:Play("helpdispel")
-	elseif spellId == 265889 and args:IsDestTypePlayer() and self:CheckDispelFilter() and self:AntiSpam(5, 2) then
+	elseif spellId == 265889 and args:IsDestTypePlayer() and self:CheckDispelFilter("magic") and self:AntiSpam(5, 2) then
 		specWarnTorchStrike:Show(args.destName)
 		specWarnTorchStrike:Play("helpdispel")
-	elseif spellId == 259188 and self:AntiSpam(5, 4) then
+	elseif spellId == 259188 and self:IsValidWarning(args.sourceGUID) and self:AntiSpam(5, 4) then
 		specWarnHeavilyArmed:Show()
 		specWarnHeavilyArmed:Play("justrun")
 	end
 end
-
---[[
-function mod:SPELL_CAST_SUCCESS(args)
-	if not self.Options.Enabled then return end
-	local spellId = args.spellId
-	if spellId == 200343 then
-
-	end
-end
---]]

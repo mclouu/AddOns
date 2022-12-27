@@ -1,10 +1,9 @@
 local mod	= DBM:NewMod(2102, "DBM-Party-BfA", 2, 1001)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20190720003055")
+mod:SetRevision("20220209045257")
 mod:SetCreatureID(126832)
 mod:SetEncounterID(2093)
-mod:SetZone()
 
 mod:RegisterCombat("combat")
 
@@ -27,7 +26,6 @@ local warnPowderShot				= mod:NewSpellAnnounce(256106, 2)
 local specWarnCharge				= mod:NewSpecialWarningDodge(255952, nil, nil, nil, 2, 2)
 local specWarnDiveBomb				= mod:NewSpecialWarningDodge(272046, nil, nil, nil, 2, 2)
 --local specWarnPowderShot			= mod:NewSpecialWarningSpell(256106, nil, nil, nil, 2, 2)--Dodge?
---local yellSwirlingScythe			= mod:NewYell(195254)
 local specWarnBrew					= mod:NewSpecialWarningInterrupt(256060, "HasInterrupt", nil, nil, 1, 2)
 local specWarnGTFO					= mod:NewSpecialWarningGTFO(256016, nil, nil, nil, 1, 8)
 
@@ -35,7 +33,7 @@ local timerChargeCD					= mod:NewCDTimer(8.4, 255952, nil, nil, nil, 3)
 local timerDiveBombCD				= mod:NewCDTimer(17, 272046, nil, nil, nil, 3)
 local timerPowderShotCD				= mod:NewCDTimer(10.8, 256106, nil, nil, nil, 3)
 local timerVilebombardmentCD		= mod:NewCDTimer(5.9, 256005, nil, nil, nil, 3)
-local timerBrewCD					= mod:NewCDTimer(20.6, 256060, nil, nil, nil, 4, nil, DBM_CORE_INTERRUPT_ICON)
+local timerBrewCD					= mod:NewCDTimer(20.6, 256060, nil, nil, nil, 4, nil, DBM_COMMON_L.INTERRUPT_ICON)
 
 function mod:OnCombatStart(delay)
 	timerChargeCD:Start(4.7-delay)
@@ -87,14 +85,14 @@ function mod:SPELL_PERIODIC_DAMAGE(_, _, _, _, destGUID, _, _, _, spellId, spell
 end
 mod.SPELL_PERIODIC_MISSED = mod.SPELL_PERIODIC_DAMAGE
 
-function mod:UNIT_SPELLCAST_SUCCEEDED(uId, _, spellId)
+function mod:UNIT_SPELLCAST_SUCCEEDED(_, _, spellId)
 	if spellId == 256056 then--Spawn Parrot
 		timerChargeCD:Stop()
 		warnPhase2:Show()
 		warnPhase2:Play("ptwo")
 		timerVilebombardmentCD:Start(6.2)
 		timerPowderShotCD:Start(7.3)--5.4 (old)
-		timerBrewCD:Start(20.6)--15.8 (old)
+--		timerBrewCD:Start(9.7)--5-20. This timer just doesn't appear to be consistent at all, so not worth showing on stage 2 start
 		if not self:IsNormal() then
 			timerDiveBombCD:Start(17.7)
 		end

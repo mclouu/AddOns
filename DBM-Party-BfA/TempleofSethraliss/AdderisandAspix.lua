@@ -1,10 +1,9 @@
 local mod	= DBM:NewMod(2142, "DBM-Party-BfA", 6, 1001)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20190720003055")
+mod:SetRevision("20220217031102")
 mod:SetCreatureID(133379, 133944)
 mod:SetEncounterID(2124)
-mod:SetZone()
 mod:SetUsedIcons(8)
 
 mod:RegisterCombat("combat")
@@ -21,49 +20,47 @@ mod:RegisterEventsInCombat(
 
 --TODO, target scan/warn Gale Force target if possible
 --TODO, get a LONG pull so timer work can be actually figured out. VIDEO too
+--General
 local warnLightningShield			= mod:NewTargetNoFilterAnnounce(263246, 3)
---Aspix
-local warnConduction				= mod:NewTargetAnnounce(263371, 2)
---Adderis
 
+mod:AddRangeFrameOption("8")
+mod:AddInfoFrameOption(263246, true)
+mod:AddSetIconOption("SetIconOnNoLit", 263246, true, true, {8})
 --Aspix
+mod:AddTimerLine(DBM:EJ_GetSectionInfo(18484))
 ----Lighting
+local warnConduction				= mod:NewTargetAnnounce(263371, 2)
+
 local specWarnJolt					= mod:NewSpecialWarningInterrupt(263318, "HasInterrupt", nil, nil, 1, 2)
 local specWarnConduction			= mod:NewSpecialWarningMoveAway(263371, nil, nil, nil, 3, 2)
 local yellConduction				= mod:NewYell(263371)
 local yellConductionFades			= mod:NewShortFadesYell(263371)
 local specWarnStaticShock			= mod:NewSpecialWarningSpell(263257, nil, nil, nil, 2, 2)
+
+local timerConductionCD				= mod:NewCDTimer(13, 263371, nil, nil, nil, 3)--NYI
+local timerStaticShockCD			= mod:NewCDTimer(13, 263257, nil, nil, nil, 2, nil, DBM_COMMON_L.HEALER_ICON)
 ----Wind
 local specWarnGust					= mod:NewSpecialWarningInterrupt(263775, "HasInterrupt", nil, nil, 1, 2)
 local specWarnGaleForce				= mod:NewSpecialWarningSpell(263776, nil, nil, nil, 2, 2)
+
+local timerGaleForceCD				= mod:NewCDTimer(14.5, 263776, nil, nil, nil, 3, nil, DBM_COMMON_L.HEROIC_ICON)
 --Adderis
---local specWarnGTFO				= mod:NewSpecialWarningGTFO(238028, nil, nil, nil, 1, 8)
+mod:AddTimerLine(DBM:EJ_GetSectionInfo(18485))
+----Lightning
+local specWarnPearlofThunder		= mod:NewSpecialWarningRun(263365, nil, nil, nil, 4, 2)
+
+local timerArcDashCD				= mod:NewCDTimer(23, 263424, nil, nil, nil, 3)
+----Wind
 local specWarnCycloneStrike			= mod:NewSpecialWarningYou(263573, nil, nil, nil, 3, 2)
 local specWarnCycloneStrikeOther	= mod:NewSpecialWarningDodge(263573, nil, nil, nil, 3, 2)
 local yellCycloneStrike				= mod:NewYell(263573)
-local specWarnPearlofThunder		= mod:NewSpecialWarningRun(263365, nil, nil, nil, 4, 2)
 
---Aspix
-----Lighting
-local timerConductionCD				= mod:NewCDTimer(13, 263371, nil, nil, nil, 3)--NYI
-local timerStaticShockCD			= mod:NewCDTimer(13, 263257, nil, nil, nil, 2, nil, DBM_CORE_HEALER_ICON)
-----Wind
-local timerGaleForceCD				= mod:NewCDTimer(16.4, 263776, nil, nil, nil, 3, nil, DBM_CORE_HEROIC_ICON)
---Adderis
-----Wind
-local timerArcingBladeCD			= mod:NewCDTimer(13.4, 263234, nil, nil, nil, 5, nil, DBM_CORE_HEROIC_ICON)
-local timerCycloneStrikeCD			= mod:NewCDTimer(14.6, 263573, nil, nil, nil, 3, nil, DBM_CORE_DEADLY_ICON)
-----Lighting
-local timerPearlofThunderCD			= mod:NewAITimer(13, 263365, nil, nil, nil, 2, nil, DBM_CORE_DEADLY_ICON)
-local timerArcDashCD				= mod:NewCDTimer(23, 263424, nil, nil, nil, 3)
-
-mod:AddRangeFrameOption("8")
-mod:AddInfoFrameOption(263246, true)
-mod:AddSetIconOption("SetIconOnNoLit", 263246, true, true, {8})
+local timerArcingBladeCD			= mod:NewCDTimer(13.4, 263234, nil, nil, nil, 5, nil, DBM_COMMON_L.HEROIC_ICON)
+local timerCycloneStrikeCD			= mod:NewCDTimer(13.3, 263573, nil, nil, nil, 3, nil, DBM_COMMON_L.DEADLY_ICON)
 
 mod.vb.noLitShield = nil
 
-function mod:CycloneTarget(targetname, uId)
+function mod:CycloneTarget(targetname)
 	if not targetname then return end
 	if targetname == UnitName("player") then
 		specWarnCycloneStrike:Show()
@@ -78,14 +75,14 @@ end
 function mod:OnCombatStart(delay)
 	self.vb.noLitShield = nil
 	--Adderis should be in winds, Aspix timers started by Lightning Shield buff
-	timerCycloneStrikeCD:Start(9-delay)
+	timerCycloneStrikeCD:Start(8.5-delay)
 	if not self:IsNormal() then
 		timerArcingBladeCD:Start(7.3-delay)
 	end
 	--Aspix
-	timerArcDashCD:Start(14-delay)--Seems to be used regardless of shield
+--	timerArcDashCD:Start(14-delay)--Can be used instantly on pull, so no timer
 	if self.Options.InfoFrame then
-		DBM.InfoFrame:SetHeader(DBM_CORE_INFOFRAME_POWER)
+		DBM.InfoFrame:SetHeader(DBM_CORE_L.INFOFRAME_POWER)
 		DBM.InfoFrame:Show(3, "enemypower", 10)
 	end
 end
@@ -103,12 +100,12 @@ function mod:SPELL_AURA_APPLIED(args)
 	local spellId = args.spellId
 	if spellId == 263246 then--Lightning Shield
 		warnLightningShield:Show(args.destName)
+		warnLightningShield:Play("targetchange")
 		local cid = self:GetCIDFromGUID(args.destGUID)
 		--Start lightning timers and stop wind
 		if cid == 133379 then--Adderis
 			timerArcingBladeCD:Stop()
 			timerCycloneStrikeCD:Stop()
-			timerPearlofThunderCD:Start(2)
 			--timerArcDashCD:Start(11.2)
 			if self.Options.RangeFrame then
 				DBM.RangeCheck:Show(8)
@@ -119,7 +116,7 @@ function mod:SPELL_AURA_APPLIED(args)
 			if not self:IsNormal() then
 				--No Doubt wrong
 				timerGaleForceCD:Stop()
-				timerGaleForceCD:Start(26.7)
+				timerGaleForceCD:Start(26)
 			end
 		end
 	elseif spellId == 263371 then
@@ -136,7 +133,6 @@ function mod:SPELL_AURA_APPLIED(args)
 		end
 	end
 end
---mod.SPELL_AURA_APPLIED_DOSE = mod.SPELL_AURA_APPLIED
 
 function mod:SPELL_AURA_REMOVED(args)
 	local spellId = args.spellId
@@ -145,7 +141,6 @@ function mod:SPELL_AURA_REMOVED(args)
 		local cid = self:GetCIDFromGUID(args.destGUID)
 		--Start wind timers and stop lightning
 		if cid == 133379 then--Adderis
-			timerPearlofThunderCD:Stop()
 			--timerArcDashCD:Stop()
 			--timerCycloneStrikeCD:Start(2)
 			if not self:IsNormal() then
@@ -188,7 +183,6 @@ function mod:SPELL_CAST_START(args)
 	elseif spellId == 263365 then
 		specWarnPearlofThunder:Show()
 		specWarnPearlofThunder:Play("justrun")
-		timerPearlofThunderCD:Start()
 	end
 end
 
@@ -201,20 +195,9 @@ function mod:SPELL_CAST_SUCCESS(args)
 	end
 end
 
---[[
-function mod:SPELL_PERIODIC_DAMAGE(_, _, _, _, destGUID, _, _, _, spellId)
-	if spellId == 228007 and destGUID == UnitGUID("player") and self:AntiSpam(2, 4) then
-		specWarnGTFO:Show()
-		specWarnGTFO:Play("watchfeet")
-	end
-end
-mod.SPELL_PERIODIC_MISSED = mod.SPELL_PERIODIC_DAMAGE
---]]
-
 function mod:UNIT_DIED(args)
 	local cid = self:GetCIDFromGUID(args.destGUID)
 	if cid == 133379 then--Adderis
-		timerPearlofThunderCD:Stop()
 		timerArcDashCD:Stop()
 		timerCycloneStrikeCD:Stop()
 		timerArcingBladeCD:Stop()
@@ -225,7 +208,7 @@ function mod:UNIT_DIED(args)
 	end
 end
 
-function mod:UNIT_SPELLCAST_SUCCEEDED(uId, _, spellId)
+function mod:UNIT_SPELLCAST_SUCCEEDED(_, _, spellId)
 	if spellId == 263776 then--Gale Force
 		specWarnGaleForce:Show()
 		specWarnGaleForce:Play("specialsoon")
@@ -241,7 +224,7 @@ do
 					self.vb.noLitShield = nil
 					local icon = GetRaidTargetIndex(uId)
 					if not icon then
-						SetRaidTarget(uId.."target", 8)
+						self:SetIcon(uId.."target", 8)
 						break
 					end
 				end

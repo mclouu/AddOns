@@ -1,5 +1,5 @@
 ## Interface: 20504
-## Version: 9.2.7.0
+## Version: 10.0.2.0
 ## Title: Broker: Played Time
 ## Author: Phanx, LudiusMaximus
 ## Notes: DataBroker plugin to track played time across all your characters.

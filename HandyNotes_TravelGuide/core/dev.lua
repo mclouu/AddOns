@@ -53,9 +53,16 @@ local function devmode()
 
     SLASH_TG1 = "/tg"
     SlashCmdList["TG"] = function(msg)
-        InterfaceOptionsFrame_Show()
-        InterfaceOptionsFrame_OpenToCategory('HandyNotes')
+        Settings.OpenToCategory('HandyNotes')
         LibStub('AceConfigDialog-3.0'):SelectGroup('HandyNotes', 'plugins', 'TravelGuide')
+    end
+
+end
+
+function addon:debugmsg(msg)
+
+    if private.global.dev and private.db.show_prints then
+        print("|CFFFF6666TravelGuide: |r"..msg)
     end
 
 end

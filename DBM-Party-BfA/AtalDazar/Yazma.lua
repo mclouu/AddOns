@@ -1,10 +1,9 @@
 local mod	= DBM:NewMod(2030, "DBM-Party-BfA", 1, 968)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20190720003055")
+mod:SetRevision("20220209045257")
 mod:SetCreatureID(122968)
 mod:SetEncounterID(2087)
-mod:SetZone()
 
 mod:RegisterCombat("combat")
 
@@ -27,16 +26,16 @@ local specWarnSkewer				= mod:NewSpecialWarningDefensive(249919, "Tank", nil, ni
 local specWarnEchoes				= mod:NewSpecialWarningDodge(250050, nil, nil, nil, 2, 2)
 local specWarnGTFO					= mod:NewSpecialWarningGTFO(250036, nil, nil, nil, 1, 8)
 
-local timerSoulrendCD				= mod:NewCDTimer(41.3, 249923, nil, nil, nil, 3, nil, DBM_CORE_DAMAGE_ICON)
-local timerWrackingPainCD			= mod:NewCDTimer(17, 250096, nil, "HasInterrupt", nil, 4, nil, DBM_CORE_INTERRUPT_ICON)--17-23
-local timerSkewerCD					= mod:NewCDTimer(12, 249919, nil, "Tank", nil, 5, nil, DBM_CORE_TANK_ICON)
+local timerSoulrendCD				= mod:NewCDTimer(40.6, 249923, nil, nil, nil, 3, nil, DBM_COMMON_L.DAMAGE_ICON)
+local timerWrackingPainCD			= mod:NewCDTimer(16.7, 250096, nil, "HasInterrupt", nil, 4, nil, DBM_COMMON_L.INTERRUPT_ICON)--17-23
+local timerSkewerCD					= mod:NewCDTimer(12, 249919, nil, "Tank", nil, 5, nil, DBM_COMMON_L.TANK_ICON)
 local timerEchoesCD					= mod:NewCDTimer(32.8, 250050, nil, nil, nil, 3)
 
 function mod:OnCombatStart(delay)
 	timerWrackingPainCD:Start(3.5-delay)
 	timerSkewerCD:Start(5-delay)
-	timerSoulrendCD:Start(10-delay)
-	timerEchoesCD:Start(16.9-delay)
+	timerSoulrendCD:Start(9.6-delay)
+	timerEchoesCD:Start(15.6-delay)
 end
 
 function mod:SPELL_AURA_APPLIED(args)
@@ -51,7 +50,7 @@ function mod:SPELL_CAST_START(args)
 	local spellId = args.spellId
 	if spellId == 249923 or spellId == 259187 then
 		timerSoulrendCD:Start()
-		if not self:IsNormal() then
+		if not self:IsNormal() and not self:IsTank() then
 			specWarnSoulRend:Show()
 			specWarnSoulRend:Play("runout")
 		end
@@ -94,17 +93,3 @@ function mod:SPELL_PERIODIC_DAMAGE(_, _, _, _, destGUID, _, _, _, spellId, spell
 	end
 end
 mod.SPELL_PERIODIC_MISSED = mod.SPELL_PERIODIC_DAMAGE
-
---[[
-function mod:UNIT_DIED(args)
-	local cid = self:GetCIDFromGUID(args.destGUID)
-	if cid == 124396 then
-
-	end
-end
-
-function mod:UNIT_SPELLCAST_SUCCEEDED(uId, _, spellId)
-	if spellId == 257939 then
-	end
-end
---]]

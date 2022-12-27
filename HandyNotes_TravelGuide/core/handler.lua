@@ -4,9 +4,10 @@
 
 local FOLDER_NAME, private = ...
 
-local addon = LibStub("AceAddon-3.0"):NewAddon(FOLDER_NAME, "AceEvent-3.0", "AceTimer-3.0")
-local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
+local addon = LibStub("AceAddon-3.0"):NewAddon(FOLDER_NAME, "AceEvent-3.0")
 local AceDB = LibStub("AceDB-3.0")
+local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes")
+local HBD = LibStub('HereBeDragons-2.0')
 local L = LibStub("AceLocale-3.0"):GetLocale(FOLDER_NAME)
 private.locale = L
 
@@ -16,7 +17,7 @@ _G.HandyNotes_TravelGuide = addon
 
 local IsQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted
 
-local MagePortalHorde  = private.constants.icon.MagePortalHorde
+local portal_red       = private.constants.icon.portal_red
 local BoatX            = private.constants.icon.boat_x
 local molemachineX     = private.constants.icon.molemachine_x
 
@@ -30,9 +31,75 @@ local notavailable      = L["handler_tooltip_not_available"]
 local RequiresPlayerLvl = L["handler_tooltip_requires_level"]
 local RequiresQuest     = L["handler_tooltip_quest"]
 local RequiresRep       = L["handler_tooltip_rep"]
+local RequiresToy       = L["handler_tooltip_toy"]
 local RetrievindData    = L["handler_tooltip_data"]
 local sanctum_feature   = L["handler_tooltip_sanctum_feature"]
 local TNRank            = L["handler_tooltip_TNTIER"]
+
+local areaPoisToRemove = {
+    -- Alliance
+    5846, -- Vol'dun
+    5847, -- Nazmir
+    5848, -- Zuldazar
+    5873, -- Dustwallow Marsh, Boat to Menethil Harbor, Wetlands
+    5874, -- Wetlands, Boat to Theramore Isle, Dustwallow Marsh
+    5875, -- Wetlands, Boat to Daggercap Bay, Howling Fjord
+    5876, -- Howling Fjord, Boat to Menethil Harbor, Wetlands
+    5877, -- Borean Tundra, Boat to Stormwind City
+    5878, -- Stormwind, Boat to Valiance Keep, Borean Tundra
+    5879, -- Stormwind, Boat to Boralus Harbor, Tiragarde Sound
+    5880, -- Tiragarde Sound, Boat to Stormwind City
+    5892, -- The Jade Forest, Portal to Stormwind City
+    6014, -- Stormwind Portal Room
+    7340, -- Thaldraszus, Boat to Stormwind
+
+    -- Horde
+    5843, -- Drustvar
+    5844, -- Tiragarde Sound
+    5845, -- Stormsong Valley
+    5883, -- Northern Stranglethorn, Zeppelin to Orgrimmar
+    5884, -- Orgrimmar, Zeppelin to Grom'gol, Schlingendorntal
+    5885, -- Orgrimmar, Zeppelin to Warsong Hold, Borean Tundra
+    5886, -- Borean Tundra, Zeppelin to Orgrimmar
+    5887, -- Echo Isles, Boat to Dazar'alor, Zuldazar
+    5888, -- Zuldazar, Boat to Echo Isles, Durotar
+    5890, -- The Jade Forest, Portal to Orgrimmar
+    6015, -- Orgrimmar Portal Room
+    6138, -- Mechagon
+    7339, -- Thaldraszus, Zeppelin to Orgrimmar
+    7341, -- Durotar, Zeppelin to the Waking Shores, Dragon Isles
+
+    -- Neutral
+    5881, -- The Cape of Stranglethorn, Boat to Ratschet
+    5882 -- Northern Barrens, Boat to Booty Bay
+}
+
+----------------------------------------------------------------------------------------------------
+---------------------------------------------HookScript---------------------------------------------
+----------------------------------------------------------------------------------------------------
+
+-- This will remove specified AreaPois on the WorldMapFrame
+local function RemoveAreaPOIs()
+    if (not private.db.remove_AreaPois) then return end
+
+    for pin in WorldMapFrame:EnumeratePinsByTemplate("AreaPOIPinTemplate") do
+        for _, poiID in ipairs(areaPoisToRemove) do
+            local poi = C_AreaPoiInfo.GetAreaPOIInfo(WorldMapFrame:GetMapID(), pin.areaPoiID)
+            if (poi ~= nil and poi.areaPoiID == poiID) then
+                WorldMapFrame:RemovePin(pin)
+                addon:debugmsg("removed AreaPoi "..poiID.." "..poi.name)
+            end
+        end
+    end
+end
+
+hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
+    RemoveAreaPOIs()
+end)
+
+WorldMapFrame:HookScript("OnShow", function()
+    RemoveAreaPOIs()
+end)
 
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------FUNCTIONS---------------------------------------------
@@ -64,6 +131,7 @@ local function ReqFulfilled(req, ...)
     or (req.timetravel and UnitLevel("player") >= 50 and IsQuestCompleted(req.timetravel.quest) and not req.warfront and req.timetravel.turn)
     or (req.warfront and GetWarfrontState(req.warfront) ~= select(1, UnitFactionGroup("player")))
     or (req.spell and not IsSpellKnown(req.spell))
+    or (req.toy and not PlayerHasToy(req.toy))
     then
         return false
     end
@@ -80,6 +148,10 @@ local function ReqFulfilled(req, ...)
     end
 
 	return true
+end
+
+local function RefreshAfter(time)
+    C_Timer.After(time, function() addon:Refresh() end)
 end
 
 -- workaround to prepare the multilabels with and without notes
@@ -119,7 +191,7 @@ local function Prepare(label, note, level, quest)
                 QUEST = "\n    |cFFFF0000"..RequiresQuest..": ["..title.."] (ID: "..quest[i]..")|r" -- red
             else
                 QUEST = "\n    |cFFFF00FF"..RetrievindData.."|r" -- pink
-                C_Timer.After(1, function() addon:Refresh() end) -- Refresh
+                RefreshAfter(1) -- Refresh
             end
         else
             QUEST = ''
@@ -145,7 +217,7 @@ local function SetIcon(point)
 end
 
 local function GetIconScale(icon)
-    if (icon == "portal" or icon == "orderhall" or icon == "mixedPortal" or icon == "petBattlePortal" or icon == "ogreWaygate") then
+    if (icon == "portal" or icon == "orderhall" or icon == "portal_mixed" or icon == "petBattlePortal" or icon == "ogreWaygate" or icon == "portal_purple") then
         return private.db["icon_scale_portal"]
     elseif (icon == "boat" or icon == "aboat") then
         return private.db["icon_scale_boat"]
@@ -157,7 +229,7 @@ local function GetIconScale(icon)
 end
 
 local function GetIconAlpha(icon)
-    if (icon == "portal" or icon == "orderhall" or icon == "mixedPortal" or icon == "petBattlePortal" or icon == "ogreWaygate") then
+    if (icon == "portal" or icon == "orderhall" or icon == "portal_mixed" or icon == "petBattlePortal" or icon == "ogreWaygate" or icon == "portal_purple") then
         return private.db["icon_alpha_portal"]
     elseif (icon == "boat" or icon == "aboat") then
         return private.db["icon_alpha_boat"]
@@ -174,7 +246,7 @@ local GetPointInfo = function(point)
     if (point) then
         local label = point.label or point.multilabel and Prepare(point.multilabel) or UNKNOWN
         if (point.requirements and not ReqFulfilled(point.requirements)) then
-            icon = ((point.icon == "portal" or point.icon == "orderhall" or point.icon == "mixedPortal" or point.icon == "petBattlePortal" or point.icon == "ogreWaygate") and MagePortalHorde)
+            icon = ((point.icon == "portal" or point.icon == "orderhall" or point.icon == "portal_mixed" or point.icon == "petBattlePortal" or point.icon == "ogreWaygate" or point.icon == "portal_purple") and portal_red)
             or (point.icon == "boat" and BoatX)
             or (point.icon == "molemachine" and molemachineX)
         else
@@ -184,7 +256,7 @@ local GetPointInfo = function(point)
     end
 end
 
-local GetPoinInfoByCoord = function(uMapID, coord)
+local GetPointInfoByCoord = function(uMapID, coord)
     return GetPointInfo(private.DB.points[uMapID] and private.DB.points[uMapID][coord])
 end
 
@@ -201,7 +273,7 @@ local function SetTooltip(tooltip, point)
         if (point.note and private.db.show_note) then
             tooltip:AddLine("("..point.note..")")
         end
-        if (point.multilabel and point.icon ~= "mixedPortal") then
+        if (point.multilabel and point.icon ~= "portal_mixed") then
             if (pointreq) then
                 tooltip:AddLine(Prepare(point.multilabel, point.multinote, pointreq.multilevel, pointreq.multiquest))
             else
@@ -211,7 +283,7 @@ local function SetTooltip(tooltip, point)
         if (point.npc) then
             tooltip:SetHyperlink(("unit:Creature-0-0-0-0-%d"):format(point.npc))
         end
-        if (point.icon == "mixedPortal") then
+        if (point.icon == "portal_mixed") then
             tooltip:AddDoubleLine(Prepare(point.multilabel, point.multinote), SetWarfrontNote(), nil,nil,nil,1) -- only the second line is red
         end
         if (pointreq) then
@@ -227,15 +299,14 @@ local function SetTooltip(tooltip, point)
                         tooltip:AddLine(RequiresQuest..": ["..C_QuestLog.GetTitleForQuestID(pointreq.quest).."] (ID: "..pointreq.quest..")",1,0,0)
                     else
                         tooltip:AddLine(RetrievindData,1,0,1) -- pink
-                        C_Timer.After(1, function() addon:Refresh() end) -- Refresh
-                        -- print("refreshed")
+                        RefreshAfter(1) -- Refresh
                     end
                 elseif (pointreq.item) then -- OgreWaygate
-                    local name = C_Item.GetItemNameByID(pointreq.item[1]) or "UNKNOWN"
+                    local name = C_Item.GetItemNameByID(pointreq.item[1]) or RetrievindData
                     local quantity = pointreq.item[2]
-                    if (name == "UNKNOWN") then
-                        C_Timer.After(1, function() addon:Refresh() end) -- Refresh
-                    end
+
+                    if (name == RetrievindData) then RefreshAfter(1) end
+
                     tooltip:AddLine(requires..': '..quantity..'x '..name, 1) -- red
                 elseif (point.icon == "molemachine") then
                     tooltip:AddLine(L["handler_tooltip_not_discovered"], 1) -- red
@@ -263,6 +334,16 @@ local function SetTooltip(tooltip, point)
                 local isKnown = IsSpellKnown(pointreq.spell)
                 if (spellName and not isKnown) then
                     tooltip:AddLine(requires..': '..spellName, 1) -- red
+                end
+            end
+            if (pointreq.toy) then
+                local toyName = GetItemInfo(pointreq.toy) or RetrievindData
+                local isKnown = PlayerHasToy(pointreq.toy)
+
+                if (toyName == RetrievindData) then RefreshAfter(1) end
+
+                if (not isKnown) then
+                    tooltip:AddLine(RequiresToy..': '..toyName, 1) -- red
                 end
             end
             if (point.covenant and pointreq.sanctumtalent) then
@@ -323,12 +404,26 @@ local function addTomTomWaypoint(button, uMapID, coord)
     if (IsAddOnLoaded("TomTom")) then
         local x, y = HandyNotes:getXY(coord)
         TomTom:AddWaypoint(uMapID, x, y, {
-            title = GetPoinInfoByCoord(uMapID, coord),
+            title = GetPointInfoByCoord(uMapID, coord),
+            from = L["handler_context_menu_addon_name"],
             persistent = nil,
             minimap = true,
             world = true
         })
     end
+end
+
+local function addBlizzardWaypoint(button, uMapID, coord)
+    local x, y = HandyNotes:getXY(coord)
+    local parentMapID = C_Map.GetMapInfo(uMapID)["parentMapID"]
+    if (not C_Map.CanSetUserWaypointOnMap(uMapID)) then
+        local wx, wy = HBD:GetWorldCoordinatesFromZone(x, y, uMapID)
+        uMapID = parentMapID
+        x, y = HBD:GetZoneCoordinatesFromWorld(wx, wy, parentMapID)
+    end
+
+    C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(uMapID, x, y))
+    C_SuperTrack.SetSuperTrackedUserWaypoint(true)
 end
 
 --------------------------------------------CONTEXT MENU--------------------------------------------
@@ -339,45 +434,50 @@ do
     local function generateMenu(button, level)
         if (not level) then return end
         if (level == 1) then
-        -- local spacer = {text='', disabled=true, notClickable=true, notCheckable=true}
 
             -- Create the title of the menu
-            info = UIDropDownMenu_CreateInfo()
-            info.isTitle = true
-            info.text = L["handler_context_menu_addon_name"]
-            info.notCheckable = true
-            UIDropDownMenu_AddButton(info, level)
+            UIDropDownMenu_AddButton({
+                isTitle = true,
+                text = L["handler_context_menu_addon_name"],
+                notCheckable = true
+            }, level)
 
-            -- UIDropDownMenu_AddButton(spacer, level)
-
-            if (IsAddOnLoaded("TomTom") and not private.db.easy_waypoint) then
-                -- Waypoint menu item
-                info = UIDropDownMenu_CreateInfo()
-                info.text = L["handler_context_menu_add_tomtom"]
-                info.notCheckable = true
-                info.func = addTomTomWaypoint
-                info.arg1 = currentMapID
-                info.arg2 = currentCoord
-                UIDropDownMenu_AddButton(info, level)
+            -- TomTom waypoint menu item
+            if (IsAddOnLoaded("TomTom")) then
+                UIDropDownMenu_AddButton({
+                    text = L["handler_context_menu_add_tomtom"],
+                    notCheckable = true,
+                    func = addTomTomWaypoint,
+                    arg1 = currentMapID,
+                    arg2 = currentCoord
+                }, level)
             end
 
-            -- Hide menu item
-            info = UIDropDownMenu_CreateInfo()
-            info.text         = L["handler_context_menu_hide_node"]
-            info.notCheckable = true
-            info.func         = hideNode
-            info.arg1         = currentMapID
-            info.arg2         = currentCoord
-            UIDropDownMenu_AddButton(info, level)
+            -- Blizzard waypoint menu item
+            UIDropDownMenu_AddButton({
+                text = L["handler_context_menu_add_map_pin"],
+                notCheckable = true,
+                func = addBlizzardWaypoint,
+                arg1 = currentMapID,
+                arg2 = currentCoord
+            }, level)
 
-            -- UIDropDownMenu_AddButton(spacer, level)
+            -- Hide menu item
+            UIDropDownMenu_AddButton({
+                text         = L["handler_context_menu_hide_node"],
+                notCheckable = true,
+                func         = hideNode,
+                arg1         = currentMapID,
+                arg2         = currentCoord
+            }, level)
 
             -- Close menu item
-            info = UIDropDownMenu_CreateInfo()
-            info.text         = CLOSE
-            info.func         = closeAllDropdowns
-            info.notCheckable = true
-            UIDropDownMenu_AddButton(info, level)
+            UIDropDownMenu_AddButton({
+                text         = CLOSE,
+                func         = closeAllDropdowns,
+                notCheckable = true
+            }, level)
+
         end
     end
 
@@ -386,20 +486,26 @@ do
     HL_Dropdown.initialize = generateMenu
 
     function PluginHandler:OnClick(button, down, uMapID, coord)
-        if ((down or button ~= "RightButton") and private.db.easy_waypoint and IsAddOnLoaded("TomTom")) then
-            return
-        end
-        if ((button == "RightButton" and not down) and (not private.db.easy_waypoint or not IsAddOnLoaded("TomTom"))) then
+        local TomTom = select(2, IsAddOnLoaded('TomTom'))
+        local dropdown = private.db.easy_waypoint_dropdown
+
+        if (down or button ~= "RightButton") then return end
+
+        if (button == "RightButton" and not down and not private.db.easy_waypoint) then
             currentMapID = uMapID
             currentCoord = coord
             ToggleDropDownMenu(1, nil, HL_Dropdown, self, 0, 0)
-        end
-        if (IsControlKeyDown() and private.db.easy_waypoint and IsAddOnLoaded("TomTom")) then
+        elseif (IsControlKeyDown() and private.db.easy_waypoint) then
             currentMapID = uMapID
             currentCoord = coord
             ToggleDropDownMenu(1, nil, HL_Dropdown, self, 0, 0)
-        elseif (private.db.easy_waypoint and IsAddOnLoaded("TomTom")) then
+        elseif (not TomTom or dropdown == 1) then
+            addBlizzardWaypoint(button, uMapID, coord)
+        elseif (TomTom and dropdown == 2) then
             addTomTomWaypoint(button, uMapID, coord)
+        else
+            addBlizzardWaypoint(button, uMapID, coord)
+            if (TomTom) then addTomTomWaypoint(button, uMapID, coord) end
         end
     end
 end
@@ -429,6 +535,10 @@ do
             if (private.hidden[currentMapID] and private.hidden[currentMapID][coord]) then
                 return false
             end
+            -- this will check if requirements are fulfilled, when remove_unknown option enabled
+            if (point.requirements and private.db.remove_unknown and not ReqFulfilled(point.requirements)) then
+                return false
+            end
             -- this will check if any node is for specific class
             if (point.class and point.class ~= select(2, UnitClass("player"))) then
                 return false
@@ -445,9 +555,10 @@ do
             if (point.icon == "orderhall" and not private.db.show_orderhall) then return false end
             if (point.icon == "worderhall" and not private.db.show_orderhall) then return false end
             if (point.requirements and point.requirements.warfront and not private.db.show_warfront) then return false end
-            if (point.icon == "mixedPortal" and not private.db.show_warfront) then return false end
+            if (point.icon == "portal_mixed" and not private.db.show_warfront) then return false end
             if (point.icon == "petBattlePortal" and not private.db.show_petBattlePortal) then return false end
             if (point.icon == "ogreWaygate" and not private.db.show_ogreWaygate) then return false end
+            if (point.icon == "portal_purple" and not private.db.show_reflectivePortal) then return false end
             if (point.icon == "flightMaster" and not private.db.show_orderhall) then return false end
             if (point.icon == "tram" and not private.db.show_tram) then return false end
             if (point.icon == "boat" and not private.db.show_boat) then return false end
@@ -498,25 +609,19 @@ local frame, events = CreateFrame("Frame"), {};
 function events:ZONE_CHANGED(...)
     addon:Refresh()
 
-    if (private.global.dev and private.db.show_prints) then
-        print("TravelGuide: refreshed after ZONE_CHANGED")
-    end
+    addon:debugmsg("refreshed after ZONE_CHANGED")
 end
 
 function events:ZONE_CHANGED_INDOORS(...)
     addon:Refresh()
 
-    if (private.global.dev and private.db.show_prints) then
-        print("TravelGuide: refreshed after ZONE_CHANGED_INDOORS")
-    end
+    addon:debugmsg("refreshed after ZONE_CHANGED_INDOORS")
 end
 
 function events:QUEST_FINISHED(...)
     addon:Refresh()
 
-    if (private.global.dev and private.db.show_prints) then
-        print("TravelGuide: refreshed after QUEST_FINISHED")
-    end
+    addon:debugmsg("refreshed after QUEST_FINISHED")
 end
 
 frame:SetScript("OnEvent", function(self, event, ...)

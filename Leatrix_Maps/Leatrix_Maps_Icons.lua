@@ -343,12 +343,15 @@
 
 		[114] =  --[[Borean Tundra]] {
 			{"Dungeon", 27.6, 26.6, L["The Nexus"], L["The Nexus"] .. ", " .. L["The Oculus"] .. ",|n" .. L["The Eye of Eternity"], 281},
+			{"PortalN", 78.9, 53.7, L["Boat to"] .. " " .. L["Moa'ki Harbor"] .. ", " .. L["Dragonblight"]},
 		},
 
 		[115] =  --[[Dragonblight]] {
 			{"Raid", 59.6, 51.1, L["Wyrmrest Temple"], L["The Ruby Sanctum"] .. ", " .. L["The Obsidian Sanctum"], 761},
 			{"Raid", 87.4, 51.1, L["Naxxramas"], L["Raid"], 754},
 			{"Dungeon", 26.2, 49.6, L["Azjol-Nerub"], L["Azjol-Nerub"] .. ", " .. L["The Old Kingdom"], 272},
+			{"PortalN", 49.6, 78.4, L["Boat to"] .. " " .. L["Kamagua"] .. ", " .. L["Howling Fjord"]},
+			{"PortalN", 47.9, 78.7, L["Boat to"] .. " " .. L["Unu'pe"] .. ", " .. L["Borean Tundra"]},
 		},
 
 		[116] =  --[[Grizzly Hills]] {
@@ -357,6 +360,7 @@
 
 		[117] =  --[[Howling Fjord]] {
 			{"Dungeon", 57.3, 46.8, L["Utgarde Keep"], L["Utgarde Keep"] .. ", " .. L["Utgarde Pinnacle"], 285},
+			{"PortalN", 23.5, 57.8, L["Boat to"] .. " " .. L["Moa'ki Harbor"] .. ", " .. L["Dragonblight"]},
 		},
 
 		[118] =  --[[Icecrown]] {
@@ -741,7 +745,7 @@
 		},
 
 		[2023] =  --[[Ohn'ahran Plains]] {
-			{"Dungeon", 61.5, 42.6, L["The Nokhud Offensive"], L["Dungeon"], 1198}, -- Unconfirmed
+			{"Dungeon", 60.9, 39.0, L["The Nokhud Offensive"], L["Dungeon"], 1198}, -- Unconfirmed
 		},
 
 		[2024] =  --[[The Azure Span]] {
@@ -753,6 +757,12 @@
 			{"Dungeon", 58.3, 42.3, L["Algeth'ar Academy"], L["Dungeon"], 1201},
 			{"Dungeon", 59.4, 60.8, L["Halls of Infusion"], L["Dungeon"], 1204},
 			{"Raid", 73.0, 55.7, L["Vault of the Incarnates"], L["Raid"], 1200},
+		},
+
+		[2112] =  --[[Valdrakken]] {
+			{"PortalN", 53.9, 55.0, L["Valdrakken Portals"] .. "|n" .. L["Dalaran"] .. ", " .. L["Shadowmoon Valley"] .. ",|n" .. L["Jade Forest"]},
+			{"PortalH", 56.6, 38.4, L["Orgrimmar"], L["Portal"]},
+			{"PortalA", 59.7, 41.8, L["Stormwind"], L["Portal"]},
 		},
 
 	}

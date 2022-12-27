@@ -1,0 +1,6 @@
+<Ui>
+    <Include file="LibRPMedia-1.0.lua"/>
+    <Include file="LibRPMedia-Classic-1.0.lua"/>
+    <Include file="LibRPMedia-Wrath-1.0.lua"/>
+    <Include file="LibRPMedia-Retail-1.0.lua"/>
+</Ui>

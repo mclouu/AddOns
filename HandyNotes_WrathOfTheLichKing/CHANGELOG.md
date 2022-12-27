@@ -1,5 +1,40 @@
 # Changelog
 
+## Changes in v10
+
+* If TomTom is present, let you set a waypoint for every related point at once
+* Route lines were being hidden sometimes in explored areas
+
+## Changes in v9
+
+* Always show everything on the minimap, since this is a vignette-less expansion
+
+## Changes in v8
+
+* Retail fixes for 10.0.2
+
+## Changes in v7.3
+
+* Don't use WorldMapFrame.AddOverlayFrame because it taints
+
+## Changes in v7.2
+
+* Fix an error with GetPlayerAuraBySpellID, but correctly this time
+
+## Changes in v7.1
+
+* Fix an error with GetPlayerAuraBySpellID
+
+## Changed in v7
+
+* Updated for 10.0.0
+
+## Changed in v6
+
+* Add in Spirit Healer locations, upon a request...
+* Make the world map button more consistent when viewed in classic
+* Fix an error that could happen when clicking the world map button in classic
+
 ## Changed in v5
 
 * Paths for rares in Borean Tundra, Dragonblight, and Grizzly Hills

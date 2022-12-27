@@ -2,7 +2,6 @@ if not WeakAuras.IsLibsOK() then return end
 local AddonName, OptionsPrivate = ...
 
 local L = WeakAuras.L
-local regionOptions = WeakAuras.regionOptions
 
 local commonOptionsCache = {}
 OptionsPrivate.commonOptionsCache = commonOptionsCache
@@ -144,7 +143,9 @@ local function addCollapsibleHeader(options, key, input, order, isGroupTab)
         if notcollapsable then
           return "Interface\\AddOns\\WeakAuras\\Media\\Textures\\bullet1", 18, 18
         else
-          return isCollapsed() and "Interface\\AddOns\\WeakAuras\\Media\\Textures\\expand" or "Interface\\AddOns\\WeakAuras\\Media\\Textures\\collapse", 18, 18
+          return isCollapsed() and "Interface\\AddOns\\WeakAuras\\Media\\Textures\\expand"
+                                    or "Interface\\AddOns\\WeakAuras\\Media\\Textures\\collapse",
+                                    18, 18
         end
       end,
       control = "WeakAurasExpand",
@@ -500,7 +501,7 @@ local function replaceNameDescFuncs(intable, data, subOption)
     local index = string.find(input, ".", 1, true);
     if (index) then
       local regionType = string.sub(input, 1, index - 1);
-      return regionOptions[regionType] and regionType;
+      return OptionsPrivate.Private.regionOptions[regionType] and regionType;
     end
     return nil;
   end
@@ -894,14 +895,17 @@ local getHelper = {
 local function CreateGetAll(subOption)
   return function(data, info, ...)
     local isToggle = nil
+    local isColor = nil
 
     local allChildren = CopyTable(getHelper)
     local enabledChildren = CopyTable(getHelper)
     for child in OptionsPrivate.Private.TraverseLeafs(data) do
-      if isToggle == nil then
+      if isToggle == nil or isColor == nil then
         local childOptions = getChildOption(OptionsPrivate.EnsureOptions(child, subOption), info)
         isToggle = childOptions and childOptions.type == "toggle"
+        isColor = childOptions and childOptions.type == "color"
       end
+
 
       local childOptions = OptionsPrivate.EnsureOptions(child, subOption)
       local childOption = childOptions;
@@ -924,6 +928,9 @@ local function CreateGetAll(subOption)
             end
 
             if not allChildren:GetSame() and not enabledChildren:GetSame() then
+              if isColor then
+                return 0, 0, 0, 1
+              end
               return nil;
             end
             break;
@@ -944,7 +951,7 @@ end
 local function CreateSetAll(subOption, getAll)
   return function(data, info, ...)
     OptionsPrivate.Private.pauseOptionsProcessing(true);
-    OptionsPrivate.Private.PauseAllDynamicGroups()
+    local suspended = OptionsPrivate.Private.PauseAllDynamicGroups()
     local before = getAll(data, info, ...)
     for child in OptionsPrivate.Private.TraverseLeafs(data) do
       local childOptions = OptionsPrivate.EnsureOptions(child, subOption)
@@ -982,7 +989,7 @@ local function CreateSetAll(subOption, getAll)
       end
     end
 
-    OptionsPrivate.Private.ResumeAllDynamicGroups()
+    OptionsPrivate.Private.ResumeAllDynamicGroups(suspended)
     OptionsPrivate.Private.pauseOptionsProcessing(false);
     OptionsPrivate.Private.ScanForLoads();
     OptionsPrivate.SortDisplayButtons(nil, true);
@@ -1033,6 +1040,7 @@ local function PositionOptions(id, data, _, hideWidthHeight, disableSelfPoint, g
     __order = metaOrder,
     width = {
       type = "range",
+      control = "WeakAurasSpinBox",
       width = WeakAuras.normalWidth,
       name = L["Width"],
       order = 60,
@@ -1044,6 +1052,7 @@ local function PositionOptions(id, data, _, hideWidthHeight, disableSelfPoint, g
     },
     height = {
       type = "range",
+      control = "WeakAurasSpinBox",
       width = WeakAuras.normalWidth,
       name = L["Height"],
       order = 61,
@@ -1061,7 +1070,9 @@ local function PositionOptions(id, data, _, hideWidthHeight, disableSelfPoint, g
       hidden = function()
         return IsParentDynamicGroup() or IsGroupByFrame()
       end,
-      values = (data.regionType == "group" or data.regionType == "dynamicgroup") and OptionsPrivate.Private.anchor_frame_types_group or OptionsPrivate.Private.anchor_frame_types,
+      values = (data.regionType == "group" or data.regionType == "dynamicgroup")
+                and OptionsPrivate.Private.anchor_frame_types_group
+                or OptionsPrivate.Private.anchor_frame_types,
     },
     anchorFrameParent = {
       type = "toggle",
@@ -1188,6 +1199,7 @@ local function PositionOptions(id, data, _, hideWidthHeight, disableSelfPoint, g
     },
     xOffset = {
       type = "range",
+      control = "WeakAurasSpinBox",
       name = L["X Offset"],
       order = 79,
       width = WeakAuras.normalWidth,
@@ -1207,6 +1219,7 @@ local function PositionOptions(id, data, _, hideWidthHeight, disableSelfPoint, g
     },
     yOffset = {
       type = "range",
+      control = "WeakAurasSpinBox",
       name = L["Y Offset"],
       order = 80,
       width = WeakAuras.normalWidth,
@@ -1243,8 +1256,10 @@ local function PositionOptions(id, data, _, hideWidthHeight, disableSelfPoint, g
     },
   };
 
-  OptionsPrivate.commonOptions.AddCodeOption(positionOptions, data, L["Custom Anchor"], "custom_anchor", "https://github.com/WeakAuras/WeakAuras2/wiki/Custom-Code-Blocks#custom-anchor-function",
-                          71.5, function() return not(data.anchorFrameType == "CUSTOM" and not IsParentDynamicGroup()) end, {"customAnchor"}, false, { setOnParent = group })
+  OptionsPrivate.commonOptions.AddCodeOption(positionOptions, data, L["Custom Anchor"], "custom_anchor",
+                      "https://github.com/WeakAuras/WeakAuras2/wiki/Custom-Code-Blocks#custom-anchor-function",
+                      71.5, function() return not(data.anchorFrameType == "CUSTOM" and not IsParentDynamicGroup()) end,
+                      {"customAnchor"}, false, { setOnParent = group })
   return positionOptions;
 end
 
@@ -1283,6 +1298,7 @@ local function BorderOptions(id, data, showBackDropOptions, hiddenFunc, order)
     },
     borderOffset = {
       type = "range",
+      control = "WeakAurasSpinBox",
       width = WeakAuras.normalWidth,
       name = L["Border Offset"],
       order = order + 0.3,
@@ -1293,6 +1309,7 @@ local function BorderOptions(id, data, showBackDropOptions, hiddenFunc, order)
     },
     borderSize = {
       type = "range",
+      control = "WeakAurasSpinBox",
       width = WeakAuras.normalWidth,
       name = L["Border Size"],
       order = order + 0.4,
@@ -1303,6 +1320,7 @@ local function BorderOptions(id, data, showBackDropOptions, hiddenFunc, order)
     },
     borderInset = {
       type = "range",
+      control = "WeakAurasSpinBox",
       width = WeakAuras.normalWidth,
       name = L["Border Inset"],
       order = order + 0.5,
@@ -1372,7 +1390,8 @@ local function AddCodeOption(args, data, name, prefix, url, order, hiddenFunc, p
   tinsert(options.extraFunctions, 1, {
     buttonLabel = L["Expand"],
     func = function()
-      OptionsPrivate.OpenTextEditor(OptionsPrivate.GetPickedDisplay(), path, encloseInFunction, options.multipath, options.reloadOptions, options.setOnParent, url, options.validator)
+      OptionsPrivate.OpenTextEditor(OptionsPrivate.GetPickedDisplay(), path, encloseInFunction, options.multipath,
+                                    options.reloadOptions, options.setOnParent, url, options.validator)
     end
   });
 
@@ -1490,6 +1509,7 @@ local function AddCommonTriggerOptions(options, data, triggernum, doubleWidth)
     desc = L["The type of trigger"],
     order = 1.1,
     values = trigger_types,
+    sorting = OptionsPrivate.Private.SortOrderForValues(trigger_types),
     get = function()
       return trigger.type
     end,
@@ -1505,7 +1525,6 @@ local function AddCommonTriggerOptions(options, data, triggernum, doubleWidth)
       WeakAuras.UpdateThumbnail(data);
       WeakAuras.ClearAndUpdateOptions(data.id);
     end,
-    control = "WeakAurasSortedDropdown"
   }
 end
 
